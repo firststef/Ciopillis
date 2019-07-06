@@ -1,0 +1,4 @@
+﻿  main.cpp
+c:\users\stefan\dropbox\raylib-ciopillisgame\raylibgame\main.cpp(2): warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
+  c:\users\stefan\dropbox\raylib-ciopillisgame\raylibgame\main.cpp: note: see previous definition of '_CRT_SECURE_NO_WARNINGS'
+  RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\raylib-CiopillisGame\Debug\RaylibGame.exe
