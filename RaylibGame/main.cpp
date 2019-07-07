@@ -95,6 +95,9 @@ public:
 
 class Container : public GameObject {
 public:
+    //vector<Container*> children;
+
+    bool isMaterial = false;
 
     virtual void Draw() {}
 };
@@ -111,13 +114,16 @@ public:
         this->cards = cards;
     }
 
-    bool isMaterial = false;
-
     static vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n);
 
     void Draw() {
-        //draws himself first,
+        if (!isMaterial)
+            return;
 
+        //draws himself first,
+        DrawRectangleRec(position, color);
+
+        //then the children
         for (auto card : cards) {
             card->Draw();
         }
@@ -315,6 +321,8 @@ int main(void)
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
     CardContainer hand(CardContainer::ExtractNCardsFrom(cardDatabase.cards, 3));
+    hand.isMaterial = true;
+
     for (auto card : cardDatabase.cards) {
         card->concedeDrawing = true;
         card->isActive = false;
