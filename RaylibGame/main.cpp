@@ -63,7 +63,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &activeObject
 
     if (it == activeObjects.end())
         --it;
-    if (((*it)->zIndex = -1))
+    if (((*it)->zIndex == -1))
         return nullptr;
     return *it;
 }
@@ -93,7 +93,7 @@ bool AddObjectToArray(vector<GameObject*> &activeObjects, GameObject &object) {
 
     activeObjects.insert(iterator, &object);
 
-    return true;
+return true;
 }
 
 int main(void)
@@ -124,7 +124,13 @@ int main(void)
     board.zIndex = -1;
     activeObjects.push_back(&board);
 
-    AddObjectToArray(activeObjects,card);
+    AddObjectToArray(activeObjects, card);
+
+    Texture2D texture1 = { 0 };
+    Card card1({ screenWidth / 2,screenHeight / 2, 30 , 300 }, texture1);//ar trebui alocate dinamic
+    card1.zIndex = 1;
+
+    AddObjectToArray(activeObjects, card1);
 
     Board board1;
     board1.zIndex = 2;
@@ -144,10 +150,10 @@ int main(void)
     AddObjectToArray(activeObjects, board4);
     AddObjectToArray(activeObjects, board5);
 
-    float timeForDragDelay = 1.0f;
+    float timeForDragDelay = 0.5f;
     float temporayTimeForDragDelay = timeForDragDelay;
     float dragDuration = 0;
-    Vector2 mouseGrab = {0,0};
+    Vector2 mouseGrab = { 0,0 };
     bool DragStarted = false;
     GameObject* dragSelectedObject = nullptr;//current selected object
     float endPositionX = -1;
@@ -168,13 +174,13 @@ int main(void)
         cout << "DragDuration " << dragDuration << endl;
         cout << "temporayTimeForDragDelay " << temporayTimeForDragDelay << endl;
 
-        iff (!DragStarted && lastGesture == GestureType::GESTURE_DRAG) {
-            
+        iff(!DragStarted && lastGesture == GestureType::GESTURE_DRAG) {
+
             //if drag just started -> init
             dragSelectedObject = GetObjectUnderPoint(GetMousePosition(), activeObjects, 0);
             if (dragSelectedObject == nullptr)
                 break;
-            
+
             DragStarted = true;
             mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };
 
@@ -185,13 +191,17 @@ int main(void)
         iff(DragStarted) {
             cout << endPositionX << "   ------   " << dragSelectedObject->position.x << "-------" << abs(endPositionX - dragSelectedObject->position.x) << endl;
             if ((dragSelectedObject == nullptr) ||
-                (abs(endPositionX - dragSelectedObject->position.x) < 1 && abs(endPositionX - dragSelectedObject->position.x) > 0.1f && 
-                 abs(endPositionY - dragSelectedObject->position.y) < 1 && abs(endPositionY - dragSelectedObject->position.y) > 0.1f)) {//macro
-                //end
+                (abs(endPositionX - dragSelectedObject->position.x) < 1 && abs(endPositionX - dragSelectedObject->position.x) >= 0.01f &&
+                    abs(endPositionY - dragSelectedObject->position.y) < 1 && abs(endPositionY - dragSelectedObject->position.y) >= 0.01f)) {//macro
+                   //end
                 DragStarted = false;
                 dragDuration = 0;
                 temporayTimeForDragDelay = timeForDragDelay;
                 break;
+            }
+            if  ((abs(endPositionX - dragSelectedObject->position.x) == 0 && abs(endPositionY - dragSelectedObject->position.y) == 0)){
+                dragDuration = 0;
+                temporayTimeForDragDelay = timeForDragDelay;
             }
             
             float lerp = 0;
@@ -223,8 +233,16 @@ int main(void)
             break;
 
         }
-        if (lastGesture != GestureType::GESTURE_DRAG && dragSelectedObject != GetObjectUnderPoint(GetMousePosition(), activeObjects, 0)) {
-            DragStarted = false;
+        if (lastGesture != GestureType::GESTURE_DRAG) {
+            if (dragSelectedObject != GetObjectUnderPoint(GetMousePosition(), activeObjects, 0))
+                DragStarted = false;
+            else if (dragSelectedObject != nullptr)
+                mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };
+
+            //deci avand in vedere faptul ca defapt poti identifica comportamentul de tragere prin secventa TAP,HOLD,DRAG
+            //sunt necesare niste modificari => retin ultimul obiect tras(dragged) si daca se face actiunea hold peste el
+            //atunci resetez mouseGrab. Ce ar fi fain aicea ar fi sa fie stocate aceste informatii in obiectul input hand
+            //ler
         }
         if (lastGesture == GestureType::GESTURE_NONE)
         {
