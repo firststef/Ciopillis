@@ -8,6 +8,10 @@
 
 using namespace std;
 
+//i could do a free roam option - you can drag around the cards and at some point when you want to tidy up,
+//you can click a button to bring them back - being that they are all stored in the memory, it  should be 
+//easy to locate their place - perhaps some option added to the input manager
+
 #define FONT_SIZE 50
 #define iff while
 
@@ -150,7 +154,8 @@ int main(void)
     AddObjectToArray(activeObjects, board4);
     AddObjectToArray(activeObjects, board5);
 
-    float timeForDragDelay = 0.5f;
+    constexpr float timeForDragDelay = 0.1f;
+    static_assert(timeForDragDelay != 0, "timeForDragDelay must not be 0");
     float temporayTimeForDragDelay = timeForDragDelay;
     float dragDuration = 0;
     Vector2 mouseGrab = { 0,0 };
@@ -189,7 +194,7 @@ int main(void)
             break;
         }
         iff(DragStarted) {
-            cout << endPositionX << "   ------   " << dragSelectedObject->position.x << "-------" << abs(endPositionX - dragSelectedObject->position.x) << endl;
+
             if ((dragSelectedObject == nullptr) ||
                 (abs(endPositionX - dragSelectedObject->position.x) < 1 && abs(endPositionX - dragSelectedObject->position.x) >= 0.01f &&
                     abs(endPositionY - dragSelectedObject->position.y) < 1 && abs(endPositionY - dragSelectedObject->position.y) >= 0.01f)) {//macro
@@ -243,6 +248,8 @@ int main(void)
             //sunt necesare niste modificari => retin ultimul obiect tras(dragged) si daca se face actiunea hold peste el
             //atunci resetez mouseGrab. Ce ar fi fain aicea ar fi sa fie stocate aceste informatii in obiectul input hand
             //ler
+
+
         }
         if (lastGesture == GestureType::GESTURE_NONE)
         {
