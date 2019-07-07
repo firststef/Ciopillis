@@ -43,6 +43,7 @@ public:
     int zIndex = 0;
 
     bool concedeDrawing = false;// this is used by objects like containers to manage sub objects
+    bool isActive = true;
 
     GameObject() {
 
@@ -92,7 +93,13 @@ public:
     }
 };
 
-class CardContainer {
+class Container : public GameObject {
+public:
+
+    virtual void Draw() {}
+};
+
+class CardContainer : public Container {//perhaps cardcontainer might inherit from Container, a class that will be used mostly for the UI, but cardDB will have isMaterial = false, so it wont be shown
 public:
     vector<Card*> cards;
 
@@ -107,6 +114,14 @@ public:
     bool isMaterial = false;
 
     static vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n);
+
+    void Draw() {
+        //draws himself first,
+
+        for (auto card : cards) {
+            card->Draw();
+        }
+    }
 };
 
 vector<Card*> CardContainer::ExtractNCardsFrom(vector<Card*>& container, int n)
@@ -144,7 +159,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &activeObject
     vector<GameObject*>::iterator it;
     it = activeObjects.begin();
     while ( it != activeObjects.end()) {
-        if ((*it)->concedeDrawing == false && CheckCollisionPointRec(point, (*it)->position))
+        if ((*it)->isActive == true && CheckCollisionPointRec(point, (*it)->position))
         {
             --order;
         }
@@ -229,6 +244,7 @@ int main(void)
     vector<GameObject*> activeObjects;
 
     CardContainer cardDatabase;
+    cardDatabase.isMaterial = false;
 
     RChar nume("test");
     Board board;
@@ -299,14 +315,16 @@ int main(void)
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
     CardContainer hand(CardContainer::ExtractNCardsFrom(cardDatabase.cards, 3));
-    for (auto obj : cardDatabase.cards) {
-        obj->concedeDrawing = true;
+    for (auto card : cardDatabase.cards) {
+        card->concedeDrawing = true;
+        card->isActive = false;
     }
-
-
+    //so every card becomes inactive and a child
     for (auto card : hand.cards) {
-        card->concedeDrawing = false;
+        card->isActive = true;
     }
+    //and every child in hand is now active
+    AddObjectToArray(activeObjects,hand);//this should be a gamemanager object function
 
     while (!WindowShouldClose())
     {
