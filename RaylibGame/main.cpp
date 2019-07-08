@@ -162,8 +162,14 @@ public:
         DrawRectangleRec(position, color);
 
         //then the children
-        for (auto card : cards) {
-            card->Draw();
+        auto iterator = cards.end() - 1;
+        while (true) {
+            (*iterator)->Draw();
+            if (iterator == cards.begin())
+                break;
+            else {  
+                iterator--;
+            }
         }
     }
 };
@@ -463,12 +469,14 @@ int main(void)
         iff(!DragStarted && lastGesture == GestureType::GESTURE_DRAG) {
 
             //if drag just started -> init
-            dragSelectedObject = GetObjectUnderPoint(GetMousePosition(), activeObjects, 0);
+            dragSelectedObject = GetObjectUnderPoint(GetMousePosition(), activeObjects, 0);//aici e problema - nu este modificata ordinea din activeObjects - cea mai usoara metoda este 
+            //sa faci active Objects ca un obiect cu mai multi fii de tip container (deci sa nu mai fie doar vector), iar fiecare copil are grija sa se deseneze pe sine si pe copii sai recursiv
+            //trebuie de asemenea vazut daca mai intai desenam containerul sau obiectele copil (zContainer < zCopii)
             if (dragSelectedObject == nullptr)
                 break;
 
             //set focus - trebuie facuta treaba asta mai organizat, managed by input manager
-            if (dragSelectedObject != activeObjects[0])
+            if (dragSelectedObject != nullptr && dragSelectedObject != hand.cards[0])
             {
                 ResetPositionInArray<Card>(hand.cards, *((Card*)dragSelectedObject), 0, hand.cards.size());
                 hand.isZAranged = false;
