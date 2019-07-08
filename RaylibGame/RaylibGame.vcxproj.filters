@@ -18,9 +18,18 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ExternalFunction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nvidia.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="externalFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

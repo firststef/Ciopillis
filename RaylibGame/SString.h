@@ -5,12 +5,12 @@
 using namespace std;
 
 namespace SString {
-    class RChar {
+    class SString {
         char* value;
     public:
-        RChar() {}
+        SString() {}
 
-        RChar(const char* charString) {
+        SString(const char* charString) {
             if (strlen(charString) > 500)
                 value = nullptr;
             
@@ -18,12 +18,12 @@ namespace SString {
             strcpy(value, charString);
         }
 
-        RChar(SString::RChar &other) {
+        SString(SString &other) {
             value = (char*)malloc(strlen(other.value) + 1);
             strcpy(value, other.value);
         }
 
-        auto operator= (const RChar & other) {
+        auto operator= (const SString & other) {
             delete value;
             value = (char*)malloc(strlen(other.value) + 1);
             strcpy(value, other.value);
@@ -33,13 +33,15 @@ namespace SString {
             return value;
         }
 
-        void Substitute(const SString::RChar &other) {
+        SString& Substitute(const SString &other) {
             delete value;
             value = (char*)malloc(strlen(other.value) + 1);
             strcpy(value, other.value);
+
+            return *this;
         }
 
-        ~RChar() {
+        ~SString() {
             delete value;
         }
     };

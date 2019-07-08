@@ -1,14 +1,13 @@
 #define _CRT_NONSTDC_NO_DEPRECATE
-#define _CRT_SECURE_NO_WARNINGS
 #include "nvidia.h"
 #include "SString.h"
 #include "raylib.h"
+#include "externalFunction.h"
 #include <iostream>
 #include <vector>
 #include <string>
 
 using namespace std;
-using namespace SString;
 
 //-----[Notes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -31,11 +30,28 @@ using namespace SString;
 
 #define iff while
 
+
+#define INVALID_NEW_INDEX -1
+#define ABSOLUT_NEW_INDEX -2
+
 //-----[Classes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+class GameObject;
+class Card;
+class Board;
+class Container;
+class CardContainer;
+
+bool AddObjectToArray(vector<GameObject*> &activeObjects, GameObject &object);
+template<typename T>
+bool AddObjectToArray(vector<T*> &objectArray, T &object, int beginPos, int endPos);
+bool ResetPositionInArray(vector<GameObject*> &activeObjects, GameObject &object, int newIndex = INVALID_NEW_INDEX);
+template<typename T>
+bool ResetPositionInArray(vector<T*> &objectArray, T &object, int beginPos, int endPos, int newIndex = INVALID_NEW_INDEX);
 
 class GameObject {
 public:
-    RChar name;
+    SString::SString name;
 
     Rectangle position;
     Texture2D texture;
@@ -49,8 +65,8 @@ public:
 
     }
 
-    GameObject(RChar &name) {
-        this->name = name;
+    GameObject(SString::SString &name) : name(name){
+        
     }
 
     virtual void Draw() {};
@@ -63,7 +79,7 @@ public:
         
     }
 
-    Board(RChar &name) : GameObject(name){
+    Board(SString::SString &name) : GameObject(name){
         
     }
 
@@ -79,7 +95,7 @@ public:
 
     }
 
-    Card(RChar &name, Rectangle rectangle, Texture2D image) : GameObject(name) {
+    Card(SString::SString &name, Rectangle rectangle, Texture2D image) : GameObject(name) {
         position = rectangle;
         texture = image;
     }
@@ -96,6 +112,8 @@ public:
 class Container : public GameObject {
 public:
     //vector<Container*> children;
+
+    bool isZAranged = false;
 
     bool isMaterial = false;
 
@@ -116,9 +134,29 @@ public:
 
     static vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n);
 
+    bool Arange() {;
+
+        int start = 0;
+        int end = cards.size() - 1;
+        for (auto obj : cards) {
+            ResetPositionInArray<Card>(cards, *obj, start, end);
+            start++;
+        }
+
+        return true;
+    }
+
     void Draw() {
         if (!isMaterial)
             return;
+
+        if (!isZAranged)
+        {
+            isZAranged = Arange();
+
+            if (!isZAranged)
+                return;
+        }
 
         //draws himself first,
         DrawRectangleRec(position, color);
@@ -161,7 +199,7 @@ vector<Card*> CardContainer::ExtractNCardsFrom(vector<Card*>& container, int n)
     return selected;
 }
 
-GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &activeObjects, int order) {
+GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &activeObjects, int order) {// e o problema aici, active Objects si Hand nu au aceeasi ordine
     vector<GameObject*>::iterator it;
     it = activeObjects.begin();
     while ( it != activeObjects.end()) {
@@ -183,30 +221,103 @@ GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &activeObject
 
 bool AddObjectToArray(vector<GameObject*> &activeObjects, GameObject &object) {
     auto iterator = activeObjects.end() - 1;
-    while ((iterator) != activeObjects.begin() && object.zIndex > (*(*(iterator))).zIndex) {
-        if (object.zIndex >= (*(*(iterator - 1))).zIndex)
-            --iterator;
-        else
-            break;
+    while (iterator != activeObjects.begin() && object.zIndex >= (*(*(iterator))).zIndex) {
+        --iterator;
+    }
+    if (iterator == activeObjects.begin() && object.zIndex < (*(*(iterator))).zIndex) {
+        iterator++;
     }
 
-    while (object.zIndex == (*(*iterator)).zIndex) {
-        object.zIndex++;
-        if (iterator == activeObjects.begin())
-            break;
-        --iterator;
-        auto copyIterator = iterator;
-        while (copyIterator != activeObjects.begin()) {
-            ((*(*copyIterator)).zIndex)++;//sa trec prin toate si sa le cresc
-            --copyIterator;
-            if ((copyIterator) != activeObjects.begin())//chestia asta cred ca e retardata - o fac de 2 ori
-                ((*(*(copyIterator-1))).zIndex)++;//problema e ca tre sa compar cu toate nu doar cu primu 4 ca primu 4 creste restul de 4 la 5 si ceilalti 5 vor fi 6 in urmatoarea runda si o sa fie mai mari
-        }
-    }
+    //while (object.zIndex == (*(*iterator)).zIndex) {
+    //    object.zIndex++;
+    //    if (iterator == activeObjects.begin())
+    //        break;
+    //    --iterator;
+    //    auto copyIterator = iterator;
+    //    while (copyIterator != activeObjects.begin()) {
+    //        ((*(*copyIterator)).zIndex)++;//sa trec prin toate si sa le cresc
+    //        --copyIterator;
+    //        if ((copyIterator) != activeObjects.begin())//chestia asta cred ca e retardata - o fac de 2 ori
+    //            ((*(*(copyIterator-1))).zIndex)++;//problema e ca tre sa compar cu toate nu doar cu primu 4 ca primu 4 creste restul de 4 la 5 si ceilalti 5 vor fi 6 in urmatoarea runda si o sa fie mai mari
+    //    }
+    //}
 
     activeObjects.insert(iterator, &object);
 
     return true;
+}
+
+template<typename T>
+bool AddObjectToArray(vector<T*> &objectArray, T &object, int beginPos, int endPos) {
+
+    int idx = endPos;
+
+    auto iterator = objectArray.begin();
+
+    //auto begin = objectArray.begin();
+    //auto iterator = begin + (endPos - 1);
+    //auto start = begin + beginPos;
+
+    while (idx != beginPos && object.zIndex >= (*iterator + idx)->zIndex) {
+        --idx;
+    }
+
+    if (idx == beginPos && idx == endPos) {
+        objectArray.insert(objectArray.end(), &object);
+    }
+    else {
+        if (idx == beginPos && object.zIndex < (*(iterator + idx))->zIndex) {
+            idx++;
+        }
+        objectArray.insert(iterator + idx, &object);
+    }
+
+    return true;
+}
+
+bool ResetPositionInArray(vector<GameObject*> &activeObjects, GameObject &object, int newIndex) {
+    for (auto it = activeObjects.begin(); it != activeObjects.end(); ++it) {
+        if ((*it) == &object) {
+            activeObjects.erase(it);
+            break;
+        }
+    }
+
+    if (newIndex == ABSOLUT_NEW_INDEX)
+        object.zIndex = activeObjects[0]->zIndex + 1;
+    else if (newIndex != INVALID_NEW_INDEX)
+        object.zIndex = newIndex;
+
+    return AddObjectToArray(activeObjects, object);
+}
+
+template<typename T>
+bool ResetPositionInArray(vector<T*> &objectArray, T &object, int beginPos , int endPos , int newIndex) {
+    typename vector<T*>::iterator begin = objectArray.begin();
+
+    //endPos must be the size of the array for the full iteration
+
+    int idx = beginPos;
+    for (; idx != endPos + 1; ++idx) {//this might break when it runs out of array
+        if ((*(begin + idx)) == &object) {
+            objectArray.erase(begin + idx);
+            break;
+        }
+    }
+
+    if (newIndex == ABSOLUT_NEW_INDEX)
+        object.zIndex = objectArray[0]->zIndex + 1;
+    else if (newIndex != INVALID_NEW_INDEX)
+        object.zIndex = newIndex;
+
+    if (idx < beginPos)
+    {
+        beginPos--; endPos--;
+    }
+    else if (idx < endPos)
+        endPos--;
+
+    return AddObjectToArray<T>(objectArray, object, beginPos, endPos);
 }
 
 //-----[Globals]---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -235,6 +346,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "Ciopillis");
     SetTargetFPS(60);
+    //SleepFunc(0.1f);
 
     /*-----[SOFT INITIALIZATION]-----------------------------------------------------------------------------------------------------------------------------*/
 
@@ -252,45 +364,45 @@ int main(void)
     CardContainer cardDatabase;
     cardDatabase.isMaterial = false;
 
-    RChar nume("test");
+    SString::SString nume("test");
     Board board;
     board.name = nume;
     board.position = { 0, 0, screenWidth, screenHeight };
     board.zIndex = -1;
     activeObjects.push_back(&board);
 
-    RChar numeCarte("Carte");
+    SString::SString numeCarte("Carte");
     Texture2D texture = { 0 };
     Card card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
-    card.zIndex = 0;
+    card.zIndex = 1;
     card.color = GREEN;
     AddObjectToArray(activeObjects, card);
 
-    RChar numeCarte1("Carte1");
+    SString::SString numeCarte1("Carte1");
     Texture2D texture1 = { 0 };
     Card card1(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
-    card1.zIndex = 1;
+    card1.zIndex = 2;
     card1.color = BLUE;
     AddObjectToArray(activeObjects, card1);
 
-    RChar numeCarte2("Carte2");
+    SString::SString numeCarte2("Carte2");
     Texture2D texture2 = { 0 };
     Card card2(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
-    card2.zIndex = 1;
+    card2.zIndex = 2;
     card2.color = RED;
     AddObjectToArray(activeObjects, card2);
 
-    RChar numeCarte3("Carte3");
+    SString::SString numeCarte3("Carte3");
     Texture2D texture3 = { 0 };
     Card card3(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
-    card3.zIndex = 1;
+    card3.zIndex = 3;
     card3.color = BLACK;
     AddObjectToArray(activeObjects, card3);
 
-    RChar numeCarte4("Carte4");
+    SString::SString numeCarte4("Carte4");
     Texture2D texture4 = { 0 };
     Card card4(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
-    card4.zIndex = 1;
+    card4.zIndex = 4;
     card4.color = PINK;
     AddObjectToArray(activeObjects, card4);
 
@@ -298,11 +410,11 @@ int main(void)
     board1.zIndex = 2;
     Board board2;
     board2.zIndex = 4;
-    Board board3;
+    Board board3(nume.Substitute("Board3"));
     board3.zIndex = 4;
     Board board4;
     board4.zIndex = 4;
-    Board board5;
+    Board board5(nume.Substitute("Board5"));
     board5.zIndex = 4;
 
     AddObjectToArray(activeObjects, board1);
@@ -310,6 +422,8 @@ int main(void)
     AddObjectToArray(activeObjects, board3);
     AddObjectToArray(activeObjects, board4);
     AddObjectToArray(activeObjects, board5);
+
+    ResetPositionInArray(activeObjects, board3, ABSOLUT_NEW_INDEX);
 
     //////////////
     cardDatabase.cards.push_back(&card);
@@ -352,6 +466,13 @@ int main(void)
             dragSelectedObject = GetObjectUnderPoint(GetMousePosition(), activeObjects, 0);
             if (dragSelectedObject == nullptr)
                 break;
+
+            //set focus - trebuie facuta treaba asta mai organizat, managed by input manager
+            if (dragSelectedObject != activeObjects[0])
+            {
+                ResetPositionInArray<Card>(hand.cards, *((Card*)dragSelectedObject), 0, hand.cards.size());
+                hand.isZAranged = false;
+            }
 
             DragStarted = true;
             mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };
