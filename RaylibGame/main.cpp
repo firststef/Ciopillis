@@ -5,7 +5,7 @@
 #include "externalFunction.h"
 #include <iostream>
 #include <vector>
-#include <string>
+#include <variant>
 
 using namespace std;
 
@@ -50,29 +50,35 @@ bool AddObjectToArray(vector<T*> &objectArray, T &object, int beginPos, int endP
 bool ResetPositionInArray(vector<GameObject*> &activeObjects, GameObject &object, int newIndex = INVALID_NEW_INDEX);
 template<typename T>
 bool ResetPositionInArray(vector<T*> &objectArray, T &object, int beginPos, int endPos, int newIndex = INVALID_NEW_INDEX);
-GameObject* GetObjectUnderPoint(Vector2 point, Container container, int order);
+GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order);
 
 class GameObject {
 public:
     SString::SString name;
 
-    Rectangle position;
-    Texture2D texture;
+    Rectangle position = {0,0,0,0};
+    Texture2D texture = {0};
     Color color = LIGHTGRAY;
-    int zIndex = 0;
+    int zIndex = -1;
 
     bool concedeDrawing = false;// this is used by objects like containers to manage sub objects
     bool isActive = true;
 
-    GameObject() {
+    GameObject() = default;
 
-    }
+    GameObject(GameObject &obj) = default;
 
-    GameObject(SString::SString &name) : name(name){
-        
-    }
+    GameObject(GameObject &&obj) noexcept(false) {};
+
+    explicit GameObject(SString::SString &name) : name(name) {};
+
+    GameObject& operator=(const GameObject &obj) = default;
+
+    GameObject& operator=(GameObject &&obj) noexcept(false) { *this = obj; return *this; };
 
     virtual void Draw() {};
+
+    virtual ~GameObject() = default;
 };
 
 class Board : public GameObject {
@@ -86,7 +92,7 @@ public:
         
     }
 
-    void Draw() { 
+    void Draw() override { 
         DrawRectangleRec(position, color); 
     };
 };
@@ -107,7 +113,7 @@ public:
     ///maybe add a function pointer for each
     ///or an event type
 
-    void Draw() {
+    void Draw() override {
         DrawRectangleRec(position, color);
     }
 };
@@ -121,7 +127,7 @@ enum ContainerType {
 
 class Container : public GameObject {
 public:
-    vector<Container*> children;
+    vector< variant<GameObject*,Container*> > children;
 
     bool isZAranged = false;
 
@@ -129,31 +135,34 @@ public:
 
     auto operator[] (int n) { return children[n]; }
 
-    virtual void Draw() {}
-    virtual void AddChild(void* obj) {
+    virtual void Draw() override {}
+    virtual void AddChild(Container* obj) {
 
-        auto pointer = (Container*)obj;
+        const variant<GameObject*, Container*> var = obj;
 
-        children.push_back(pointer);
+        children.push_back(var);
 
-        this->zIndex = MAX(this->zIndex, pointer->zIndex);
+        this->zIndex = MAX(this->zIndex, obj->zIndex);
     }
-    friend GameObject* GetObjectUnderPoint(Vector2 point, Container container, int order);
+    virtual void AddChild(GameObject* obj) {
+
+        const variant<GameObject*, Container*> var = obj;
+
+        children.push_back(var);
+
+        this->zIndex = MAX(this->zIndex, obj->zIndex);
+    }
+
+    friend GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order);
 };
 
 class CardContainer : public Container {//perhaps cardcontainer might inherit from Container, a class that will be used mostly for the UI, but cardDB will have isMaterial = false, so it wont be shown
 public:
     vector<Card*> cards;//cards should become private
 
-    CardContainer() {
+    CardContainer() = default;
 
-    }
-
-    CardContainer(vector<Card*> cards) {
-        this->cards = cards;
-    }
-
-    static vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n);
+    static const vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n);
 
     bool Arange() {;
 
@@ -167,7 +176,7 @@ public:
         return true;
     }
 
-    void Draw() {
+    void Draw() override {
 
         if (!isZAranged)
         {
@@ -188,16 +197,20 @@ public:
         }
     }
 
-    void AddChild(void* obj) {
-        auto pointer = (Card*)obj;
+    void AddList(vector<Card*> const &cards){
+        for (auto card : cards) {
+            AddChild(card);
+        }
+    }
 
-        cards.push_back(pointer);
+    virtual void AddChild(Card* obj) {
+        cards.push_back(obj);
 
-        this->zIndex = MAX(this->zIndex, pointer->zIndex);
+        this->zIndex = MAX(this->zIndex, obj->zIndex);
     }
 };
 
-vector<Card*> CardContainer::ExtractNCardsFrom(vector<Card*>& container, int n)
+const vector<Card*> CardContainer::ExtractNCardsFrom(vector<Card*>& container, int n)
 {
     vector<Card*> selected;
     vector<int> selectedIndexes;
@@ -221,31 +234,38 @@ vector<Card*> CardContainer::ExtractNCardsFrom(vector<Card*>& container, int n)
     return selected;
 }
 
-GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &objectArray, int order) {// e o problema aici, active Objects si Hand nu au aceeasi ordine
-    vector<GameObject*>::iterator it = objectArray.end();
-    vector<GameObject*>::iterator begin = objectArray.begin();
+GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &objectArray, int& order) {// e o problema aici, active Objects si Hand nu au aceeasi ordine
+    auto it = objectArray.end();
+    auto const begin = objectArray.begin();
     --it;
     while ( it != begin) {
-        if ((*it)->isActive == true && CheckCollisionPointRec(point, (*it)->position))
+        if ((*it)->isActive && CheckCollisionPointRec(point, (*it)->position))
         {
             --order;
         }
         if (order < 0)
             break;
         --it;
-    }//teoretic ar trebui begin() sa fie board deci nu mai verific
+    }
 
-    if (it == begin || order >= 0)
+    if (order >= 0 || it == begin && (**it).zIndex == -1)
         return nullptr;
     return *it;
 }
 
-GameObject* GetObjectUnderPoint(Vector2 point, Container container, int order) {
-    GameObject*
+GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order) {
     
-    for (auto child : container.children) {
-
+    reverse(container.children.begin(), container.children.end());//iterating from the last to the first - this needs testing
+    for (auto variant_child : container.children) {
+        if (variant_child.index() == 0)//GameObject
+            CheckCollisionPointRec(point, get<GameObject*>(variant_child)->position);
+        else {//Container
+            const auto ptr = GetObjectUnderPoint(point, *get<Container*>(variant_child), order);
+            if (ptr)
+                return nullptr;
+        }
     }
+    reverse(container.children.begin(), container.children.end());//making changes back
 }
 
 bool AddObjectToArray(vector<GameObject*> &objectArray, GameObject &object) {
@@ -254,32 +274,86 @@ bool AddObjectToArray(vector<GameObject*> &objectArray, GameObject &object) {
         --iterator;
     }
     if (iterator == objectArray.begin() && object.zIndex > (*(*(iterator))).zIndex) {
-        iterator++;
+        ++iterator;
     }
-
-    //while (object.zIndex == (*(*iterator)).zIndex) {
-    //    object.zIndex++;
-    //    if (iterator == activeObjects.begin())
-    //        break;
-    //    --iterator;
-    //    auto copyIterator = iterator;
-    //    while (copyIterator != activeObjects.begin()) {
-    //        ((*(*copyIterator)).zIndex)++;//sa trec prin toate si sa le cresc
-    //        --copyIterator;
-    //        if ((copyIterator) != activeObjects.begin())//chestia asta cred ca e retardata - o fac de 2 ori
-    //            ((*(*(copyIterator-1))).zIndex)++;//problema e ca tre sa compar cu toate nu doar cu primu 4 ca primu 4 creste restul de 4 la 5 si ceilalti 5 vor fi 6 in urmatoarea runda si o sa fie mai mari
-    //    }
-    //}
 
     objectArray.insert(iterator, &object);
 
     return true;
 }
 
-template<typename T>
-bool AddObjectToArray(vector<T*> &objectArray, T &object, int beginPos, int endPos) {
+bool AddObjectToArray(vector< variant<GameObject*, Container*> > &objectArray, GameObject &object) {
+    auto iterator = objectArray.end() - 1;
+    GameObject* pointer = nullptr;
 
-    int idx = endPos;
+    while (iterator != objectArray.begin()){
+
+        if(!(*iterator).index())//GameObject
+            pointer = static_cast<GameObject*>(get<GameObject*>(*iterator));
+        else
+            pointer = static_cast<GameObject*>(get<Container*>(*iterator));
+
+        if (object.zIndex <= pointer->zIndex)
+            --iterator;
+    }
+
+    if (objectArray.size() == 1){
+        if (!(*iterator).index())
+            pointer = static_cast<GameObject*>(get<GameObject*>(*iterator));
+        else
+            pointer = static_cast<GameObject*>(get<Container*>(*iterator));
+
+        if (object.zIndex > pointer->zIndex)
+            ++iterator;
+    }
+    else if (iterator == objectArray.begin() && object.zIndex > pointer->zIndex) {
+        ++iterator;
+    }
+
+    variant<GameObject*, Container*> obj = &object;
+    objectArray.insert(iterator, obj);
+
+    return true;
+}
+
+bool AddObjectToArray(vector< variant<GameObject*, Container*> > &objectArray, Container &object) {
+    auto iterator = objectArray.end() - 1;
+    GameObject* pointer = nullptr;
+
+    while (iterator != objectArray.begin()) {
+
+        if (!(*iterator).index())//GameObject
+            pointer = static_cast<GameObject*>(get<GameObject*>(*iterator));
+        else
+            pointer = static_cast<GameObject*>(get<Container*>(*iterator));
+
+        if (object.zIndex <= pointer->zIndex)
+            --iterator;
+    }
+
+    if (objectArray.size() == 1) {
+        if (!(*iterator).index())
+            pointer = static_cast<GameObject*>(get<GameObject*>(*iterator));
+        else
+            pointer = static_cast<GameObject*>(get<Container*>(*iterator));
+
+        if (object.zIndex > pointer->zIndex)
+            ++iterator;
+    }
+    else if (iterator == objectArray.begin() && object.zIndex > pointer->zIndex) {
+        ++iterator;
+    }
+
+    variant<GameObject*, Container*> obj = &object;
+    objectArray.insert(iterator, obj);
+
+    return true;
+}
+
+template<typename T>
+bool AddObjectToArray(vector<T*> &objectArray, T &object, int beginPos, int endPos) {//trebuie retestata
+
+    int idx = beginPos;
 
     auto iterator = objectArray.begin();
 
@@ -287,21 +361,13 @@ bool AddObjectToArray(vector<T*> &objectArray, T &object, int beginPos, int endP
     //auto iterator = begin + (endPos - 1);
     //auto start = begin + beginPos;
 
-    while (idx != beginPos && object.zIndex <= (*iterator + idx)->zIndex) {
-        --idx;
+    while (idx <= endPos && object.zIndex >= (*(iterator + idx))->zIndex) {
+        ++idx;
     }
 
-    if (idx == beginPos && idx == endPos) {
-        objectArray.insert(objectArray.end(), &object);
-    }
-    else {
-        if (idx == beginPos && object.zIndex > (*(iterator + idx))->zIndex) {
-            idx++;
-        }
-        objectArray.insert(iterator + idx, &object);
-    }
+    objectArray.insert(iterator + idx, &object);
 
-    return true;
+    return true;//nu merge ordonarea
 }
 
 bool ResetPositionInArray(vector<GameObject*> &objectArray, GameObject &object, int newIndex) {
@@ -392,9 +458,9 @@ int main(void)
 
     CardContainer cardDatabase;
 
-    SString::SString nume("test");
+    SString::SString name("The First Board");
     Board board;
-    board.name = nume;
+    board.name = name;
     board.position = { 0, 0, screenWidth, screenHeight };
     board.zIndex = -1;
     activeObjects.AddChild(&board);
@@ -423,7 +489,7 @@ int main(void)
     SString::SString numeCarte3("Carte3");
     Texture2D texture3 = { 0 };
     Card card3(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
-    card3.zIndex = 3;
+    card3.zIndex = 4;
     card3.color = BLACK;
     //AddObjectToArray(activeObjects, card3);
 
@@ -438,20 +504,20 @@ int main(void)
     board1.zIndex = 2;
     Board board2;
     board2.zIndex = 4;
-    Board board3(nume.Substitute("Board3"));
+    Board board3(name.Substitute("Board3"));
     board3.zIndex = 4;
     Board board4;
     board4.zIndex = 4;
-    Board board5(nume.Substitute("Board5"));
+    Board board5(name.Substitute("Board5"));
     board5.zIndex = 4;
 
-    AddObjectToArray(activeObjects, board1);
+    /*AddObjectToArray(activeObjects, board1);
     AddObjectToArray(activeObjects, board2);
     AddObjectToArray(activeObjects, board3);
     AddObjectToArray(activeObjects, board4);
     AddObjectToArray(activeObjects, board5);
 
-    ResetPositionInArray(activeObjects, board3, ABSOLUT_NEW_INDEX);
+    ResetPositionInArray(activeObjects, board3, ABSOLUT_NEW_INDEX);*/
 
     //////////////
     cardDatabase.cards.push_back(&card);
@@ -462,19 +528,20 @@ int main(void)
 
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
-    CardContainer hand(CardContainer::ExtractNCardsFrom(cardDatabase.cards, 3));
+    CardContainer hand;
+    hand.AddList(CardContainer::ExtractNCardsFrom(cardDatabase.cards, 3));
     hand.type = WRAPPER;
 
-    for (auto card : cardDatabase.cards) {
-        card->concedeDrawing = true;
-        card->isActive = false;
+    for (auto _card : cardDatabase.cards) {
+        _card->concedeDrawing = true;
+        _card->isActive = false;
     }
     //so every card becomes inactive and a child
-    for (auto card : hand.cards) {
-        card->isActive = true;
+    for (auto _card : hand.cards) {
+        _card->isActive = true;
     }
     //and every child in hand is now active
-    AddObjectToArray(activeObjects,hand);//this should be a gamemanager object function
+    AddObjectToArray(activeObjects.children,*((Container*)&hand));//this should be a gamemanager object function
 
     while (!WindowShouldClose())
     {
@@ -571,9 +638,15 @@ int main(void)
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        for (auto obj : activeObjects){
-            if (!obj->concedeDrawing)
-                obj->Draw();
+        for (auto obj : activeObjects.children){
+
+            if (!obj.index()) {
+                auto pointer = get<GameObject*>(obj);
+                pointer->Draw();
+            } else {
+                auto pointer = get<Container*>(obj);
+                pointer->Draw();
+            }
         }
 
         EndDrawing();
