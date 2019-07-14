@@ -79,6 +79,7 @@
       <AdditionalIncludeDirectories>C:\raylib\raylib\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GRAPHICS_API_OPENGL_33;PLATFORM_DESKTOP;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\raylib\raylib\projects\VS2017\raylib\Debug.DLL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -134,8 +135,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externalFunction.h" />
+    <ClInclude Include="Helpers.h" />
     <ClInclude Include="nvidia.h" />
-    <ClInclude Include="SString.h" />
+    <ClInclude Include="Types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

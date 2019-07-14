@@ -1,11 +1,11 @@
 ﻿#define _CRT_NONSTDC_NO_DEPRECATE
 #include "nvidia.h"
-#include "SString.h"
+#include "Types.h"
+#include "Helpers.h"
 #include "raylib.h"
 #include "externalFunction.h"
 #include <iostream>
 #include <vector>
-#include <variant>//de scos variant si facut un union propriu pe cei doi pointeri
 
 using namespace std;
 using namespace Types;
@@ -43,15 +43,16 @@ class GameObject;
 class Card;
 class Board;
 class Container;
+struct ContWrapper;
 class CardContainer;
 
 bool AddObjectToArray(vector<GameObject*> &objectArray, GameObject &object);
 template<typename T, typename K>
 bool AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPos);
 template<>
-bool AddObjectToArray<variant<GameObject*, Container*>, GameObject>(vector< variant<GameObject*, Container*> > &objectArray, GameObject &object, int beginPos, int endPos);
+bool AddObjectToArray<ContWrapper, GameObject>(vector< ContWrapper > &objectArray, GameObject &object, int beginPos, int endPos);
 template<>
-bool AddObjectToArray<variant<GameObject*, Container*>, Container>(vector< variant<GameObject*, Container*> > &objectArray, Container &object, int beginPos, int endPos);
+bool AddObjectToArray<ContWrapper, Container>(vector< ContWrapper > &objectArray, Container &object, int beginPos, int endPos);
 bool ResetPositionInArray(vector<GameObject*> &objectArray, GameObject &object, int newIndex);
 template<typename T, typename K>
 bool ResetPositionInArray(vector<T> &objectArray, K &object, int beginPos, int endPos, bool(*func)(vector<T> &objArray, K &obj));
@@ -59,7 +60,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order);
 
 class GameObject {
 public:
-    Types::SString name;
+    SString name;
     int zIndex = -1;
 
     Color color = LIGHTGRAY;
@@ -75,7 +76,7 @@ public:
 
     GameObject(GameObject &&obj) noexcept(false) {};
 
-    explicit GameObject(Types::SString &name) : name(name) {};
+    explicit GameObject(SString &name) : name(name) {};
 
     GameObject& operator=(const GameObject &obj) = default;
 
@@ -93,7 +94,7 @@ public:
         
     }
 
-    Board(Types::SString &name) : GameObject(name){
+    Board(SString &name) : GameObject(name){
         
     }
 
@@ -109,7 +110,7 @@ public:
 
     }
 
-    Card(Types::SString &name, Rectangle rectangle, Texture2D image) : GameObject(name) {
+    Card(SString &name, Rectangle rectangle, Texture2D image) : GameObject(name) {
         position = rectangle;
         texture = image;
     }
@@ -135,24 +136,24 @@ public:
 
     Container() = default;
 
-    explicit Container(Types::SString &name) : GameObject(name) {};
+    explicit Container(SString &name) : GameObject(name) {};
 
-    vector< variant<GameObject*,Container*> > children;
+    vector< ContWrapper > children;
 
-    ContainerType type = ContainerType::LOGICAL;
+    ContainerType type = LOGICAL;
 
-    auto operator[] (int n) { return children[n]; }
+    ContWrapper& operator[] (int n) { return children[n]; }
 
     virtual void Draw() override {}
     virtual void AddChild(Container* obj) {
 
-        AddObjectToArray<variant<GameObject*, Container*>, GameObject>(children, *obj, 0, children.size() - 1);
+        AddObjectToArray<ContWrapper, GameObject>(children, *obj, 0, children.size() - 1);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
     }
     virtual void AddChild(GameObject* obj) {
 
-        AddObjectToArray<variant<GameObject*, Container*>, GameObject>(children, *obj, 0, children.size() - 1);
+        AddObjectToArray<ContWrapper, GameObject>(children, *obj, 0, children.size() - 1);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
     }
@@ -160,25 +161,65 @@ public:
     friend GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order);
 };
 
+struct ContWrapper
+{
+    union
+    {
+        GameObject* go_pointer = nullptr;
+        Container* c_pointer;
+    };
+    
+    char index = -1;
+
+    ContWrapper(GameObject* pointer)
+    {
+        go_pointer = pointer;
+        index = 0;
+    }
+
+    ContWrapper(Container* pointer)
+    {
+        c_pointer = pointer;
+        index = 1;
+    }
+
+    ContWrapper& operator=(GameObject* pointer)
+    {
+        go_pointer = pointer;
+        index = 0;
+    }
+
+    ContWrapper& operator=(Container* pointer)
+    {
+        c_pointer = pointer;
+        index = 1;
+    }
+
+    bool operator==(ContWrapper& other)
+    {
+        return go_pointer == other.go_pointer;
+    }
+};
+
 class CardContainer : public Container {
 public:
 
     CardContainer() = default;
 
-    explicit CardContainer(Types::SString &name) : Container(name) {};
+    explicit CardContainer(SString &name) : Container(name) {};
 
     static const vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n);
 
     void Draw() override {
 
         //draws himself first,
-        if (type == ContainerType::OVERLAY || type == ContainerType::MATERIAL)
+        if (type == OVERLAY || type == MATERIAL)
             DrawRectangleRec(position, color);
 
         //then the children
-        if (type == ContainerType::WRAPPER || type == ContainerType::MATERIAL)
+        if (type == WRAPPER || type == MATERIAL)
         for (auto card: children){
-            auto genericObj = get<GameObject*>(card);
+            auto genericObj = card.go_pointer;
             genericObj->Draw();
         }
     }
@@ -191,7 +232,7 @@ public:
 
     virtual void AddChild(Card* obj) {
 
-        AddObjectToArray<variant<GameObject*, Container*>, GameObject>(children, *static_cast<GameObject*>(obj), 0 ,children.size() - 1);
+        AddObjectToArray<ContWrapper, GameObject>(children, *static_cast<GameObject*>(obj), 0 ,children.size() - 1);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
     }
@@ -222,7 +263,7 @@ const vector<Card*> CardContainer::ExtractNCardsFrom(vector<Card*>& container, i
     return selected;
 }
 
-GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &objectArray, int& order) {// e o problema aici, active Objects si Hand nu au aceeasi ordine
+GameObject* GetObjectUnderPoint(Vector2 point, vector<GameObject*> &objectArray, int& order) {
     auto it = objectArray.end();
     auto const begin = objectArray.begin();
     --it;
@@ -245,11 +286,11 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order) 
     
     GameObject* returnPtr = nullptr;
 
-    reverse(container.children.begin(), container.children.end());//iterating from the last to the first - this needs testing
+    reverse(container.children.begin(), container.children.end());
     for (auto variant_child : container.children) {
-        if (variant_child.index() == 0)//GameObject
+        if (variant_child.index == 0)//GameObject
         {
-            const auto ptr = get<GameObject*>(variant_child);
+            const auto ptr = variant_child.go_pointer;
             if (CheckCollisionPointRec(point, ptr->position))
             {
                 if (ptr) {
@@ -265,7 +306,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order) 
             }
         }
         else {//Container
-            const auto ptr = GetObjectUnderPoint(point, *get<Container*>(variant_child), order);
+            const auto ptr = GetObjectUnderPoint(point, *(variant_child.c_pointer), order);
             if (ptr)
             {
                 if (ptr->zIndex != -1)
@@ -279,7 +320,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int order) 
             }
         }
     }
-    reverse(container.children.begin(), container.children.end());//making changes back
+    reverse(container.children.begin(), container.children.end());
 
     return returnPtr;
 }
@@ -320,7 +361,7 @@ bool AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPo
 }
 
 template<>
-bool AddObjectToArray<variant<GameObject*, Container*>, GameObject>(vector< variant<GameObject*, Container*> > &objectArray, GameObject &object, int beginPos, int endPos) {
+bool AddObjectToArray<ContWrapper, GameObject>(vector< ContWrapper > &objectArray, GameObject &object, int beginPos, int endPos) {
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
     GameObject* pointer = nullptr;
 
@@ -328,10 +369,7 @@ bool AddObjectToArray<variant<GameObject*, Container*>, GameObject>(vector< vari
 
     for (auto obj : objectArray)
     {
-        if (!obj.index())
-            pointer = static_cast<GameObject*>(get<GameObject*>(obj));
-        else
-            pointer = static_cast<GameObject*>(get<Container*>(obj));
+        pointer = obj.go_pointer;
 
         if (obj == objectArray[objectArray.empty() ? 0 : objectArray.size() - 1])
         {
@@ -344,14 +382,14 @@ bool AddObjectToArray<variant<GameObject*, Container*>, GameObject>(vector< vari
 
     reverse(objectArray.begin(), objectArray.end());
 
-    variant<GameObject*, Container*> obj = &object;
+    ContWrapper obj = &object;
     objectArray.insert(iterator, obj);
 
     return true;
 }
 
 template<>
-bool AddObjectToArray<variant<GameObject*, Container*>, Container>(vector< variant<GameObject*, Container*> > &objectArray, Container &object, int beginPos, int endPos) {
+bool AddObjectToArray<ContWrapper, Container>(vector< ContWrapper > &objectArray, Container &object, int beginPos, int endPos) {
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
     GameObject* pointer = nullptr;
 
@@ -359,10 +397,7 @@ bool AddObjectToArray<variant<GameObject*, Container*>, Container>(vector< varia
 
     for (auto obj : objectArray)
     {
-        if (!obj.index())
-            pointer = static_cast<GameObject*>(get<GameObject*>(obj));
-        else
-            pointer = static_cast<GameObject*>(get<Container*>(obj));
+        pointer = obj.go_pointer;
 
         if (obj == objectArray[objectArray.empty() ? 0 : objectArray.size() - 1])
         {
@@ -375,7 +410,7 @@ bool AddObjectToArray<variant<GameObject*, Container*>, Container>(vector< varia
 
     reverse(objectArray.begin(), objectArray.end());
 
-    variant<GameObject*, Container*> obj = &object;
+    ContWrapper obj = &object;
     objectArray.insert(iterator, obj);
 
     return true;
@@ -397,16 +432,14 @@ bool ResetPositionInArray(vector<GameObject*> &objectArray, GameObject &object, 
     return AddObjectToArray(objectArray, object);
 }
 
-//this function requires the index of the first element to be compared to, the last element, if the new Obj index is absolute or a new index
-template<typename T, typename K>
-bool ResetPositionInArray(vector<T> &objectArray, K &object, int beginPos , int endPos , bool (*func)(vector<T> &objArray, K &obj)) {
+//This function requires the index of the first element to be compared to, the last element, if the new Obj index is absolute or a new index
+template<typename K>
+bool ResetPositionInArray(vector<ContWrapper> &objectArray, K &object, int beginPos , int endPos , bool (*func)(vector<ContWrapper> &objArray, K &obj)) {
     auto begin = objectArray.begin();
-
-    //endPos must be the size of the array for the full iteration
 
     int idx = beginPos;
     for (; idx != endPos + 1; ++idx) {
-        if ((get<K*>(*(begin + idx))) == &object) {
+        if ((*(begin + idx)).go_pointer == &object) {
             objectArray.erase(begin + idx);
             break;
         }
@@ -421,7 +454,7 @@ bool ResetPositionInArray(vector<T> &objectArray, K &object, int beginPos , int 
     else if (idx < endPos)
         endPos--;
 
-    return AddObjectToArray<T,K>(objectArray, object, beginPos, endPos);
+    return AddObjectToArray<ContWrapper, K>(objectArray, object, beginPos, endPos);
 }
 
 //-----[Globals]---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -467,44 +500,44 @@ int main(void)
 
     vector<Card*> cardDatabase;
 
-    Types::SString name("The First Board");
+    SString name("The First Board");
     Board board;
     board.name = name;
     board.position = { 0, 0, screenWidth, screenHeight };
     board.zIndex = -1;
     activeObjects.AddChild(&board);
 
-    Types::SString numeCarte("Carte");
+    SString numeCarte("Carte");
     Texture2D texture = { 0 };
     Card card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
     card.zIndex = 1;
     card.color = GREEN;
 
-    Types::SString numeCarte1("Carte1");
+    SString numeCarte1("Carte1");
     Texture2D texture1 = { 0 };
     Card card1(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
     card1.zIndex = 2;
     card1.color = BLUE;
 
-    Types::SString numeCarte2("Carte2");
+    SString numeCarte2("Carte2");
     Texture2D texture2 = { 0 };
     Card card2(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
     card2.zIndex = 2;
     card2.color = RED;
 
-    Types::SString numeCarte3("Carte3");
+    SString numeCarte3("Carte3");
     Texture2D texture3 = { 0 };
     Card card3(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
     card3.zIndex = 4;
     card3.color = BLACK;
 
-    Types::SString numeCarte4("Carte4");
+    SString numeCarte4("Carte4");
     Texture2D texture4 = { 0 };
     Card card4(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
     card4.zIndex = 4;
     card4.color = PINK;
 
-    Board board1;
+    /*Board board1;
     board1.zIndex = 2;
     Board board2;
     board2.zIndex = 4;
@@ -515,7 +548,7 @@ int main(void)
     Board board5(name.Substitute("Board5"));
     board5.zIndex = 4;
 
-    /*AddObjectToArray(activeObjects, board1);
+    AddObjectToArray(activeObjects, board1);
     AddObjectToArray(activeObjects, board2);
     AddObjectToArray(activeObjects, board3);
     AddObjectToArray(activeObjects, board4);
@@ -532,7 +565,7 @@ int main(void)
 
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
-    Types::SString hand_name("Hand");
+    SString hand_name("Hand");
     CardContainer hand(hand_name);
     auto draw = CardContainer::ExtractNCardsFrom(cardDatabase, 3);
     hand.AddList(draw);
@@ -545,13 +578,13 @@ int main(void)
     //so every card becomes inactive and a child
     for (auto _card : hand.children) {
         GameObject* pointer = nullptr;
-        if (_card.index())
-            pointer = get<GameObject*>(_card);
+        if (!_card.index)
+            pointer = _card.go_pointer;
         if (pointer)
             pointer->isActive = true;
     }
     //and every child in hand is now active
-    AddObjectToArray<variant<GameObject*, Container*>, Container>(activeObjects.children,*(static_cast<Container*>(&hand)), 0, activeObjects.children.size() - 1);//this should be a gamemanager object function
+    AddObjectToArray<ContWrapper, Container>(activeObjects.children,*(static_cast<Container*>(&hand)), 0, activeObjects.children.size() - 1);//this should be a gamemanager object function
 
     while (!WindowShouldClose())
     {
@@ -568,23 +601,22 @@ int main(void)
         iff(!DragStarted && lastGesture == GestureType::GESTURE_DRAG) {
 
             //if drag just started -> init
-            dragSelectedObject = GetObjectUnderPoint(mouse, activeObjects, 0);//aici e problema - nu este modificata ordinea din activeObjects - cea mai usoara metoda este 
-            //sa faci active Objects ca un obiect cu mai multi fii de tip container (deci sa nu mai fie doar vector), iar fiecare copil are grija sa se deseneze pe sine si pe copii sai recursiv
-            //trebuie de asemenea vazut daca mai intai desenam containerul sau obiectele copil (zContainer < zCopii)
+            dragSelectedObject = GetObjectUnderPoint(mouse, activeObjects, 0);
+
             if (dragSelectedObject == nullptr)
                 break;
 
             //set focus - trebuie facuta treaba asta mai organizat, managed by input manager
-            if (dragSelectedObject != nullptr && dragSelectedObject != get<GameObject*>(hand.children[hand.children.empty() ? 0 : hand.children.size() - 1]))
+            if (dragSelectedObject != nullptr && dragSelectedObject != hand.children[hand.children.empty() ? 0 : hand.children.size() - 1].go_pointer)
             {
-                ResetPositionInArray<variant<GameObject*, Container*>, GameObject>(
+                ResetPositionInArray<GameObject>(
                     hand.children, 
                     *dragSelectedObject, 
                     0,
                     hand.children.size(),
-                    [](vector<variant<GameObject*, Container*>> &objArray, GameObject &obj)->bool
+                    [](vector<ContWrapper> &objArray, GameObject &obj)->bool
                 {
-                    obj.zIndex = get<GameObject*>(objArray[objArray.size() - 1])->zIndex + 1;
+                    obj.zIndex = (objArray[objArray.size() - 1].go_pointer)->zIndex + 1;
                     return true;
                 });
             }
@@ -658,14 +690,12 @@ int main(void)
 
         for (auto obj : activeObjects.children){
 
-            if (!obj.index()) {
-                auto pointer = get<GameObject*>(obj);
+            if (!obj.index) {
+                auto pointer = obj.go_pointer;
                 pointer->Draw();
-                cout << pointer->name << endl;
             } else {
-                auto pointer = get<Container*>(obj);
+                auto pointer = obj.c_pointer;
                 pointer->Draw();
-                cout << pointer->name << endl;
             }
         }
 

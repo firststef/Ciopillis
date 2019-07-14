@@ -26,10 +26,13 @@
     <ClInclude Include="nvidia.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SString.h">
+    <ClInclude Include="externalFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="externalFunction.h">
+    <ClInclude Include="Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

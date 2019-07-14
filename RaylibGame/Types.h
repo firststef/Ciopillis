@@ -1,7 +1,4 @@
 #pragma once
-#include <string.h>
-#include <stdlib.h>
-#include <cstdio>
 #include <ostream>
 
 using namespace std;
@@ -17,7 +14,7 @@ namespace Types {
         SString(const char* charString) {
             if (strlen(charString) > 500)
                 value = nullptr;
-            
+
             value = (char*)malloc(strlen(charString) + 1);
             strcpy(value, charString);
         }
