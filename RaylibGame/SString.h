@@ -1,11 +1,15 @@
 #pragma once
 #include <string.h>
 #include <stdlib.h>
+#include <cstdio>
+#include <ostream>
 
 using namespace std;
 
-namespace SString {
+namespace Types {
+
     class SString {
+    protected:
         char* value;
     public:
         SString() {}
@@ -29,6 +33,8 @@ namespace SString {
             strcpy(value, other.value);
         }
 
+        friend ostream & operator << (ostream &out, const SString &c);
+
         char* GetText() {
             return value;
         }
@@ -45,4 +51,11 @@ namespace SString {
             delete value;
         }
     };
+
+    ostream & operator << (ostream &out, const Types::SString &c)
+    {
+        out << c.value;
+        return out;
+    }
 }
+
