@@ -134,6 +134,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Classes.h" />
     <ClInclude Include="externalFunction.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="nvidia.h" />
