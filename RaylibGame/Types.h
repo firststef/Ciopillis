@@ -5,7 +5,7 @@ using namespace std;
 
 namespace Types {
 
-    class SString {
+    class  SString {
     protected:
         char* value;
     public:
@@ -22,6 +22,11 @@ namespace Types {
         SString(SString &other) {
             value = (char*)malloc(strlen(other.value) + 1);
             strcpy(value, other.value);
+        }
+
+        SString(SString *other) {
+            value = (char*)malloc(strlen(other->value) + 1);
+            strcpy(value, other->value);
         }
 
         auto operator= (const SString & other) {
@@ -45,7 +50,7 @@ namespace Types {
         }
 
         ~SString() {
-            delete value;
+            free(value);
         }
     };
 

@@ -11,18 +11,6 @@
 using namespace std;
 using namespace Types;
 
-//-----[Notes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
-/*
-
-
-//"Card" MACRO_CONCAT("", __COUNTER__)
-
-//i could do a free roam option - you can drag around the cards and at some point when you want to tidy up,
-//you can click a button to bring them back - being that they are all stored in the memory, it  should be
-//easy to locate their place - perhaps some option added to the input manager
-
-
-*/
 //-----[Macros]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 constexpr int MAX(int x, int y) { return ((x > y) ? x : y); }
@@ -44,16 +32,16 @@ class GameObject;
 class Card;
 class Board;
 class Container;
-struct ContWrapper;
+struct Owner;
 class CardContainer;
 
 bool AddObjectToArray(vector<GameObject*> &objectArray, GameObject &object);
 template<typename T, typename K>
 bool AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPos, void* parent);
 template<>
-bool AddObjectToArray<ContWrapper, GameObject>(vector< ContWrapper > &objectArray, GameObject &object, int beginPos, int endPos, void* parent);
+bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObject &object, int beginPos, int endPos, void* parent);
 template<>
-bool AddObjectToArray<ContWrapper, Container>(vector< ContWrapper > &objectArray, Container &object, int beginPos, int endPos, void* parent);
+bool AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container &object, int beginPos, int endPos, void* parent);
 bool ResetPositionInArray(vector<GameObject*> &objectArray, GameObject &object, int newIndex);
 GameObject* GetGameObjectUnderPoint(Vector2 point, Container& container, int& order);
 
@@ -75,7 +63,7 @@ public:
 
     GameObject(GameObject &&obj) noexcept(false) {};
 
-    explicit GameObject(SString &name) : name(name) {};
+    explicit GameObject(SString *name, Rectangle pos) : name(name), position(pos) {};
 
     GameObject& operator=(const GameObject &obj) = default;
 
@@ -93,7 +81,7 @@ public:
 
     }
 
-    Board(SString &name) : GameObject(name) {
+    Board(SString *name, Rectangle pos) : GameObject(name, pos) {
 
     }
 
@@ -109,8 +97,7 @@ public:
 
     }
 
-    Card(SString &name, Rectangle rectangle, Texture2D image) : GameObject(name) {
-        position = rectangle;
+    Card(SString *name, Rectangle rectangle, Texture2D image) : GameObject(name, rectangle) {
         texture = image;
     }
 
@@ -133,76 +120,100 @@ enum ContainerType {
 class Container : public GameObject {
 public:
 
-    vector< ContWrapper > children;
+    vector< Owner > children;
 
     ContainerType type = LOGICAL;
 
     Container() = default;
 
-    explicit Container(SString &name) : GameObject(name) {};
+    explicit Container(SString *name, Rectangle pos) : GameObject(name,pos) {};
 
-    ContWrapper& operator[] (int n) { return children[n]; }
+    Owner& operator[] (int n) { return children[n]; }
 
     void Draw() override {}
     virtual void AddChild(Container* obj) {
 
-        AddObjectToArray<ContWrapper, GameObject>(children, *obj, 0, children.size() - 1, this);
+        AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
     }
     virtual void AddChild(GameObject* obj) {
 
-        AddObjectToArray<ContWrapper, GameObject>(children, *obj, 0, children.size() - 1, this);
+        AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
+    }
+    virtual void Destroy()
+    {
+        for ( Owner obj : children)
+        {
+            obj.Destroy();
+        }
     }
 
     friend GameObject* GetGameObjectUnderPoint(Vector2 point, Container& container, int& order);
 };
 
-typedef struct ContWrapper
+#define DUMMY
+
+struct Owner
 {
     union
     {
-        GameObject* go_pointer = nullptr;
+        GameObject* go_pointer;
         Container* c_pointer;
     };
 
     char index = -1;
 
-    Container* parent;
+    Container* parent = nullptr;
 
-    ContWrapper() = default;
+    Owner() = default;
 
-    ContWrapper(GameObject* pointer)
+    Owner(GameObject* pointer) 
     {
         go_pointer = pointer;
         index = 0;
     }
 
-    ContWrapper(Container* pointer)
+    Owner(Container* pointer)
     {
         c_pointer = pointer;
         index = 1;
     }
 
-    ContWrapper& operator=(GameObject* pointer)
+    Owner& operator=(GameObject* pointer)
     {
         go_pointer = pointer;
         index = 0;
         return *this;
     }
 
-    ContWrapper& operator=(Container* pointer)
+    Owner& operator=(Container* pointer)
     {
         c_pointer = pointer;
         index = 1;
         return *this;
     }
 
-    bool operator==(ContWrapper& other)
+    bool operator==(Owner& other)
     {
         return go_pointer == other.go_pointer;
+    }
+
+    bool operator==(void* ptr)
+    {
+        return go_pointer == ptr;
+    }
+
+    bool operator!=(void* ptr)
+    {
+        return !(go_pointer == ptr);
+    }
+
+    GameObject* operator->()
+    {
+        return go_pointer;
     }
 };
 
@@ -211,7 +222,7 @@ public:
 
     CardContainer() = default;
 
-    explicit CardContainer(SString &name) : Container(name) {};
+    explicit CardContainer(SString *name, Rectangle pos) : Container(name, pos) {};
 
     static const vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n);
 
@@ -237,7 +248,7 @@ public:
 
     virtual void AddChild(Card* obj) {
 
-        AddObjectToArray<ContWrapper, GameObject>(children, *static_cast<GameObject*>(obj), 0, children.size() - 1, this);
+        AddObjectToArray<Owner, GameObject>(children, *static_cast<GameObject*>(obj), 0, children.size() - 1, this);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
     }
@@ -245,6 +256,15 @@ public:
 
 class HorizontalContainer : public Container
 {
+public:
+    enum AllocateType
+    {
+        GET_FIRST_AVAILABLE,
+        GET_LAST_AVAILABLE
+    };
+
+    AllocateType allocateType = GET_FIRST_AVAILABLE;
+
     int numOfColumns = 1;
     int numOfLines = 1;
 
@@ -255,38 +275,52 @@ class HorizontalContainer : public Container
 
     float spaceBetween = 0;
 
-    Rectangle* positionTable = nullptr;
-    int* indexTable = nullptr;
+    bool stretchEnabled = false;
 
-    explicit HorizontalContainer(SString &name, int columns, int lines) :
-        Container(name), numOfColumns(columns), numOfLines(lines)
-    {};
+    Rectangle* positionTable = nullptr;
+    Rectangle* savedPositionTable = nullptr;
+    int* indexTable = nullptr;
+    int* optimizeIndexTable = nullptr;
+    bool overwritePosOn = false;
+
+    explicit HorizontalContainer(SString *name, Rectangle pos, int columns, int lines) :
+        Container(name,pos), numOfColumns(columns), numOfLines(lines)
+    {
+        color = PURPLE;
+        InitSize();
+    };
     explicit HorizontalContainer(int columns, int lines) :
         numOfColumns(columns), numOfLines(lines)
-    {};
-    explicit HorizontalContainer(SString &name, int columns, int lines, float left, float up, float right, float down, float space) :
-        Container(name), numOfColumns(columns), numOfLines(lines),
+    {
+        color = PURPLE;
+        InitSize();
+    };
+    explicit HorizontalContainer(SString *name, Rectangle pos, int columns, int lines, float left, float up, float right, float down, float space) :
+        Container(name,pos), numOfColumns(columns), numOfLines(lines),
         marginLeft(left), marginUp(up), marginRight(right), marginDown(down), spaceBetween(space)
     {
-        positionTable = InitSize();
-        indexTable = new int[numOfColumns*numOfLines];
+        color = PURPLE;
+        InitSize();
     };
     explicit HorizontalContainer(int columns, int lines, float left, float up, float right, float down, float space) :
         numOfColumns(columns), numOfLines(lines),
         marginLeft(left), marginUp(up), marginRight(right), marginDown(down), spaceBetween(space)
     {
-        positionTable = InitSize();
-        indexTable = new int[numOfColumns*numOfLines];
+        color = PURPLE;
+        InitSize();
     };
 
     ~HorizontalContainer()
     {
-        delete positionTable;
+        free(positionTable);
+        free(indexTable);
+        free(optimizeIndexTable);
+        free(savedPositionTable);
     }
 
-    Rectangle* InitSize()
+    void InitSize()
     {
-        auto table = new Rectangle[numOfColumns*numOfLines];
+        positionTable = (Rectangle*)calloc(numOfColumns*numOfLines, sizeof(Rectangle));
 
         const auto totalHeight = position.height - marginUp - marginDown - spaceBetween * (static_cast<float>(numOfLines) - 1.0f);
         const auto totalWidth = position.width - marginLeft - marginRight - spaceBetween * (static_cast<float>(numOfColumns) - 1.0f);
@@ -301,24 +335,99 @@ class HorizontalContainer : public Container
                 float x = position.x + marginLeft + spaceBetween * static_cast<float>(col) + width * static_cast<float>(col) + width / 2;
 
                 const Rectangle aux{ x,y,width,height };
-                table[numOfLines * lin + numOfColumns] = aux;
+                positionTable[numOfLines * lin + col] = aux;
             }
 
-        return table;
+        indexTable = (int*)calloc(numOfColumns*numOfLines, sizeof(int));
+        optimizeIndexTable = (int*)calloc(numOfColumns*numOfLines, sizeof(int));
+        savedPositionTable = (Rectangle*)calloc(numOfColumns*numOfLines, sizeof(Rectangle));
     }
+    int AssignPos()
+    {
+        switch (allocateType)
+        {
+        case GET_LAST_AVAILABLE:
+            for (int idx = numOfColumns * numOfLines - 1; idx >= 0 ; idx--)
+                if (optimizeIndexTable[idx] == 0)
+                {
+                    optimizeIndexTable[idx] = 1;
+                    return idx;
+                }
+            return -1;
+        case GET_FIRST_AVAILABLE:
+        default:
+            for (int idx = 0; idx < numOfColumns*numOfLines; idx++)
+                if (optimizeIndexTable[idx] == 0)
+                {
+                    optimizeIndexTable[idx] = 1;
+                    return idx;
+                }
+            return -1;
+        }
+    }
+    void OverwritePos()
+    {
+        int index = 0;
+        for (auto obj : children) {
+            auto genericObj = obj.go_pointer;
 
-    void Draw() override {}
+            savedPositionTable[indexTable[index]] = genericObj->position;
+            auto getPos = positionTable[indexTable[index]];
+
+            if (stretchEnabled)
+            {
+                getPos.x -= getPos.width / 2;
+                getPos.y -= getPos.height / 2;
+            }
+            else
+            {
+                getPos.width = genericObj->position.width;
+                getPos.height = genericObj->position.height;
+                getPos.x -= getPos.width / 2;
+                getPos.y -= getPos.height / 2;
+            }
+
+            genericObj->position = getPos;
+            genericObj->Draw();
+            index++;
+        }
+    }
+    void Draw() override
+    {
+        if(!overwritePosOn)
+        {
+            OverwritePos();
+            overwritePosOn = true;
+        }
+
+        if (type == OVERLAY || type == MATERIAL)
+            DrawRectangleRec(position, color);
+
+        if (type == WRAPPER || type == MATERIAL)
+            for (auto obj : children) {
+                auto genericObj = obj.go_pointer;
+                genericObj->Draw();
+            }
+    }
     void AddChild(Container* obj) override {
 
-        AddObjectToArray<ContWrapper, GameObject>(children, *obj, 0, children.size() - 1, this);
+        AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
+
+        indexTable[children.empty() ? 0 : children.size() - 1] = AssignPos();
+
+        overwritePosOn = false;
     }
     void AddChild(GameObject* obj) override {
 
-        AddObjectToArray<ContWrapper, GameObject>(children, *obj, 0, children.size() - 1, this);
+        AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
 
         this->zIndex = MAX(this->zIndex, obj->zIndex);
+
+        indexTable[children.empty() ? 0 : children.size() - 1] = AssignPos();
+
+        overwritePosOn = false;
     }
 };
 
@@ -526,7 +635,7 @@ bool AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPo
 }
 
 template<>
-bool AddObjectToArray<ContWrapper, GameObject>(vector< ContWrapper > &objectArray, GameObject &object, int beginPos, int endPos, void* parent) {
+bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObject &object, int beginPos, int endPos, void* parent) {
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
     GameObject* pointer = nullptr;
 
@@ -547,7 +656,7 @@ bool AddObjectToArray<ContWrapper, GameObject>(vector< ContWrapper > &objectArra
 
     reverse(objectArray.begin(), objectArray.end());
 
-    ContWrapper obj = &object;
+    Owner obj = &object;
     obj.parent = static_cast<Container*>(parent);
     objectArray.insert(iterator, obj);
 
@@ -555,7 +664,7 @@ bool AddObjectToArray<ContWrapper, GameObject>(vector< ContWrapper > &objectArra
 }
 
 template<>
-bool AddObjectToArray<ContWrapper, Container>(vector< ContWrapper > &objectArray, Container &object, int beginPos, int endPos, void* parent) {
+bool AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container &object, int beginPos, int endPos, void* parent) {
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
     GameObject* pointer = nullptr;
 
@@ -576,7 +685,7 @@ bool AddObjectToArray<ContWrapper, Container>(vector< ContWrapper > &objectArray
 
     reverse(objectArray.begin(), objectArray.end());
 
-    ContWrapper obj = &object;
+    Owner obj = &object;
     obj.parent = static_cast<Container*>(parent);
     objectArray.insert(iterator, obj);
 
@@ -601,7 +710,7 @@ bool ResetPositionInArray(vector<GameObject*> &objectArray, GameObject &object, 
 
 //This function requires the index of the first element to be compared to, the last element, if the new Obj index is absolute or a new index
 template<typename K>
-bool ResetPositionInArray(vector<ContWrapper> &objectArray, K &object, int beginPos, int endPos, bool(*func)(vector<ContWrapper> &objArray, K &obj), void* parent) {
+bool ResetPositionInArray(vector<Owner> &objectArray, K &object, int beginPos, int endPos, bool(*func)(vector<Owner> &objArray, K &obj), void* parent) {
     auto begin = objectArray.begin();
 
     int idx = beginPos;
@@ -621,7 +730,7 @@ bool ResetPositionInArray(vector<ContWrapper> &objectArray, K &object, int begin
     else if (idx < endPos)
         endPos--;
 
-    return AddObjectToArray<ContWrapper, K>(objectArray, object, beginPos, endPos, parent);
+    return AddObjectToArray<Owner, K>(objectArray, object, beginPos, endPos, parent);
 }
 
 //trebuie neaparat o functie de defragmentare

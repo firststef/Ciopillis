@@ -135,6 +135,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Classes.h" />
+    <ClInclude Include="Engine.h" />
     <ClInclude Include="externalFunction.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="nvidia.h" />
