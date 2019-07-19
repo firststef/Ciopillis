@@ -149,10 +149,11 @@ int main1(void)
         _card->isActive = false;
     }
     //so every card becomes inactive and a child
-    for (auto _card : hand.children) {
+    for (auto _card = hand.children.begin(); _card != hand.children.end(); ++_card)
+    {
         GameObject* pointer = nullptr;
-        if (!_card.index)
-            pointer = _card.go_pointer.get();
+        if (!(*_card).index)
+            pointer = (*_card).go_pointer;
         if (pointer)
             pointer->isActive = true;
     }
@@ -175,9 +176,9 @@ int main1(void)
         10,
         20
     );
-    for (auto _card : hand.children)
+    for (auto _card = hand.children.begin(); _card != hand.children.end(); ++_card)
     {
-        GameObject* ptr = _card.go_pointer.get();
+        GameObject* ptr = (*_card).go_pointer;
         playerHand.AddChild(ptr);
     }
     hand.children.clear();
@@ -195,7 +196,7 @@ int main1(void)
         Vector2 mouse = GetMousePosition();
         float delta = GetFrameTime();
 
-        system("CLS");
+        //system("CLS");
 
         //if lastGesture != gesture none inseamna ca userul face ceva, deci trebuie salvata inainte locatia cartilor si apoi dupa ce se reincepe logica,
         //trebuie validata pozitia si restabilita memoria
@@ -308,14 +309,14 @@ int main1(void)
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        for (auto obj : activeObjects.children){
-
-            if (!obj.index) {
-                auto pointer = obj.go_pointer;
+        for (auto obj = activeObjects.children.begin(); obj != activeObjects.children.end(); ++obj)
+        {
+            if (!(*obj).index) {
+                auto pointer = (*obj).go_pointer;
                 if (pointer->isActive)
                     pointer->Draw();
             } else {
-                auto pointer = obj.c_pointer;
+                auto pointer = (*obj).c_pointer;
                 if (pointer->isActive)
                     pointer->Draw();
             }
@@ -346,7 +347,7 @@ int main()
     board->name = name;
     board->position = { 0, 0, screenWidth, screenHeight };
     board->zIndex = -1;
-    Manager::activeObjects.AddChild(board);
+    Manager::activeObjects.AddChild(board);//sar putea pur si simplu sa nu fie nevoie de acel destroy ci pur si simplu sa fac in interiorul functiilor un auxiliar dinamic
 
     SString numeCarte("Carte");
     Texture2D texture = { 0 };
@@ -417,23 +418,23 @@ int main()
         _card->isActive = false;
     }
     //so every card becomes inactive and a child
-    for (auto _card : hand->children) {
+    for (auto _card = hand->children.begin(); _card != hand->children.end(); ++_card) {
         GameObject* pointer = nullptr;
-        if (!_card.index)
-            pointer = _card.go_pointer.get();
+        if (!(*_card).index)
+            pointer = (*_card).go_pointer;
         if (pointer)
             pointer->isActive = true;
     }
     //and every child in hand is now active
-    AddObjectToArray<Owner, Container>(
+    /*AddObjectToArray<Owner, Container>(
         Manager::activeObjects.children,
         *(static_cast<Container*>(hand)),
         0,
         Manager::activeObjects.children.size() - 1,
         nullptr
-    );//this should be a gamemanager object function
+    );//this should be a gamemanager object function*/
 
-    HorizontalContainer playerHand(
+    HorizontalContainer* playerHand = new HorizontalContainer(
         SString("PlayerHand"),
         {
             screenWidth / 4,
@@ -449,20 +450,20 @@ int main()
         10,
         20
     );
-    for (auto _card : hand->children)
+    for (auto _card = hand->children.begin(); _card != hand->children.end(); ++_card)
     {
-        GameObject* ptr = _card.go_pointer.get();
-        playerHand.AddChild(ptr);
+        GameObject* ptr = (*_card).go_pointer;
+        playerHand->AddChild(ptr);
     }
     hand->children.clear();
     hand->isActive = false;
-    playerHand.isActive = true;
-    playerHand.type = Container::MATERIAL;
-    playerHand.stretchEnabled = false;
+    playerHand->isActive = true;
+    playerHand->type = Container::MATERIAL;
+    playerHand->stretchEnabled = false;
 
     AddObjectToArray<Owner, Container>(
         Manager::activeObjects.children,
-        *(static_cast<Container*>(&playerHand)),
+        *(static_cast<Container*>(playerHand)),
         0,
         Manager::activeObjects.children.size() - 1,
         nullptr
@@ -470,7 +471,7 @@ int main()
 
     while (!WindowShouldClose())
     {
-        system("CLS");
+        //system("CLS");
 
         //Ok deci logica de baza
         

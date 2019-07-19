@@ -46,15 +46,15 @@ void ScreenManager::Draw()
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    for (auto obj : activeObjects.children) {
+    for (auto obj = activeObjects.children.begin(); obj != activeObjects.children.end(); ++obj) {
 
-        if (!obj.index) {
-            auto pointer = obj.go_pointer;
+        if (!(*obj).index) {
+            auto pointer = (*obj).go_pointer;
             if (pointer->isActive)
                 pointer->Draw();
         }
         else {
-            auto pointer = obj.c_pointer;
+            auto pointer = (*obj).c_pointer;
             if (pointer->isActive)
                 pointer->Draw();
         }
@@ -215,7 +215,7 @@ Action& ActionManager::InterpretInput(const ::Input& input)
 void ActionManager::SaveState()
 {
     saveStateObjects.Destroy();
-    saveStateObjects = activeObjects.GetCopy();
+    saveStateObjects = *activeObjects.GetCopy();
 }
 void ActionManager::LoadState()
 {
