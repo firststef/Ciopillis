@@ -10,66 +10,87 @@
 class Manager
 {
 public:
-    static Container activeObjects;
+    static Container                    activeObjects;
 
 };
+
+Container Manager::activeObjects(SString("Active Objects"), { 0,0,0,0 });
 
 class ScreenManager : public Manager {
-    int screenWidth = 1600;
-    int screenHeight = 800;
+    int                                 screenWidth = 1600;
+    int                                 screenHeight = 800;
 
-    const char* windowTitle = "raylib [core] example - mouse input";
+    const char*                         windowTitle = "raylib [core] example - mouse input";
 
 public:
-
-    ScreenManager() {
-        Init();
-    }
-
-    ScreenManager(int width, int height) : screenWidth(width), screenHeight(height) {
-        Init();
-    }
-
-    void Init()
-    {
-        InitWindow(screenWidth, screenHeight, windowTitle);
-        SetTargetFPS(60);
-    }
-
-    ~ScreenManager() {
-        CloseWindow();
-    }
+    ScreenManager();
+    ScreenManager(int width, int height);
+    void                                Init();
+    void                                Draw();
+    
+    ~ScreenManager();
 };
+ScreenManager::ScreenManager() {
+    Init();
+}
+ScreenManager::ScreenManager(int width, int height) : screenWidth(width), screenHeight(height) {
+    Init();
+}
+void ScreenManager::Init()
+{
+    InitWindow(screenWidth, screenHeight, windowTitle);
+    SetTargetFPS(60);
+}
+void ScreenManager::Draw()
+{
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+
+    for (auto obj : activeObjects.children) {
+
+        if (!obj.index) {
+            auto pointer = obj.go_pointer;
+            if (pointer->isActive)
+                pointer->Draw();
+        }
+        else {
+            auto pointer = obj.c_pointer;
+            if (pointer->isActive)
+                pointer->Draw();
+        }
+    }
+
+    EndDrawing();
+}
+ScreenManager::~ScreenManager() {
+    CloseWindow();
+}
 
 struct Input {
-    int gestureObtained;
+    int                                 gestureObtained;
 
-    Vector2 start;
-    Vector2 end;
+    Vector2                             start;
+    Vector2                             end;
 };
 
 class InputManager : public Manager {
 public:
-    int enabledGestures = 0b0000000000001001;
+    int                                 enabledGestures = 0b0000000000001001;
 
     //Drag
-    bool dragStarted = false;
-    Owner dragSelectedObject = static_cast<GameObject*>(nullptr);
-    Vector2 mouseGrab = { 0,0 };
-    float endPositionX = -1;
-    float endPositionY = -1;
-    float timeForDragDelay = 0.000000000001f;
-    float temporayTimeForDragDelay = timeForDragDelay;
-    float dragDuration = 0;
+    bool                                dragStarted = false;
+    Owner                               dragSelectedObject = static_cast<GameObject*>(nullptr);
+    Vector2                             mouseGrab = { 0,0 };
+    float                               endPositionX = -1;
+    float                               endPositionY = -1;
+    float                               timeForDragDelay = 0.000000000001f;
+    float                               temporayTimeForDragDelay = timeForDragDelay;
+    float                               dragDuration = 0;
 
-    InputManager(int enabled) : enabledGestures(enabled)
-    {
+    InputManager(int enabled) : enabledGestures(enabled){}
 
-    }
-
-    Input& ListenToInput();
+    Input&                              ListenToInput();
 };
-
 Input& InputManager::ListenToInput() {
     Input input;
 
@@ -162,7 +183,7 @@ Input& InputManager::ListenToInput() {
         //atunci resetez mouseGrab. Ce ar fi fain aicea ar fi sa fie stocate aceste informatii in obiectul input hand
         //ler
     }
-    if (lastGesture == GestureType::GESTURE_NONE)
+    if (lastGesture == GESTURE_NONE)
     {
         //this could be the place for uninit
     }
@@ -173,36 +194,46 @@ Input& InputManager::ListenToInput() {
 
 struct Action
 {
-    int action;
+    int                                 action;
 };
 
 class ActionManager : public Manager {
 public:
-    Container saveStateObjects;
+    Container                           saveStateObjects;
 
-    Action& InterpretInput(const ::Input& input);
-    void SaveState();
-    void LoadState();
+    Action&                             InterpretInput(const ::Input& input);
+    void                                SaveState();
+    void                                LoadState();
+    void                                InterpretResponse(const Action& action);
 };
-
 Action& ActionManager::InterpretInput(const ::Input& input)
 {
     Action action;
 
     return action;
 }
-
 void ActionManager::SaveState()
 {
-    for auto 
+    saveStateObjects.Destroy();
+    saveStateObjects = activeObjects.GetCopy();
 }
-
 void ActionManager::LoadState()
 {
-
+    activeObjects.Destroy();
+    activeObjects = saveStateObjects;
+}
+void ActionManager::InterpretResponse(const Action& action)
+{
+    
 }
 
 class GameManager {
-    vector <Owner>  activeObjects;
-
+public:
+    Action&                              ValidateAction(const Action& action);
 };
+Action& GameManager::ValidateAction(const Action& action)
+{
+    Action response;
+
+    return response;
+}

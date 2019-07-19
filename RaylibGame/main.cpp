@@ -48,7 +48,7 @@ float endPositionY = -1;
 
 //-----[Main]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-int main(void)
+int main1(void)
 {
     /*-----[SO INITIALIZATION]-----------------------------------------------------------------------------------------------------------------------------*/
 
@@ -69,7 +69,7 @@ int main(void)
     /*-----[RESOURCES]----------------------------------------------------------*/
 
     SString str("Active");
-    Container activeObjects(&str,{0,0,0,0});
+    Container activeObjects(str,{0,0,0,0});
 
     vector<Card*> cardDatabase;
 
@@ -82,31 +82,31 @@ int main(void)
 
     SString numeCarte("Carte");
     Texture2D texture = { 0 };
-    Card card(&numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
+    Card card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
     card.zIndex = 1;
     card.color = GREEN;
 
     SString numeCarte1("Carte1");
     Texture2D texture1 = { 0 };
-    Card card1(&numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
+    Card card1(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
     card1.zIndex = 2;
     card1.color = BLUE;
 
     SString numeCarte2("Carte2");
     Texture2D texture2 = { 0 };
-    Card card2(&numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
+    Card card2(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
     card2.zIndex = 2;
     card2.color = RED;
 
     SString numeCarte3("Carte3");
     Texture2D texture3 = { 0 };
-    Card card3(&numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
+    Card card3(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
     card3.zIndex = 4;
     card3.color = BLACK;
 
     SString numeCarte4("Carte4");
     Texture2D texture4 = { 0 };
-    Card card4(&numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
+    Card card4(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
     card4.zIndex = 4;
     card4.color = PINK;
 
@@ -139,10 +139,10 @@ int main(void)
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
     SString hand_name("Hand");
-    CardContainer hand(&hand_name, {0,0,0,0});
+    CardContainer hand(hand_name, {0,0,0,0});
     auto draw = CardContainer::ExtractNCardsFrom(cardDatabase, 3);
     hand.AddList(draw);
-    hand.type = WRAPPER;
+    hand.type = Container::WRAPPER;
 
     for (auto _card : cardDatabase) {
         _card->concedeDrawing = true;
@@ -152,15 +152,15 @@ int main(void)
     for (auto _card : hand.children) {
         GameObject* pointer = nullptr;
         if (!_card.index)
-            pointer = _card.go_pointer;
+            pointer = _card.go_pointer.get();
         if (pointer)
             pointer->isActive = true;
     }
     //and every child in hand is now active
     AddObjectToArray<Owner, Container>(activeObjects.children,*(static_cast<Container*>(&hand)), 0, activeObjects.children.size() - 1, nullptr);//this should be a gamemanager object function
-
+    SString a(SString("trdt"));
     HorizontalContainer playerHand(
-        new SString("PlayerHand"),
+        SString("PlayerHand"),
         {
             screenWidth / 4,
             screenHeight / 4,
@@ -177,13 +177,13 @@ int main(void)
     );
     for (auto _card : hand.children)
     {
-        GameObject* ptr = _card.go_pointer;
+        GameObject* ptr = _card.go_pointer.get();
         playerHand.AddChild(ptr);
     }
     hand.children.clear();
     hand.isActive = false;
     playerHand.isActive = true;
-    playerHand.type = MATERIAL;
+    playerHand.type = Container::MATERIAL;
     playerHand.stretchEnabled = false;
 
     AddObjectToArray<Owner, Container>(activeObjects.children, *(static_cast<Container*>(&playerHand)), 0, activeObjects.children.size() - 1, nullptr);
@@ -330,12 +330,143 @@ int main(void)
 
 int enabledGestures = 0b0000000000001001;
 
-int main1()
+int main()
 {
     ScreenManager screenManager(screenWidth, screenHeight);
     GameManager gameManager;
     InputManager inputManager(enabledGestures);
     ActionManager actionManager;
+
+    /*-----[RESOURCES]----------------------------------------------------------*/
+
+    vector<Card*> cardDatabase;
+
+    SString name("The First Board");
+    Board* board = new Board;
+    board->name = name;
+    board->position = { 0, 0, screenWidth, screenHeight };
+    board->zIndex = -1;
+    Manager::activeObjects.AddChild(board);
+
+    SString numeCarte("Carte");
+    Texture2D texture = { 0 };
+    Card* card = new Card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
+    card->zIndex = 1;
+    card->color = GREEN;
+
+    SString numeCarte1("Carte1");
+    Texture2D texture1 = { 0 };
+    Card* card1 = new Card(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
+    card1->zIndex = 2;
+    card1->color = BLUE;
+
+    SString numeCarte2("Carte2");
+    Texture2D texture2 = { 0 };
+    Card* card2 = new Card(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
+    card2->zIndex = 2;
+    card2->color = RED;
+
+    SString numeCarte3("Carte3");
+    Texture2D texture3 = { 0 };
+    Card* card3 = new Card(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
+    card3->zIndex = 4;
+    card3->color = BLACK;
+
+    SString numeCarte4("Carte4");
+    Texture2D texture4 = { 0 };
+    Card* card4 = new Card(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
+    card4->zIndex = 4;
+    card4->color = PINK;
+
+    /*Board board1;
+    board1.zIndex = 2;
+    Board board2;
+    board2.zIndex = 4;
+    Board board3(name.Substitute("Board3"));
+    board3.zIndex = 4;
+    Board board4;
+    board4.zIndex = 4;
+    Board board5(name.Substitute("Board5"));
+    board5.zIndex = 4;
+
+    AddObjectToArray(activeObjects, board1);
+    AddObjectToArray(activeObjects, board2);
+    AddObjectToArray(activeObjects, board3);
+    AddObjectToArray(activeObjects, board4);
+    AddObjectToArray(activeObjects, board5);
+
+    ResetPositionInArray(activeObjects, board3, ABSOLUT_NEW_INDEX);*/
+
+    //////////////
+    cardDatabase.emplace_back(card);
+    cardDatabase.emplace_back(card1);
+    cardDatabase.emplace_back(card2);
+    cardDatabase.emplace_back(card3);
+    cardDatabase.emplace_back(card4);
+
+    /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
+
+    SString hand_name("Hand");
+    CardContainer* hand = new CardContainer(hand_name, { 0,0,0,0 });
+    auto draw = CardContainer::ExtractNCardsFrom(cardDatabase, 3);
+    hand->AddList(draw);
+    hand->type = Container::WRAPPER;
+
+    for (auto _card : cardDatabase) {
+        _card->concedeDrawing = true;
+        _card->isActive = false;
+    }
+    //so every card becomes inactive and a child
+    for (auto _card : hand->children) {
+        GameObject* pointer = nullptr;
+        if (!_card.index)
+            pointer = _card.go_pointer.get();
+        if (pointer)
+            pointer->isActive = true;
+    }
+    //and every child in hand is now active
+    AddObjectToArray<Owner, Container>(
+        Manager::activeObjects.children,
+        *(static_cast<Container*>(hand)),
+        0,
+        Manager::activeObjects.children.size() - 1,
+        nullptr
+    );//this should be a gamemanager object function
+
+    HorizontalContainer playerHand(
+        SString("PlayerHand"),
+        {
+            screenWidth / 4,
+            screenHeight / 4,
+            screenWidth / 2,
+            screenHeight / 2
+        },
+        4,
+        1,
+        10,
+        10,
+        10,
+        10,
+        20
+    );
+    for (auto _card : hand->children)
+    {
+        GameObject* ptr = _card.go_pointer.get();
+        playerHand.AddChild(ptr);
+    }
+    hand->children.clear();
+    hand->isActive = false;
+    playerHand.isActive = true;
+    playerHand.type = Container::MATERIAL;
+    playerHand.stretchEnabled = false;
+
+    AddObjectToArray<Owner, Container>(
+        Manager::activeObjects.children,
+        *(static_cast<Container*>(&playerHand)),
+        0,
+        Manager::activeObjects.children.size() - 1,
+        nullptr
+    );
 
     while (!WindowShouldClose())
     {

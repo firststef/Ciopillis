@@ -7,7 +7,7 @@ namespace Types {
 
     class  SString {
     protected:
-        char* value;
+        char* value = nullptr;
     public:
         SString() {}
 
@@ -19,14 +19,9 @@ namespace Types {
             strcpy(value, charString);
         }
 
-        SString(SString &other) {
+        SString(const SString& other) {
             value = (char*)malloc(strlen(other.value) + 1);
             strcpy(value, other.value);
-        }
-
-        SString(SString *other) {
-            value = (char*)malloc(strlen(other->value) + 1);
-            strcpy(value, other->value);
         }
 
         auto operator= (const SString & other) {
