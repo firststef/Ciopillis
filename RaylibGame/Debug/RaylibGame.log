@@ -1,32 +1,10 @@
-﻿  ExternalFunction.cpp
-  main.cpp
+﻿  main.cpp
 c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(1): warning C4005: '_CRT_NONSTDC_NO_DEPRECATE': macro redefinition
   c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp: note: see previous definition of '_CRT_NONSTDC_NO_DEPRECATE'
-c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(527): warning C4018: '>': signed/unsigned mismatch
-c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.16.27023\include\xmemory0(881): error C2664: 'Owner::Owner(const Owner &&)': cannot convert argument 1 from 'Owner *' to 'GameObject *'
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.16.27023\include\xmemory0(879): note: Types pointed to are unrelated; conversion requires reinterpret_cast, C-style cast or function-style cast
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.16.27023\include\vector(900): note: see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,Owner*&>(_Alloc &,_Objty *const ,Owner *&)' being compiled
-          with
-          [
-              _Alloc=std::allocator<Owner>,
-              _Ty=Owner,
-              _Objty=Owner
-          ]
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.16.27023\include\vector(902): note: see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,Owner*&>(_Alloc &,_Objty *const ,Owner *&)' being compiled
-          with
-          [
-              _Alloc=std::allocator<Owner>,
-              _Ty=Owner,
-              _Objty=Owner
-          ]
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.16.27023\include\vector(916): note: see reference to function template instantiation '_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_back_with_unused_capacity<Owner*&>(Owner *&)' being compiled
-          with
-          [
-              _Ty=Owner
-          ]
-  c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(228): note: see reference to function template instantiation '_Ty &std::vector<_Ty,std::allocator<_Ty>>::emplace_back<Owner*&>(Owner *&)' being compiled
-          with
-          [
-              _Ty=Owner
-          ]
-  Generating Code...
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(526): warning C4018: '>': signed/unsigned mismatch
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(83): warning C4172: returning address of local variable or temporary: go
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(240): warning C4172: returning address of local variable or temporary: cont
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(213): warning C4172: returning address of local variable or temporary: action
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(238): warning C4172: returning address of local variable or temporary: response
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(192): warning C4172: returning address of local variable or temporary: input
+  RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exe

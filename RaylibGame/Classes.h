@@ -6,7 +6,6 @@
 #include "externalFunction.h"
 #include <iostream>
 #include <vector>
-#include <memory.h>
 
 using namespace std;
 using namespace Types;
@@ -122,20 +121,20 @@ struct Owner
 {
     union
     {
-        shared_ptr<GameObject>            go_pointer;
-        shared_ptr<Container>             c_pointer;
+        GameObject*             go_pointer;
+        Container*              c_pointer;
     };
 
     char                        index = -1;
 
     Container*                  parent = nullptr;
 
-    Owner()                     {};
+    Owner()                     = default;
     Owner(GameObject* pointer);
     Owner(Container* pointer);
-    Owner(const Owner& other){} //these two will create problems
-    Owner(const Owner&& other);
-    auto                        operator=(const Owner& other){} //these will create problems
+    Owner(const Owner& other)   { cout << (*(other.go_pointer)).name << endl; } //these two will create problems
+    Owner(Owner&& other);
+    Owner&                      operator=(const Owner& other) { cout << (*(other.go_pointer)).name << endl; return *this; }//these will create problems
     Owner&                      operator=(GameObject* pointer);
     Owner&                      operator=(Container* pointer);
     bool                        operator==(Owner& other);
@@ -149,18 +148,29 @@ struct Owner
 };
 Owner::Owner(GameObject* pointer)
 {
-    go_pointer = make_shared<GameObject>(*pointer);
+    go_pointer = pointer;
     index = 0;
 }
-Owner::Owner(const Owner&& other)
+Owner::Owner(Container* pointer)
 {
-    this->go_pointer.reset(other.go_pointer.get());
+    c_pointer = pointer;
+    index = 1;
+}
+Owner::Owner(Owner&& other)
+{
+    this->go_pointer = other.go_pointer;
     this->index = other.index;
 }
 Owner& Owner::operator=(GameObject* pointer)
 {
-    go_pointer = make_shared<GameObject>(*pointer);
+    go_pointer = pointer;
     index = 0;
+    return *this;
+}
+Owner& Owner::operator=(Container* pointer)
+{
+    c_pointer = pointer;
+    index = 1;
     return *this;
 }
 bool Owner::operator==(Owner& other)
@@ -169,15 +179,15 @@ bool Owner::operator==(Owner& other)
 }
 bool Owner::operator==(void* ptr)
 {
-    return go_pointer.get() == ptr;
+    return go_pointer == ptr;
 }
 bool Owner::operator!=(void* ptr)
 {
-    return !(go_pointer.get() == ptr);
+    return !(go_pointer == ptr);
 }
 GameObject* Owner::operator->()
 {
-    return go_pointer.get();
+    return go_pointer;
 }
 Owner::~Owner() {
     Destroy();
@@ -221,10 +231,10 @@ Container& Container::GetCopy()
 {
     Container cont;
     cont.type = type;
-    for (auto obj : children)
+    for (auto obj = children.begin(); obj != children.end();++obj)
     {
-        Owner* newOwner = new Owner;
-        newOwner->MakeCopy(obj);
+        Owner newOwner;
+        newOwner.MakeCopy(*obj);
         cont.children.emplace_back(newOwner);
     }
     return cont;
@@ -248,9 +258,9 @@ void Container::AddChild(GameObject* obj) {
 }
 void Container::Destroy()
 {
-    for (Owner obj : children)
+    for (auto obj = children.begin(); obj != children.end(); ++obj)
     {
-        obj.Destroy();
+        (*obj).Destroy();
     }
 }
 Container::~Container()
@@ -276,20 +286,9 @@ void Owner::Destroy()
 {
     index = -1;
     if (index == 0)
-        go_pointer.reset();
+        delete go_pointer;
     else
-        c_pointer.reset();
-}
-Owner::Owner(Container* pointer)
-{
-    c_pointer = make_shared<Container>(*pointer);
-    index = 1;
-}
-Owner& Owner::operator=(Container* pointer)
-{
-    c_pointer = make_shared<Container>(*pointer);
-    index = 1;
-    return *this;
+        delete c_pointer;
 }
 
 class CardContainer : public Container {
@@ -313,8 +312,8 @@ void CardContainer::Draw() {
 
     //then the children
     if (type == WRAPPER || type == MATERIAL)
-        for (auto card : children) {
-            auto genericObj = card.go_pointer;
+        for (auto card = children.begin(); card != children.end(); ++card) {
+            auto genericObj = (*card).go_pointer;
             genericObj->Draw();
         }
 }
@@ -448,8 +447,8 @@ int HorizontalContainer::AssignPos()
 void HorizontalContainer::OverwritePos()
 {
     int index = 0;
-    for (auto obj : children) {
-        auto genericObj = obj.go_pointer;
+    for (auto obj = children.begin(); obj != children.end(); ++obj) {
+        auto genericObj = (*obj).go_pointer;
 
         savedPositionTable[indexTable[index]] = genericObj->position;
         auto getPos = positionTable[indexTable[index]];
@@ -484,8 +483,8 @@ void HorizontalContainer::Draw()
         DrawRectangleRec(position, color);
 
     if (type == WRAPPER || type == MATERIAL)
-        for (auto obj : children) {
-            auto genericObj = obj.go_pointer;
+        for (auto obj = children.begin(); obj != children.end(); ++obj) {
+            auto genericObj = (*obj).go_pointer;
             genericObj->Draw();
         }
 }
@@ -574,7 +573,7 @@ GameObject* GetGameObjectUnderPoint(Vector2 point, Container& container, int& or
 
                 if (ptr->zIndex != -1)
                 {
-                    returnPtr = ptr.get();
+                    returnPtr = ptr;
                     --order;
                     continue;
                 }
@@ -616,7 +615,7 @@ Container* GetParentUnderPoint(Vector2 point, Container& container, int& order, 
 
             if (getLogical || CheckCollisionPointRec(point, (*variant_child).c_pointer->position))
             {
-                returnPtr = (*variant_child).c_pointer.get();
+                returnPtr = (*variant_child).c_pointer;
                 --order;
             }
 
@@ -650,7 +649,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int& order)
 
                 if (ptr->zIndex != -1)
                 {
-                    returnPtr = ptr.get();
+                    returnPtr = ptr;
                     --order;
                     continue;
                 }
@@ -664,7 +663,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int& order)
             const auto ptr1 = (*variant_child).c_pointer;
             if (ptr1 && CheckCollisionPointRec(point, ptr1->position))
             {
-                returnPtr = ptr1.get();
+                returnPtr = ptr1;
                 --order;
             }
 
@@ -721,11 +720,11 @@ bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObjec
 
     reverse(objectArray.begin(), objectArray.end());
 
-    for (auto obj : objectArray)
+    for (auto obj = objectArray.begin(); obj != objectArray.end(); ++obj)
     {
-        pointer = obj.go_pointer.get();
+        pointer = (*obj).go_pointer;
 
-        if (obj == objectArray[objectArray.empty() ? 0 : objectArray.size() - 1])
+        if (*obj == objectArray[objectArray.empty() ? 0 : objectArray.size() - 1])
         {
             if (object.zIndex >= pointer->zIndex)
                 ++iterator;
@@ -738,7 +737,7 @@ bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObjec
 
     Owner* obj = new Owner(&object);
     obj->parent = static_cast<Container*>(parent);
-    objectArray.insert(iterator, *obj);
+    objectArray.insert(iterator, *obj);//aici apeleaza constructorul de copiere
 
     return true;
 }
@@ -749,11 +748,11 @@ bool AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container 
 
     reverse(objectArray.begin(), objectArray.end());
 
-    for (auto obj : objectArray)
+    for (auto obj = objectArray.begin(); obj != objectArray.end(); ++obj)
     {
-        pointer = obj.go_pointer.get();
+        pointer = (*obj).go_pointer;
 
-        if (obj == objectArray[objectArray.empty() ? 0 : objectArray.size() - 1])
+        if (*obj == objectArray[objectArray.empty() ? 0 : objectArray.size() - 1])
         {
             if (object.zIndex >= pointer->zIndex)
                 ++iterator;
