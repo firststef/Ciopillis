@@ -426,15 +426,15 @@ int main()
             pointer->isActive = true;
     }
     //and every child in hand is now active
-    AddObjectToArray<Owner, Container>(
+    /*AddObjectToArray<Owner, Container>(
         Manager::activeObjects.children,
         *(static_cast<Container*>(hand)),
         0,
         Manager::activeObjects.children.size() - 1,
         nullptr
-    );//this should be a gamemanager object function
+    );//this should be a gamemanager object function*/
 
-    HorizontalContainer playerHand(
+    HorizontalContainer* playerHand = new HorizontalContainer(
         SString("PlayerHand"),
         {
             screenWidth / 4,
@@ -453,17 +453,17 @@ int main()
     for (auto _card = hand->children.begin(); _card != hand->children.end(); ++_card)
     {
         GameObject* ptr = (*_card).go_pointer;
-        playerHand.AddChild(ptr);
+        playerHand->AddChild(ptr);
     }
     hand->children.clear();
     hand->isActive = false;
-    playerHand.isActive = true;
-    playerHand.type = Container::MATERIAL;
-    playerHand.stretchEnabled = false;
+    playerHand->isActive = true;
+    playerHand->type = Container::MATERIAL;
+    playerHand->stretchEnabled = false;
 
     AddObjectToArray<Owner, Container>(
         Manager::activeObjects.children,
-        *(static_cast<Container*>(&playerHand)),
+        *(static_cast<Container*>(playerHand)),
         0,
         Manager::activeObjects.children.size() - 1,
         nullptr

@@ -215,7 +215,7 @@ Action& ActionManager::InterpretInput(const ::Input& input)
 void ActionManager::SaveState()
 {
     saveStateObjects.Destroy();
-    saveStateObjects = activeObjects.GetCopy();
+    saveStateObjects = *activeObjects.GetCopy();
 }
 void ActionManager::LoadState()
 {

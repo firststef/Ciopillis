@@ -64,7 +64,7 @@ public:
 
     GameObject&                 operator=(const GameObject &obj) = default;
 
-    virtual GameObject&         GetCopy();
+    GameObject*                 GetCopy();
 
     virtual void Draw()         {};
 
@@ -75,11 +75,10 @@ GameObject::GameObject(GameObject &obj)
     *this = obj; 
     this->name = obj.name;
 }
-GameObject& GameObject::GetCopy()
+GameObject* GameObject::GetCopy()
 {
-    GameObject go;
-    go = *this;
-    go.name = this->name;
+    GameObject* go = new GameObject;
+    *go = *this;
     return go;
 }
 
@@ -132,9 +131,10 @@ struct Owner
     Owner()                     = default;
     Owner(GameObject* pointer);
     Owner(Container* pointer);
-    Owner(const Owner& other)   { cout << (*(other.go_pointer)).name << endl; } //these two will create problems
+    Owner(const Owner& other)   = default; //these two will not create new objects
     Owner(Owner&& other);
-    Owner&                      operator=(const Owner& other) { cout << (*(other.go_pointer)).name << endl; return *this; }//these will create problems
+
+    Owner&                      operator=(const Owner& other) { return *this; }//these two will not create new objects
     Owner&                      operator=(GameObject* pointer);
     Owner&                      operator=(Container* pointer);
     bool                        operator==(Owner& other);
@@ -190,7 +190,7 @@ GameObject* Owner::operator->()
     return go_pointer;
 }
 Owner::~Owner() {
-    Destroy();
+    
 }
 
 class Container : public GameObject {
@@ -207,9 +207,9 @@ public:
     ContainerType               type = LOGICAL;
 
     Container()                 {};
-
     explicit Container(SString name, Rectangle pos) : GameObject(name,pos) {};
-    Container&                  GetCopy();
+
+    Container*                  GetCopy();
     Container&                  operator=(Container& cont);
     Owner&                      operator[](int n);
     void                        Draw();
@@ -227,15 +227,15 @@ Container& Container::operator= (Container& cont)
     this->children = cont.children;
     return *this;
 }
-Container& Container::GetCopy()
+Container* Container::GetCopy()
 {
-    Container cont;
-    cont.type = type;
+    Container* cont = new Container;
+    cont->type = type;
     for (auto obj = children.begin(); obj != children.end();++obj)
     {
         Owner newOwner;
         newOwner.MakeCopy(*obj);
-        cont.children.emplace_back(newOwner);
+        cont->children.emplace_back(newOwner);
     }
     return cont;
 }
@@ -271,20 +271,18 @@ Container::~Container()
 //From Owner
 void Owner::MakeCopy(Owner& owner)
 {
-    if (owner.index == 0)
+    this->index = owner.index;
+    if (index == 0)
     {
-        GameObject* ptr = new GameObject;
-        *ptr = (*owner.go_pointer).GetCopy();
+        this->go_pointer = (*owner.go_pointer).GetCopy();
     }
     else
     {
-        Container* ptr = new Container;
-        *ptr = (*owner.c_pointer).GetCopy();
+        this->c_pointer  = (*owner.c_pointer).GetCopy();
     }
 }
 void Owner::Destroy()
 {
-    index = -1;
     if (index == 0)
         delete go_pointer;
     else
@@ -639,8 +637,7 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int& order)
 
     GameObject* returnPtr = nullptr;
 
-    reverse(container.children.begin(), container.children.end());
-    for (auto variant_child = container.children.begin(); variant_child != container.children.end() && order >= 0; ++variant_child) {
+    for (auto variant_child = container.children.rbegin(); variant_child != container.children.rend() && order >= 0; ++variant_child) {
         if ((*variant_child).index == 0)//GameObject
         {
             const auto ptr = (*variant_child).go_pointer;
@@ -676,7 +673,6 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int& order)
 
         }
     }
-    reverse(container.children.begin(), container.children.end());
 
     return returnPtr;
 }
