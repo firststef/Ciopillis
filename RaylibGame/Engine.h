@@ -7,6 +7,9 @@
 #include <vector>
 #include "Classes.h"
 
+#define IF while
+#define BREAK_IF break;
+
 class Manager
 {
 public:
@@ -98,39 +101,38 @@ Input& InputManager::ListenToInput() {
     Vector2 mouse = GetMousePosition();
     float delta = GetFrameTime();
 
-    iff(!dragStarted && lastGesture == GESTURE_DRAG) {
+    if(lastGesture == GESTURE_DRAG && !dragStarted) {
 
         //if drag just started -> init
         int order = 0;
-        dragSelectedObject = GetObjectUnderPoint(mouse, activeObjects, order);
+        dragSelectedObject = GetSelectableObjectUnderPoint(mouse, activeObjects, order);
 
-        if (dragSelectedObject == nullptr)
-            break;
-
-        //set focus - trebuie facuta treaba asta mai organizat, managed by input manager
-        /*if (dragSelectedObject != nullptr && dragSelectedObject != hand.children[hand.children.empty() ? 0 : hand.children.size() - 1].go_pointer)
+        if (dragSelectedObject != nullptr && dragSelectedObject->isSelectable)
         {
-            ResetPositionInArray<GameObject>(
-                hand.children,
-                *dragSelectedObject,
-                0,
-                hand.children.size(),
-                [](vector<Owner> &objArray, GameObject &obj)->bool
+            //set focus - trebuie facuta treaba asta mai organizat, managed by action manager
+            /*if (dragSelectedObject != nullptr && dragSelectedObject != hand.children[hand.children.empty() ? 0 : hand.children.size() - 1].go_pointer)
             {
-                obj.zIndex = (objArray[objArray.size() - 1].go_pointer)->zIndex + 1;
-                return true;
-            },
-                &hand);
-        }*/
+                ResetPositionInArray<GameObject>(
+                    hand.children,
+                    *dragSelectedObject,
+                    0,
+                    hand.children.size(),
+                    [](vector<Owner> &objArray, GameObject &obj)->bool
+                {
+                    obj.zIndex = (objArray[objArray.size() - 1].go_pointer)->zIndex + 1;
+                    return true;
+                },
+                    &hand);
+            }*/
 
-        dragStarted = true;
-        mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };
+            dragStarted = true;
+            mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };
 
-        endPositionX = mouse.x;
-        endPositionY = mouse.y;
-        break;
+            endPositionX = mouse.x;
+            endPositionY = mouse.y;
+        }
     }
-    iff(dragStarted) {
+    IF(dragStarted) {
 
         if ((dragSelectedObject == nullptr) ||
             (abs(endPositionX - dragSelectedObject->position.x) < 1 && abs(endPositionX - dragSelectedObject->position.x) >= 0.01f &&
@@ -139,7 +141,7 @@ Input& InputManager::ListenToInput() {
             dragStarted = false;
             dragDuration = 0;
             temporayTimeForDragDelay = timeForDragDelay;
-            break;
+            BREAK_IF;
         }
         if ((abs(endPositionX - dragSelectedObject->position.x) == 0 && abs(endPositionY - dragSelectedObject->position.y) == 0)) {
             dragDuration = 0;
@@ -168,12 +170,12 @@ Input& InputManager::ListenToInput() {
         dragSelectedObject->position.x += deltaX * lerp;
         dragSelectedObject->position.y += deltaY * lerp;
 
-        break;
+        BREAK_IF;
 
     }
     if (lastGesture != GestureType::GESTURE_DRAG) {
         int order = 0;
-        if (dragSelectedObject != GetObjectUnderPoint(mouse, activeObjects, order))
+        if (dragSelectedObject.go_pointer != GetObjectUnderPoint(mouse, activeObjects, order).go_pointer)
             dragStarted = false;
         else if (dragSelectedObject != nullptr)
             mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };

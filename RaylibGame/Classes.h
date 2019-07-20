@@ -19,7 +19,6 @@ constexpr int MAX(int x, int y) { return ((x > y) ? x : y); }
 #define CONCAT_NUM( x, y ) x#y
 #define MACRO_CONCAT( x, y ) CONCAT_NUM( x, y )
 
-#define iff while
 typedef Vector2 Point;
 
 #define INVALID_NEW_INDEX -1
@@ -41,8 +40,6 @@ template<>
 bool                            AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObject &object, int beginPos, int endPos, void* parent);
 template<>
 bool                            AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container &object, int beginPos, int endPos, void* parent);
-bool                            ResetPositionInArray(vector<GameObject*> &objectArray, GameObject &object, int newIndex);
-GameObject*                     GetGameObjectUnderPoint(Vector2 point, Container& container, int& order);
 
 class GameObject {
 public:
@@ -53,8 +50,8 @@ public:
     Rectangle                   position = { 0,0,0,0 };
     Texture2D                   texture = { 0 };
 
-    bool                        concedeDrawing = false;// this is used by objects like containers to manage sub objects
     bool                        isActive = true;
+    bool                        isSelectable = false;
 
     GameObject()                = default;
 
@@ -123,10 +120,8 @@ struct Owner
         GameObject*             go_pointer;
         Container*              c_pointer;
     };
-
-    char                        index = -1;
-
     Container*                  parent = nullptr;
+    char                        index = -1;//trebuie modificat in type
 
     Owner()                     = default;
     Owner(GameObject* pointer);
@@ -134,7 +129,7 @@ struct Owner
     Owner(const Owner& other)   = default; //these two will not create new objects
     Owner(Owner&& other);
 
-    Owner&                      operator=(const Owner& other) { return *this; }//these two will not create new objects
+    Owner&                      operator=(const Owner& other) = default; //these two will not create new objects
     Owner&                      operator=(GameObject* pointer);
     Owner&                      operator=(Container* pointer);
     bool                        operator==(Owner& other);
@@ -219,7 +214,7 @@ public:
 
     ~Container();
 
-    friend GameObject*          GetGameObjectUnderPoint(Vector2 point, Container& container, int& order);
+    friend Owner&                GetGameObjectUnderPoint(Vector2 point, Container& container, int& order);
 };
 Container& Container::operator= (Container& cont)
 {
@@ -299,8 +294,6 @@ public:
     void                        Draw();
     void                        AddList(vector<Card*> const& cards);
     virtual void                AddChild(Card* obj);
-
-    static vector<Card*>  ExtractNCardsFrom(vector<Card*>& container, int n);
 };
 void CardContainer::Draw() {
 
@@ -516,7 +509,7 @@ HorizontalContainer::~HorizontalContainer()
 }
 
 //used for random extracting or shuffling
-vector<Card*> CardContainer::ExtractNCardsFrom(vector<Card*>& container, int n)
+vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n)
 {
     vector<Card*> selected;
     vector<int> selectedIndexes;
@@ -557,85 +550,9 @@ GameObject* GetGameObjectUnderPoint(Vector2 point, vector<GameObject*> &objectAr
         return nullptr;
     return *it;
 }
-GameObject* GetGameObjectUnderPoint(Vector2 point, Container& container, int& order) {//add bool LookForParent - returns only the object that you are on top and is also parent
-
-    GameObject* returnPtr = nullptr;
-
-    reverse(container.children.begin(), container.children.end());
-    for (auto variant_child = container.children.begin(); variant_child != container.children.end() && order >= 0; ++variant_child) {
-        if ((*variant_child).index == 0)//GameObject
-        {
-            const auto ptr = (*variant_child).go_pointer;
-            if (ptr && CheckCollisionPointRec(point, ptr->position))
-            {
-
-                if (ptr->zIndex != -1)
-                {
-                    returnPtr = ptr;
-                    --order;
-                    continue;
-                }
-
-                returnPtr = nullptr;
-                --order;
-
-            }
-        }
-        else {//Container
-            const auto ptr = GetGameObjectUnderPoint(point, *((*variant_child).c_pointer), order);
-            if (ptr) {
-                if (ptr->zIndex != -1)
-                {
-                    returnPtr = ptr;
-                    --order;
-                    continue;
-                }
-
-                returnPtr = nullptr;
-                --order;
-            }
-        }
-    }
-    reverse(container.children.begin(), container.children.end());
-
-    return returnPtr;
-}
-//This function will return Container objects - if you specify true for getLogical it will also consider abstract containers
-//You could combine GetParentUnderPoint and GetGameObjectUnderPoint to deduce if the object you are on has this parent,
-//perhaps by iterating through numbers for order or somehow recursively reaching the parent
-Container* GetParentUnderPoint(Vector2 point, Container& container, int& order, bool getLogical) {//add bool LookForParent - returns only the object that you are on top and is also parent
-
-    Container* returnPtr = nullptr;
-
-    reverse(container.children.begin(), container.children.end());
-    for (auto variant_child = container.children.begin(); variant_child != container.children.end() && order >= 0; ++variant_child) {
-        if ((*variant_child).index == 1) {//Container
-
-            if (getLogical || CheckCollisionPointRec(point, (*variant_child).c_pointer->position))
-            {
-                returnPtr = (*variant_child).c_pointer;
-                --order;
-            }
-
-            if (order < 0)
-                break;
-
-            const auto ptr = GetParentUnderPoint(point, *((*variant_child).c_pointer), order, getLogical);
-
-            returnPtr = ptr;
-
-            if (order < 0)
-                break;
-
-        }
-    }
-    reverse(container.children.begin(), container.children.end());
-
-    return returnPtr;
-}
-GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int& order) {
-
-    GameObject* returnPtr = nullptr;
+Owner& GetGameObjectUnderPoint(Vector2 point, Container& container, int& order) {//add bool LookForParent - returns only the object that you are on top and is also parent
+    Owner returnOwner;
+    returnOwner.go_pointer = nullptr;
 
     for (auto variant_child = container.children.rbegin(); variant_child != container.children.rend() && order >= 0; ++variant_child) {
         if ((*variant_child).index == 0)//GameObject
@@ -646,12 +563,89 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int& order)
 
                 if (ptr->zIndex != -1)
                 {
-                    returnPtr = ptr;
+                    returnOwner = (*variant_child);
                     --order;
                     continue;
                 }
 
-                returnPtr = nullptr;
+                returnOwner.go_pointer = nullptr;
+                returnOwner.index = 0;
+                --order;
+
+            }
+        }
+        else {//Container
+            const auto ownr = GetGameObjectUnderPoint(point, *((*variant_child).c_pointer), order);
+            if (ownr.go_pointer) {
+                if (ownr.go_pointer->zIndex != -1)
+                {
+                    returnOwner = (*variant_child);
+                    --order;
+                    continue;
+                }
+
+                returnOwner.go_pointer = nullptr;
+                returnOwner.index = 1;
+                --order;
+            }
+        }
+    }
+
+    return returnOwner;
+}
+//This function will return Container objects - if you specify true for getLogical it will also consider abstract containers
+//You could combine GetParentUnderPoint and GetGameObjectUnderPoint to deduce if the object you are on has this parent,
+//perhaps by iterating through numbers for order or somehow recursively reaching the parent
+Owner& GetParentUnderPoint(Vector2 point, Container& container, int& order, bool getLogical) {//add bool LookForParent - returns only the object that you are on top and is also parent
+
+    Owner returnOwner;
+    returnOwner.go_pointer = nullptr;
+
+    for (auto variant_child = container.children.rbegin(); variant_child != container.children.rend() && order >= 0; ++variant_child) {
+        if ((*variant_child).index == 1) {//Container
+
+            if (getLogical || CheckCollisionPointRec(point, (*variant_child).c_pointer->position))
+            {
+                returnOwner = (*variant_child);
+                --order;
+            }
+
+            if (order < 0)
+                break;
+
+            const auto ownr = GetParentUnderPoint(point, *((*variant_child).c_pointer), order, getLogical);
+
+            returnOwner = ownr;
+
+            if (order < 0)
+                break;
+
+        }
+    }
+
+    return returnOwner;
+}
+Owner& GetObjectUnderPoint(Vector2 point, Container& container, int& order) {
+
+    Owner returnOwner;
+    returnOwner.go_pointer = nullptr;
+
+    for (auto variant_child = container.children.rbegin(); variant_child != container.children.rend() && order >= 0; ++variant_child) {
+        if ((*variant_child).index == 0)//GameObject
+        {
+            const auto ptr = (*variant_child).go_pointer;
+            if (ptr && CheckCollisionPointRec(point, ptr->position))
+            {
+
+                if (ptr->zIndex != -1)
+                {
+                    returnOwner = (*variant_child);
+                    --order;
+                    continue;
+                }
+
+                returnOwner.go_pointer = nullptr;
+                returnOwner.index = 0;
                 --order;
 
             }
@@ -660,21 +654,40 @@ GameObject* GetObjectUnderPoint(Vector2 point, Container& container, int& order)
             const auto ptr1 = (*variant_child).c_pointer;
             if (ptr1 && CheckCollisionPointRec(point, ptr1->position))
             {
-                returnPtr = ptr1;
+                returnOwner = (*variant_child);
                 --order;
             }
 
             if (order < 0)
                 break;
 
-            const auto ptr2 = GetObjectUnderPoint(point, *((*variant_child).c_pointer), order);
+            const auto ownr = GetObjectUnderPoint(point, *((*variant_child).c_pointer), order);
 
-            returnPtr = ptr2;
+            returnOwner = ownr;
 
         }
     }
 
-    return returnPtr;
+    return returnOwner;
+}
+//this actually tries to get a selectable object but still returns an object
+Owner& GetSelectableObjectUnderPoint(Vector2 point, Container& container, int& order) {
+    Owner obj;
+    obj.go_pointer = nullptr;
+
+    --order;
+    int returnOrder = -1;
+    do
+    {
+        ++order;
+        int save = order;
+        obj = GetObjectUnderPoint(point, container, order);
+        returnOrder = order;
+        order = save;
+    } while (obj.index == 1 && !obj.c_pointer->isSelectable);
+    order = returnOrder;
+
+    return obj;
 }
 bool AddObjectToArray(vector<GameObject*> &objectArray, GameObject &object) {
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.end();
@@ -714,9 +727,7 @@ bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObjec
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
     GameObject* pointer = nullptr;
 
-    reverse(objectArray.begin(), objectArray.end());
-
-    for (auto obj = objectArray.begin(); obj != objectArray.end(); ++obj)
+    for (auto obj = objectArray.rbegin(); obj != objectArray.rend(); ++obj)
     {
         pointer = (*obj).go_pointer;
 
@@ -728,8 +739,6 @@ bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObjec
         else if (object.zIndex < pointer->zIndex && iterator != objectArray.begin())
             --iterator;
     }
-
-    reverse(objectArray.begin(), objectArray.end());
 
     Owner* obj = new Owner(&object);
     obj->parent = static_cast<Container*>(parent);
@@ -742,9 +751,7 @@ bool AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container 
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
     GameObject* pointer = nullptr;
 
-    reverse(objectArray.begin(), objectArray.end());
-
-    for (auto obj = objectArray.begin(); obj != objectArray.end(); ++obj)
+    for (auto obj = objectArray.rbegin(); obj != objectArray.rend(); ++obj)
     {
         pointer = (*obj).go_pointer;
 
@@ -756,8 +763,6 @@ bool AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container 
         else if (object.zIndex < pointer->zIndex && iterator != objectArray.begin())
             --iterator;
     }
-
-    reverse(objectArray.begin(), objectArray.end());
 
     Owner* obj = new Owner(&object);
     obj->parent = static_cast<Container*>(parent);
