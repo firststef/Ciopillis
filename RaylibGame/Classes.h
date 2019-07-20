@@ -21,6 +21,9 @@ constexpr int MAX(int x, int y) { return ((x > y) ? x : y); }
 
 typedef Vector2 Point;
 
+#define IF while
+#define BREAK_IF break;
+
 #define INVALID_NEW_INDEX -1
 #define ABSOLUT_NEW_INDEX -2
 
@@ -127,13 +130,14 @@ struct Owner
     Owner(GameObject* pointer);
     Owner(Container* pointer);
     Owner(const Owner& other)   = default; //these two will not create new objects
-    Owner(Owner&& other);
+    Owner(Owner&& other)        = default;
 
     Owner&                      operator=(const Owner& other) = default; //these two will not create new objects
     Owner&                      operator=(GameObject* pointer);
     Owner&                      operator=(Container* pointer);
     bool                        operator==(Owner& other);
     bool                        operator==(void* ptr);
+    bool                        operator!=(Owner& other);
     bool                        operator!=(void* ptr);
     GameObject*                 operator->();
     void                        MakeCopy(Owner& owner);
@@ -150,11 +154,6 @@ Owner::Owner(Container* pointer)
 {
     c_pointer = pointer;
     index = 1;
-}
-Owner::Owner(Owner&& other)
-{
-    this->go_pointer = other.go_pointer;
-    this->index = other.index;
 }
 Owner& Owner::operator=(GameObject* pointer)
 {
@@ -176,6 +175,10 @@ bool Owner::operator==(void* ptr)
 {
     return go_pointer == ptr;
 }
+bool Owner::operator!=(Owner& other)
+{
+    return !(*this == other);
+}
 bool Owner::operator!=(void* ptr)
 {
     return !(go_pointer == ptr);
@@ -190,16 +193,14 @@ Owner::~Owner() {
 
 class Container : public GameObject {
 public:
+    vector< Owner >             children;
+
     enum ContainerType {
         LOGICAL,// don't show object or his children
         WRAPPER,// shows only his children 
         OVERLAY,// show only object 
         MATERIAL// show object and his children
-    };
-
-    vector< Owner >             children;
-
-    ContainerType               type = LOGICAL;
+    }                           type = LOGICAL;
 
     Container()                 {};
     explicit Container(SString name, Rectangle pos) : GameObject(name,pos) {};
@@ -710,10 +711,6 @@ bool AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPo
 
     auto iterator = objectArray.begin();
 
-    //auto begin = objectArray.begin();
-    //auto iterator = begin + (endPos - 1);
-    //auto start = begin + beginPos;
-
     while (idx <= endPos && object.zIndex >= (*(iterator + idx))->zIndex) {
         ++idx;
     }
@@ -724,10 +721,10 @@ bool AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPo
 }
 template<>
 bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObject &object, int beginPos, int endPos, void* parent) {
-    auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
+    auto iterator = (!objectArray.empty()) ? objectArray.begin() + endPos : objectArray.begin();
     GameObject* pointer = nullptr;
 
-    for (auto obj = objectArray.rbegin(); obj != objectArray.rend(); ++obj)
+    for (auto obj = objectArray.rbegin(); obj != objectArray.rend() - beginPos; ++obj)
     {
         pointer = (*obj).go_pointer;
 
@@ -748,10 +745,10 @@ bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObjec
 }
 template<>
 bool AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container &object, int beginPos, int endPos, void* parent) {
-    auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.begin();
+    auto iterator = (!objectArray.empty()) ? objectArray.begin() + endPos : objectArray.begin();
     GameObject* pointer = nullptr;
 
-    for (auto obj = objectArray.rbegin(); obj != objectArray.rend(); ++obj)
+    for (auto obj = objectArray.rbegin(); obj != objectArray.rend() - beginPos; ++obj)
     {
         pointer = (*obj).go_pointer;
 
@@ -808,5 +805,52 @@ bool ResetPositionInArray(vector<Owner> &objectArray, K &object, int beginPos, i
         endPos--;
 
     return AddObjectToArray<Owner, K>(objectArray, object, beginPos, endPos, parent);
+}
+//Both beginPos and endPos represent indexes of the limit-elements with which the object will be compared
+bool AddObjectToContainer(Container &container, Owner &owner, int beginPos, int endPos)
+{
+    auto iterator = (!container.children.empty()) ? container.children.begin() + endPos : container.children.begin();
+    GameObject* pointer = nullptr;
+
+    for (auto obj = container.children.rbegin(); obj != container.children.rend() - beginPos; ++obj)
+    {
+        pointer = (*obj).go_pointer;
+
+        if (*obj == container.children[container.children.empty() ? 0 : container.children.size() - 1])
+        {
+            if (owner.go_pointer->zIndex >= pointer->zIndex)
+                ++iterator;
+        }
+        else if (owner.go_pointer->zIndex < pointer->zIndex && iterator != container.children.begin())
+            --iterator;
+    }
+
+    owner.parent = &container;
+    container.children.insert(iterator, owner);
+
+    return true;
+}
+bool ResetPositionInContainer(Container &container, Owner &owner, int beginPos, int endPos, bool(*func)(Container &cont, Owner &obj))
+{
+    auto begin = container.children.begin();
+
+    int idx = beginPos;
+    for (; idx != endPos + 1; ++idx) {
+        if ((*(begin + idx)) == owner) {
+            container.children.erase(begin + idx);
+            break;
+        }
+    }
+
+    func(container, owner);
+
+    if (idx < beginPos)
+    {
+        --beginPos; --endPos;
+    }
+    else if (idx < endPos)
+        --endPos;
+
+    return AddObjectToContainer(container, owner, beginPos, endPos);
 }
 //trebuie neaparat o functie de defragmentare

@@ -7,8 +7,6 @@
 #include <vector>
 #include "Classes.h"
 
-#define IF while
-#define BREAK_IF break;
 
 class Manager
 {
@@ -70,7 +68,18 @@ ScreenManager::~ScreenManager() {
 }
 
 struct Input {
+    enum InputAction
+    {
+        IDLE = 0,
+        SELECT_OBJECT,
+        BEGIN_DRAG,
+        CONTINUE_DRAG,
+        END_DRAG
+    }                                   action = IDLE;
+
+
     int                                 gestureObtained;
+    Owner                               object = static_cast<GameObject*>(nullptr);
 
     Vector2                             start;
     Vector2                             end;
@@ -78,139 +87,198 @@ struct Input {
 
 class InputManager : public Manager {
 public:
-    int                                 enabledGestures = 0b0000000000001001;
+    int                                 enabledGestures = 0b1111111111111111;
+
+    Owner                               previousSelectedObject = static_cast<GameObject*>(nullptr);
+    Owner                               lastSelectedObject = static_cast<GameObject*>(nullptr);
+    int                                 previousGesture = GESTURE_NONE;
+
+    //Tap
 
     //Drag
     bool                                dragStarted = false;
-    Owner                               dragSelectedObject = static_cast<GameObject*>(nullptr);
-    Vector2                             mouseGrab = { 0,0 };
-    float                               endPositionX = -1;
-    float                               endPositionY = -1;
-    float                               timeForDragDelay = 0.000000000001f;
-    float                               temporayTimeForDragDelay = timeForDragDelay;
-    float                               dragDuration = 0;
 
-    InputManager(int enabled) : enabledGestures(enabled){}
+    InputManager()                      = default;
 
-    Input&                              ListenToInput();
+    InputManager(int enabled);
+
+    Input                              ListenToInput();
+    void                                ResetLastSelected();
 };
-Input& InputManager::ListenToInput() {
+InputManager::InputManager(int enabled) : enabledGestures(enabled)
+{
+    SetGesturesEnabled(enabledGestures);
+}
+Input InputManager::ListenToInput() {
     Input input;
 
     int lastGesture = GetGestureDetected();
     Vector2 mouse = GetMousePosition();
     float delta = GetFrameTime();
 
-    if(lastGesture == GESTURE_DRAG && !dragStarted) {
+    int selectedOrder = 0;
 
-        //if drag just started -> init
-        int order = 0;
-        dragSelectedObject = GetSelectableObjectUnderPoint(mouse, activeObjects, order);
+    lastSelectedObject = GetSelectableObjectUnderPoint(mouse, activeObjects, selectedOrder);
+    //if (lastSelectedObject == nullptr || (lastSelectedObject != nullptr && !lastSelectedObject->isSelectable))--not allowed for check here - when nullptr comes it has to collide to some conditions
+    //{
+    //    input.gestureObtained = lastGesture;
+    //    previousGesture = lastGesture;
+    //    previousSelectedObject = lastSelectedObject;
+    //    return input;
+    //}
 
-        if (dragSelectedObject != nullptr && dragSelectedObject->isSelectable)
-        {
-            //set focus - trebuie facuta treaba asta mai organizat, managed by action manager
-            /*if (dragSelectedObject != nullptr && dragSelectedObject != hand.children[hand.children.empty() ? 0 : hand.children.size() - 1].go_pointer)
-            {
-                ResetPositionInArray<GameObject>(
-                    hand.children,
-                    *dragSelectedObject,
-                    0,
-                    hand.children.size(),
-                    [](vector<Owner> &objArray, GameObject &obj)->bool
-                {
-                    obj.zIndex = (objArray[objArray.size() - 1].go_pointer)->zIndex + 1;
-                    return true;
-                },
-                    &hand);
-            }*/
-
-            dragStarted = true;
-            mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };
-
-            endPositionX = mouse.x;
-            endPositionY = mouse.y;
-        }
-    }
-    IF(dragStarted) {
-
-        if ((dragSelectedObject == nullptr) ||
-            (abs(endPositionX - dragSelectedObject->position.x) < 1 && abs(endPositionX - dragSelectedObject->position.x) >= 0.01f &&
-                abs(endPositionY - dragSelectedObject->position.y) < 1 && abs(endPositionY - dragSelectedObject->position.y) >= 0.01f)) {//macro
-               //end
-            dragStarted = false;
-            dragDuration = 0;
-            temporayTimeForDragDelay = timeForDragDelay;
-            BREAK_IF;
-        }
-        if ((abs(endPositionX - dragSelectedObject->position.x) == 0 && abs(endPositionY - dragSelectedObject->position.y) == 0)) {
-            dragDuration = 0;
-            temporayTimeForDragDelay = timeForDragDelay;
-        }
-
-        float lerp = 0;
-
-        if (lastGesture == GestureType::GESTURE_DRAG)//pot aprea probleme aici ca nu este acelasi obiect
-        {
-            temporayTimeForDragDelay += delta;
-            dragDuration += delta;
-            lerp = dragDuration / temporayTimeForDragDelay;
-
-            endPositionX = mouse.x - mouseGrab.x;
-            endPositionY = mouse.y - mouseGrab.y;
-        }
-        else {
-            dragDuration = (dragDuration + delta < temporayTimeForDragDelay) ? dragDuration + delta : temporayTimeForDragDelay;
-            lerp = dragDuration / temporayTimeForDragDelay;
-        }
-
-        float deltaX = endPositionX - dragSelectedObject->position.x;
-        float deltaY = endPositionY - dragSelectedObject->position.y;
-
-        dragSelectedObject->position.x += deltaX * lerp;
-        dragSelectedObject->position.y += deltaY * lerp;
-
-        BREAK_IF;
-
-    }
-    if (lastGesture != GestureType::GESTURE_DRAG) {
-        int order = 0;
-        if (dragSelectedObject.go_pointer != GetObjectUnderPoint(mouse, activeObjects, order).go_pointer)
-            dragStarted = false;
-        else if (dragSelectedObject != nullptr)
-            mouseGrab = { mouse.x - dragSelectedObject->position.x, mouse.y - dragSelectedObject->position.y };
-
-        //deci avand in vedere faptul ca defapt poti identifica comportamentul de tragere prin secventa TAP,HOLD,DRAG
-        //sunt necesare niste modificari => retin ultimul obiect tras(dragged) si daca se face actiunea hold peste el
-        //atunci resetez mouseGrab. Ce ar fi fain aicea ar fi sa fie stocate aceste informatii in obiectul input hand
-        //ler
-    }
     if (lastGesture == GESTURE_NONE)
     {
         //this could be the place for uninit
     }
+    if(lastGesture == GESTURE_TAP)
+    {
+        if (lastSelectedObject != nullptr && lastSelectedObject->isSelectable)
+        {
+            input.action = Input::SELECT_OBJECT;
+            input.object = lastSelectedObject;
+        }
+    }
+    if (lastGesture == GESTURE_DRAG)
+    {
+        if (!dragStarted) {
+
+            if (lastSelectedObject != nullptr && lastSelectedObject->isSelectable) {
+                dragStarted = true;
+
+                input.action = Input::BEGIN_DRAG;
+                input.object = lastSelectedObject;
+            }
+        } 
+        else
+        {
+            if (previousSelectedObject == lastSelectedObject)
+            {
+                input.action = Input::CONTINUE_DRAG;
+                input.object = lastSelectedObject;
+            }
+            else
+            {
+                dragStarted = false;
+
+                input.action = Input::END_DRAG;
+                input.object = previousSelectedObject;
+            }
+        }
+    }
+    else if (previousGesture == GESTURE_DRAG) {
+        if (dragStarted) {
+            dragStarted = false;
+
+            input.action = Input::END_DRAG;
+            input.object = previousSelectedObject;
+        }
+    }
 
     input.gestureObtained = lastGesture;
-    return input; // actually not good
+    previousGesture = lastGesture;
+    previousSelectedObject = lastSelectedObject;
+    return input;
 }
+void InputManager::ResetLastSelected()
+{
+    previousSelectedObject = static_cast<GameObject*>(nullptr);
+}
+
+class Animation
+{
+    double                              startTime = 0;
+    double                              endTime = 0;
+};
 
 struct Action
 {
-    int                                 action;
+    enum ActionType
+    {
+        UNASSIGNED,
+        INPUT_ACTION,
+        GAME_ACTION
+    }                                   type = UNASSIGNED;
 };
 
 class ActionManager : public Manager {
 public:
     Container                           saveStateObjects;
 
-    Action&                             InterpretInput(const ::Input& input);
+    //Select
+
+    //Drag
+    Vector2                             mouseGrab;
+    Vector2                             endPos;
+
+    Action&                             InterpretInput( Input& input);
     void                                SaveState();
     void                                LoadState();
     void                                InterpretResponse(const Action& action);
 };
-Action& ActionManager::InterpretInput(const ::Input& input)
+Action& ActionManager::InterpretInput(Input& input)
 {
     Action action;
+
+    Vector2 mouse = GetMousePosition();
+
+    if (input.action != Input::IDLE)
+    {
+        //SaveState();
+    }
+
+    if (input.action == Input::SELECT_OBJECT)
+    {
+        cout << input.object.go_pointer->name << "is selected" << endl;
+        //aici ar veni input.object.on_select(); on_select fiind o valoare de lambda pentru ce se intampla la selectie
+
+        if (input.object.parent->children[input.object.parent->children.empty() ? 0 : input.object.parent->children.size() - 1] != input.object)
+        {
+            ResetPositionInContainer(
+                *input.object.parent,
+                input.object,
+                0,
+                input.object.parent->children.size() - 1,
+                [](Container &cont, Owner &obj)->bool
+            {
+                obj.go_pointer->zIndex = (cont.children.empty()) ? 1 : (cont.children[cont.children.size() - 1].go_pointer)->zIndex + 1;
+                return true;
+            }
+            );
+        }
+    }
+    if(input.action == Input::BEGIN_DRAG)
+    {
+        cout << input.object.go_pointer->name << "begin drag" << endl;
+        //input.object.on_begin_drag();
+
+        mouseGrab = { mouse.x - input.object.go_pointer->position.x, mouse.y - input.object.go_pointer->position.y };
+
+        //aici in interiorul on_begin_drag() cel mai probabil se va apela un refresh pentru parinte
+    }
+    if(input.action == Input::CONTINUE_DRAG)
+    {
+        cout << input.object.go_pointer->name << "continue drag" << endl;
+        //input.object.on_drag();
+
+        endPos = { mouse.x - mouseGrab.x, mouse.y - mouseGrab.y };
+
+        input.object.go_pointer->position = { endPos.x, endPos.y, input.object.go_pointer->position.width, input.object.go_pointer->position.height };
+
+        //check peste ce trece, apeleaza - on_dragged_over();
+        //de asemenea trebuie retinut obiectul peste care a trecut, daca s-a schimbat, ar trebui apelat on_end_dragged_over();
+    }
+    if(input.action == Input::END_DRAG)
+    {
+        cout << input.object.go_pointer->name << "end drag" << endl;
+        //input.object.on_end_drag();
+
+        endPos = { mouse.x - mouseGrab.x, mouse.y - mouseGrab.y };
+
+        input.object.go_pointer->position = { endPos.x, endPos.y, input.object.go_pointer->position.width, input.object.go_pointer->position.height };
+
+        //trebuie verificat acum peste ce este released - on_release_over();
+    }
 
     return action;
 }

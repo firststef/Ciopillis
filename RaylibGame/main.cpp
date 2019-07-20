@@ -1,30 +1,12 @@
-﻿#define _CRT_NONSTDC_NO_DEPRECATE
-#include "Classes.h"
+﻿#include "Classes.h"
 #include "Engine.h"
 
 //-----[Notes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 
-
-//"Card" MACRO_CONCAT("", __COUNTER__)
-
 //i could do a free roam option - you can drag around the cards and at some point when you want to tidy up,
 //you can click a button to bring them back - being that they are all stored in the memory, it  should be
 //easy to locate their place - perhaps some option added to the input manager
-
-Ok so GameManager will be the big class that manages:
-
-    Gets data from input manager and
-    Sends the data to event Manager
-    The event Manager initializes a turn data
-    Turn data is processed (probably by GameManager)
-    At last screen manager is also called and processes what to do
-
-   Note: Communication between the classes could be made by something
-like a buffer (pipe) that communicates between the classes
-
-   Note: The event that is sent between the input and the eventManager
-might be changed frequently
 
 */
 
@@ -35,20 +17,9 @@ const int screenHeight = 800;
 
 const int FONT_SIZE = 50;
 
-//Input Globals
-constexpr float timeForDragDelay = 0.000000000001f;
-static_assert(timeForDragDelay != 0, "timeForDragDelay must not be 0");
-float temporayTimeForDragDelay = timeForDragDelay;
-float dragDuration = 0;
-Vector2 mouseGrab = { 0,0 };
-bool DragStarted = false;
-GameObject* dragSelectedObject = nullptr;//current selected object
-float endPositionX = -1;
-float endPositionY = -1;
-
 //-----[Main]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-int enabledGestures = 0b0000000000001001;
+int enabledGestures = 0b0000000000001111;
 
 int main()
 {
@@ -66,33 +37,33 @@ int main()
     board->name = name;
     board->position = { 0, 0, screenWidth, screenHeight };
     board->zIndex = -1;
-    Manager::activeObjects.AddChild(board);//sar putea pur si simplu sa nu fie nevoie de acel destroy ci pur si simplu sa fac in interiorul functiilor un auxiliar dinamic
+    Manager::activeObjects.AddChild(board);
 
-    SString numeCarte("Carte");
+    SString numeCarte("GREEN");
     Texture2D texture = { 0 };
     Card* card = new Card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
     card->zIndex = 1;
     card->color = GREEN;
 
-    SString numeCarte1("Carte1");
+    SString numeCarte1("BLUE");
     Texture2D texture1 = { 0 };
     Card* card1 = new Card(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
     card1->zIndex = 2;
     card1->color = BLUE;
 
-    SString numeCarte2("Carte2");
+    SString numeCarte2("RED");
     Texture2D texture2 = { 0 };
     Card* card2 = new Card(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
     card2->zIndex = 2;
     card2->color = RED;
 
-    SString numeCarte3("Carte3");
+    SString numeCarte3("BLACK");
     Texture2D texture3 = { 0 };
     Card* card3 = new Card(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
     card3->zIndex = 4;
     card3->color = BLACK;
 
-    SString numeCarte4("Carte4");
+    SString numeCarte4("PINK");
     Texture2D texture4 = { 0 };
     Card* card4 = new Card(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
     card4->zIndex = 4;
@@ -178,7 +149,7 @@ int main()
         
         Input input = inputManager.ListenToInput();
         //inregistreaza inputul superficial
-        Action action = actionManager.InterpretInput(input);
+        Action action = actionManager.InterpretInput(input);//------------ poate o sa fie nevoie sa trecem pe multithreading aici - animatia sa continue cat timpin input scrie dragging de ex.
         //observa inputul primit si il compara cu state-ul curent
         //daca este valid, mai intai salveaza state-ul curent
         //-----(ceea ce inseamna ca o sa avem nevoie de niste functii
@@ -192,7 +163,10 @@ int main()
         actionManager.InterpretResponse(response);
         //functiile astea pot folosi niste API uri interne de exemplu
         //moveObject() sau cv
-        //aici practic finalizeaza actiunea
+        //aici practic finalizeaza actiunea -- ar trebui facu ceva gen o coada
+        //pentru a face animatiile cum trebuie, sau un fel de clasa animatie
+        //care intoarce position si rotation in functie de timpul de start
+        //si timpul actual
         screenManager.Draw();
         //deocamdata aici doar deseneaza - la un moment dat poate
         //face in functie de response ceva - desi acum ca ma gandesc action

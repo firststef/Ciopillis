@@ -1,11 +1,12 @@
 ﻿  ExternalFunction.cpp
   main.cpp
-c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(1): warning C4005: '_CRT_NONSTDC_NO_DEPRECATE': macro redefinition
-  c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp: note: see previous definition of '_CRT_NONSTDC_NO_DEPRECATE'
-c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(524): warning C4018: '>': signed/unsigned mismatch
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(518): warning C4018: '>': signed/unsigned mismatch
   Generating Code...
-c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(213): warning C4172: returning address of local variable or temporary: action
-c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(238): warning C4172: returning address of local variable or temporary: response
-c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(192): warning C4172: returning address of local variable or temporary: input
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(627): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(595): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(691): warning C4172: returning address of local variable or temporary: obj
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(672): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(308): warning C4172: returning address of local variable or temporary: response
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(283): warning C4172: returning address of local variable or temporary: action
      Creating library C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.lib and object C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exp
   RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exe
