@@ -1,6 +1,7 @@
-﻿#include "Classes.h"
+﻿#include "nvidia.h"
 #include "Engine.h"
-#include <string>
+
+using namespace std;
 
 //-----[Notes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -10,7 +11,6 @@
 //easy to locate their place - perhaps some option added to the input manager
 
 */
-
 //-----[Globals]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 int const screenWidth = 1600;
@@ -30,42 +30,42 @@ int main()
 
     CardContainer* cardDatabase = new CardContainer;
 
-    SString name("The First Board");
+    Types::SString name("The First Board");
     Board* board = new Board;
     board->name = name;
     board->position = { 0, 0, screenWidth, screenHeight };
     board->zIndex = -1;
     manager.activeObjects.AddChild(board);
 
-    SString numeCarte("GREEN");
+    Types::SString numeCarte("GREEN");
     Texture2D texture = { 0 };
     Card* card = new Card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
     card->zIndex = 1;
     card->color = GREEN;
     cardDatabase->AddChild(card);
 
-    SString numeCarte1("BLUE");
+    Types::SString numeCarte1("BLUE");
     Texture2D texture1 = { 0 };
     Card* card1 = new Card(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
     card1->zIndex = 2;
     card1->color = BLUE;
     cardDatabase->AddChild(card1);
 
-    SString numeCarte2("RED");
+    Types::SString numeCarte2("RED");
     Texture2D texture2 = { 0 };
     Card* card2 = new Card(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
     card2->zIndex = 2;
     card2->color = RED;
     cardDatabase->AddChild(card2);
 
-    SString numeCarte3("BLACK");
+    Types::SString numeCarte3("BLACK");
     Texture2D texture3 = { 0 };
     Card* card3 = new Card(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
     card3->zIndex = 4;
     card3->color = BLACK;
     cardDatabase->AddChild(card3);
 
-    SString numeCarte4("PINK");
+    Types::SString numeCarte4("PINK");
     Texture2D texture4 = { 0 };
     Card* card4 = new Card(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
     card4->zIndex = 4;
@@ -74,7 +74,7 @@ int main()
 
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
-    SString hand_name("Hand");
+    Types::SString hand_name("Hand");
     CardContainer draw = ExtractNCardsFrom(*cardDatabase, 3);
     CardContainer* hand = (CardContainer*) draw.GetCopy();
     hand->name = hand_name;
@@ -104,7 +104,7 @@ int main()
     );//this should be a gamemanager object function*/
 
     HorizontalContainer* playerHand = new HorizontalContainer(
-        SString("PlayerHand"),
+        Types::SString("PlayerHand"),
         {
             screenWidth / 4,
             screenHeight / 4,
@@ -138,15 +138,15 @@ int main()
         nullptr
     );
 
-    SString log;
-    Entity player( SString("Player") );
-    Entity enemy(SString("Enemy"));
+    Types::SString log;
+    Entity player(Types::SString("Player") );
+    Entity enemy(Types::SString("Enemy"));
     GameServer server(GameServer::Interface::CONSOLE, log, *cardDatabase,player,enemy);
 
     system("CLS");
     while (!WindowShouldClose())
     {
-        //CHECKBK(server.RunConsole() == 0, "Server exited");
+        //CHECKBK(server.RunConsole() != 0, "Server exited");
         
         //Ok deci logica de baza
         

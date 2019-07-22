@@ -1,8 +1,6 @@
 #pragma once
 #include <ostream>
 
-using namespace std;
-
 namespace Types {
 
     class  SString {
@@ -61,8 +59,6 @@ namespace Types {
             return str;
         }
 
-        friend ostream & operator << (ostream &out, const SString &c);
-
         char* GetText() {
             return value;
         }
@@ -78,9 +74,12 @@ namespace Types {
             free(value);
             value = nullptr;
         }
+
+        friend std::ostream & operator << (std::ostream &out, const SString &c);
     };
 
-    ostream & operator << (ostream &out, const Types::SString &c)
+    inline
+    std::ostream & operator << (std::ostream &out, const Types::SString &c)
     {
         out << c.value;
         return out;

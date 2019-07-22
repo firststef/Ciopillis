@@ -1,11 +1,15 @@
-﻿  ExternalFunction.cpp
+﻿  Classes.cpp
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.cpp(331): warning C4018: '>': signed/unsigned mismatch
+  Engine.cpp
+  ExternalFunction.cpp
   main.cpp
-c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(535): warning C4018: '>': signed/unsigned mismatch
+  Server.cpp
   Generating Code...
-c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(644): warning C4172: returning address of local variable or temporary: returnOwner
-c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(612): warning C4172: returning address of local variable or temporary: returnOwner
-c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(708): warning C4172: returning address of local variable or temporary: obj
-c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(689): warning C4172: returning address of local variable or temporary: returnOwner
-c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(305): warning C4172: returning address of local variable or temporary: response
-c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(280): warning C4172: returning address of local variable or temporary: action
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.cpp(205): warning C4172: returning address of local variable or temporary: response
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.cpp(184): warning C4172: returning address of local variable or temporary: action
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.cpp(408): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.cpp(440): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.cpp(504): warning C4172: returning address of local variable or temporary: obj
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.cpp(485): warning C4172: returning address of local variable or temporary: returnOwner
+     Creating library C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.lib and object C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exp
   RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exe
