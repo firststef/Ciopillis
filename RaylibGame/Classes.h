@@ -15,14 +15,15 @@ using namespace Types;
 constexpr int MAX(int x, int y) { return ((x > y) ? x : y); }
 
 #define GET_NAME(x) #x //could be used in combination with SClose for printing variables after destruction of SClose object
-
 #define CONCAT_NUM( x, y ) x#y
 #define MACRO_CONCAT( x, y ) CONCAT_NUM( x, y )
 
-typedef Vector2 Point;
-
 #define IF while
 #define BREAK_IF break;
+
+#define CHECK(c, ret, msg) {if (!c) {cout<<msg; return ret;}};
+#define CHECKRET(c, msg) {if (!c) {cout << msg; return;}}
+#define CHECKBK(c, msg) {if (!c) {cout << msg; break;}}
 
 #define INVALID_NEW_INDEX -1
 #define ABSOLUT_NEW_INDEX -2
@@ -64,7 +65,7 @@ public:
 
     GameObject&                 operator=(const GameObject &obj) = default;
 
-    GameObject*                 GetCopy();
+    virtual GameObject*         GetCopy();
 
     virtual void Draw()         {};
 
@@ -110,11 +111,18 @@ public:
     ///or an event type
 
     void Draw()                 override;
+    GameObject*                 GetCopy() override;
 };
 void Card::Draw()
 {
     DrawRectangleRec(position, color);
 };
+GameObject* Card::GetCopy()
+{
+    Card* go = new Card;
+    *go = *this;
+    return go;
+}
 
 struct Owner
 {
@@ -125,6 +133,8 @@ struct Owner
     };
     Container*                  parent = nullptr;
     char                        index = -1;//trebuie modificat in type
+
+    bool                        alreadyDestroyed = false;
 
     Owner()                     = default;
     Owner(GameObject* pointer);
@@ -202,11 +212,11 @@ public:
         MATERIAL// show object and his children
     }                           type = LOGICAL;
 
-    Container()                 {};
+    Container()                 = default;
+    Container(Container &cont)  { *this = cont; };
     explicit Container(SString name, Rectangle pos) : GameObject(name,pos) {};
 
-    Container*                  GetCopy();
-    Container&                  operator=(Container& cont);
+    virtual Container*          GetCopy();
     Owner&                      operator[](int n);
     void                        Draw();
     virtual void                AddChild(Container* obj);
@@ -217,21 +227,16 @@ public:
 
     friend Owner&                GetGameObjectUnderPoint(Vector2 point, Container& container, int& order);
 };
-Container& Container::operator= (Container& cont)
-{
-    this->type = cont.type;
-    this->children = cont.children;
-    return *this;
-}
 Container* Container::GetCopy()
 {
     Container* cont = new Container;
     cont->type = type;
+    cont->zIndex = zIndex;
     for (auto obj = children.begin(); obj != children.end();++obj)
     {
-        Owner newOwner;
-        newOwner.MakeCopy(*obj);
-        cont->children.emplace_back(newOwner);
+        Owner* newOwner = new Owner;
+        newOwner->MakeCopy(*obj);
+        cont->children.emplace_back(*newOwner);
     }
     return cont;
 }
@@ -254,47 +259,46 @@ void Container::AddChild(GameObject* obj) {
 }
 void Container::Destroy()
 {
-    for (auto obj = children.begin(); obj != children.end(); ++obj)
+    for (auto obj = children.begin(); obj != children.end();++obj)
     {
         (*obj).Destroy();
     }
+    children.clear();
 }
 Container::~Container()
 {
-    Destroy();
+    //Destroy(); --destroy no longer implicitly called
 }
 
 //From Owner
 void Owner::MakeCopy(Owner& owner)
 {
     this->index = owner.index;
-    if (index == 0)
-    {
-        this->go_pointer = (*owner.go_pointer).GetCopy();
-    }
-    else
-    {
-        this->c_pointer  = (*owner.c_pointer).GetCopy();
-    }
+    this->go_pointer = owner.go_pointer == nullptr ? nullptr : owner.go_pointer->GetCopy();
 }
 void Owner::Destroy()
 {
-    if (index == 0)
-        delete go_pointer;
-    else
-        delete c_pointer;
+    if (!alreadyDestroyed) {
+        if (index == 0)
+            delete go_pointer;
+        else
+            delete c_pointer;
+
+        alreadyDestroyed = true;
+    }
 }
 
 class CardContainer : public Container {
 public:
 
     CardContainer()             = default;
-
+    CardContainer(CardContainer& cont) { *this = cont; }
     explicit CardContainer(SString name, Rectangle pos) : Container(name, pos) {};
 
     void                        Draw();
     void                        AddList(vector<Card*> const& cards);
     virtual void                AddChild(Card* obj);
+    Container*                  GetCopy() override;
 };
 void CardContainer::Draw() {
 
@@ -319,6 +323,19 @@ void CardContainer::AddChild(Card* obj) {
     AddObjectToArray<Owner, GameObject>(children, *static_cast<GameObject*>(obj), 0, children.size() - 1, this);
 
     this->zIndex = MAX(this->zIndex, obj->zIndex);
+}
+Container* CardContainer::GetCopy()
+{
+    CardContainer* cont = new CardContainer;
+    cont->type = type;
+    cont->zIndex = zIndex;
+    for (auto obj = children.begin(); obj != children.end(); ++obj)
+    {
+        Owner* newOwner = new Owner;
+        newOwner->MakeCopy(*obj);
+        cont->children.emplace_back(*newOwner);
+    }
+    return cont;
 }
 
 class HorizontalContainer : public Container
@@ -510,16 +527,16 @@ HorizontalContainer::~HorizontalContainer()
 }
 
 //used for random extracting or shuffling
-vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n)
+CardContainer ExtractNCardsFrom(CardContainer& container, int n)
 {
-    vector<Card*> selected;
+    CardContainer cont;
     vector<int> selectedIndexes;
 
-    if (n > container.size())
-        return selected;
+    if (n > container.children.size())
+        return cont;
 
     for (int i = n; n >= 1;) {
-        int randomN = GetRandomValue(0, container.size() - 1);
+        int randomN = GetRandomValue(0, container.children.size() - 1);
 
         if ([&]()->bool {for (auto idx : selectedIndexes) { if (idx == randomN) return false; } return true; }()) {
             selectedIndexes.push_back(randomN);
@@ -528,10 +545,10 @@ vector<Card*> ExtractNCardsFrom(vector<Card*>& container, int n)
     }
 
     for (auto it : selectedIndexes) {
-        selected.push_back(container[it]);
+         cont.AddChild(dynamic_cast<Card*>(container[it].go_pointer));
     }
 
-    return selected;
+    return cont;
 }
 GameObject* GetGameObjectUnderPoint(Vector2 point, vector<GameObject*> &objectArray, int& order) {
     auto it = objectArray.end();

@@ -6,35 +6,24 @@
 #include <iostream>
 #include <vector>
 #include "Classes.h"
+#include "Server.h"
 
-
-class Manager
-{
-public:
-    static Container                    activeObjects;
-
-};
-
-Container Manager::activeObjects(SString("Active Objects"), { 0,0,0,0 });
-
-class ScreenManager : public Manager {
+class ScreenManager {
     int                                 screenWidth = 1600;
     int                                 screenHeight = 800;
 
     const char*                         windowTitle = "raylib [core] example - mouse input";
 
+    Container&                          activeObjects;
+
 public:
-    ScreenManager();
-    ScreenManager(int width, int height);
+    ScreenManager(int width, int height, Container& activeObj);
     void                                Init();
     void                                Draw();
     
     ~ScreenManager();
 };
-ScreenManager::ScreenManager() {
-    Init();
-}
-ScreenManager::ScreenManager(int width, int height) : screenWidth(width), screenHeight(height) {
+ScreenManager::ScreenManager(int width, int height, Container& activeObj) : screenWidth(width), screenHeight(height), activeObjects(activeObj) {
     Init();
 }
 void ScreenManager::Init()
@@ -85,8 +74,10 @@ struct Input {
     Vector2                             end;
 };
 
-class InputManager : public Manager {
+class InputManager {
 public:
+    Container&                          activeObjects;
+
     int                                 enabledGestures = 0b1111111111111111;
 
     Owner                               previousSelectedObject = static_cast<GameObject*>(nullptr);
@@ -98,14 +89,12 @@ public:
     //Drag
     bool                                dragStarted = false;
 
-    InputManager()                      = default;
-
-    InputManager(int enabled);
+    InputManager(int enabled, Container& activeObj);
 
     Input                              ListenToInput();
     void                                ResetLastSelected();
 };
-InputManager::InputManager(int enabled) : enabledGestures(enabled)
+InputManager::InputManager(int enabled, Container& activeObj) : enabledGestures(enabled), activeObjects(activeObj)
 {
     SetGesturesEnabled(enabledGestures);
 }
@@ -201,8 +190,10 @@ struct Action
     }                                   type = UNASSIGNED;
 };
 
-class ActionManager : public Manager {
+class ActionManager {
 public:
+    Container&                          activeObjects;
+
     Container                           saveStateObjects;
 
     //Select
@@ -211,11 +202,17 @@ public:
     Vector2                             mouseGrab;
     Vector2                             endPos;
 
+    ActionManager(Container& activeObj);
+
     Action&                             InterpretInput( Input& input);
     void                                SaveState();
     void                                LoadState();
     void                                InterpretResponse(const Action& action);
 };
+ActionManager::ActionManager(Container& activeObj) : activeObjects(activeObj)
+{
+    
+}
 Action& ActionManager::InterpretInput(Input& input)
 {
     Action action;
@@ -307,3 +304,28 @@ Action& GameManager::ValidateAction(const Action& action)
 
     return response;
 }
+
+class Manager
+{
+public:
+    Container                           activeObjects;
+
+    Entity                              playerOne;
+    Entity                              playerTwo;
+
+    ScreenManager                       screenManager;
+    GameManager                         gameManager;
+    InputManager                        inputManager;
+    ActionManager                       actionManager;
+
+    Manager(int screenWidth = 1600, int screenHeight = 900, int enabledGestures = 0b0000000000001111) :
+        activeObjects(SString("Active Objects"), {0,0,0,0}),
+        playerOne(SString("playerOne")), playerTwo(SString("playerTwo")),
+        screenManager(screenWidth,screenHeight,activeObjects),
+        inputManager(enabledGestures,activeObjects),
+        actionManager(activeObjects)
+    {
+    }
+
+    ~Manager() { activeObjects.Destroy(); }
+};

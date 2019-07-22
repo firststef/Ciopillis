@@ -1,2 +1,36 @@
-﻿  main.cpp
-c:\users\stefan\dropbox\raylib-ciopillisgame\raylibgame\main.cpp(4): fatal error C1083: Cannot open include file: 'raylib.h': No such file or directory
+﻿  ExternalFunction.cpp
+  main.cpp
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(250): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(256): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(323): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(503): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(513): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(539): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(800): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(244): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(139): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(536): warning C4172: returning address of local variable or temporary: cont
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(551): warning C4172: returning address of local variable or temporary: cont
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(644): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(612): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(689): warning C4172: returning address of local variable or temporary: returnOwner
+c:\users\stefan\dropbox\ciopillis\raylibgame\classes.h(708): warning C4172: returning address of local variable or temporary: obj
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(280): warning C4172: returning address of local variable or temporary: action
+c:\users\stefan\dropbox\ciopillis\raylibgame\engine.h(305): warning C4172: returning address of local variable or temporary: response
+     Creating library C:\Users\Stefan\Dropbox\Ciopillis\x64\Debug\RaylibGame.lib and object C:\Users\Stefan\Dropbox\Ciopillis\x64\Debug\RaylibGame.exp
+main.obj : error LNK2019: unresolved external symbol InitWindow referenced in function "public: void __cdecl ScreenManager::Init(void)" (?Init@ScreenManager@@QEAAXXZ)
+main.obj : error LNK2019: unresolved external symbol WindowShouldClose referenced in function main
+main.obj : error LNK2019: unresolved external symbol ClearBackground referenced in function "public: void __cdecl ScreenManager::Draw(void)" (?Draw@ScreenManager@@QEAAXXZ)
+main.obj : error LNK2019: unresolved external symbol BeginDrawing referenced in function "public: void __cdecl ScreenManager::Draw(void)" (?Draw@ScreenManager@@QEAAXXZ)
+main.obj : error LNK2019: unresolved external symbol EndDrawing referenced in function "public: void __cdecl ScreenManager::Draw(void)" (?Draw@ScreenManager@@QEAAXXZ)
+main.obj : error LNK2019: unresolved external symbol SetTargetFPS referenced in function "public: void __cdecl ScreenManager::Init(void)" (?Init@ScreenManager@@QEAAXXZ)
+main.obj : error LNK2019: unresolved external symbol GetFrameTime referenced in function "public: struct Input __cdecl InputManager::ListenToInput(void)" (?ListenToInput@InputManager@@QEAA?AUInput@@XZ)
+main.obj : error LNK2019: unresolved external symbol GetRandomValue referenced in function "class CardContainer & __cdecl ExtractNCardsFrom(class CardContainer &,int)" (?ExtractNCardsFrom@@YAAEAVCardContainer@@AEAV1@H@Z)
+main.obj : error LNK2019: unresolved external symbol GetMousePosition referenced in function "public: struct Action & __cdecl ActionManager::InterpretInput(struct Input &)" (?InterpretInput@ActionManager@@QEAAAEAUAction@@AEAUInput@@@Z)
+main.obj : error LNK2019: unresolved external symbol SetGesturesEnabled referenced in function "public: __cdecl InputManager::InputManager(int,class Container &)" (??0InputManager@@QEAA@HAEAVContainer@@@Z)
+main.obj : error LNK2019: unresolved external symbol GetGestureDetected referenced in function "public: struct Input __cdecl InputManager::ListenToInput(void)" (?ListenToInput@InputManager@@QEAA?AUInput@@XZ)
+main.obj : error LNK2019: unresolved external symbol DrawRectangleRec referenced in function "public: virtual void __cdecl Board::Draw(void)" (?Draw@Board@@UEAAXXZ)
+main.obj : error LNK2019: unresolved external symbol CheckCollisionPointRec referenced in function "struct Owner & __cdecl GetGameObjectUnderPoint(struct Vector2,class Container &,int &)" (?GetGameObjectUnderPoint@@YAAEAUOwner@@UVector2@@AEAVContainer@@AEAH@Z)
+C:\raylib\raylib\projects\VS2017\raylib\Debug.DLL\raylib.lib : warning LNK4272: library machine type 'x86' conflicts with target machine type 'x64'
+C:\Users\Stefan\Dropbox\Ciopillis\x64\Debug\RaylibGame.exe : fatal error LNK1120: 13 unresolved externals

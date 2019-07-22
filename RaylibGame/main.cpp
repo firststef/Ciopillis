@@ -1,5 +1,6 @@
 ﻿#include "Classes.h"
 #include "Engine.h"
+#include <string>
 
 //-----[Notes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -12,8 +13,8 @@
 
 //-----[Globals]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const int screenWidth = 1600;
-const int screenHeight = 800;
+int const screenWidth = 1600;
+int const screenHeight = 900;
 
 const int FONT_SIZE = 50;
 
@@ -23,67 +24,63 @@ int enabledGestures = 0b0000000000001111;
 
 int main()
 {
-    ScreenManager screenManager(screenWidth, screenHeight);
-    GameManager gameManager;
-    InputManager inputManager(enabledGestures);
-    ActionManager actionManager;
+    Manager manager;
 
     /*-----[RESOURCES]----------------------------------------------------------*/
 
-    vector<Card*> cardDatabase;
+    CardContainer* cardDatabase = new CardContainer;
 
     SString name("The First Board");
     Board* board = new Board;
     board->name = name;
     board->position = { 0, 0, screenWidth, screenHeight };
     board->zIndex = -1;
-    Manager::activeObjects.AddChild(board);
+    manager.activeObjects.AddChild(board);
 
     SString numeCarte("GREEN");
     Texture2D texture = { 0 };
     Card* card = new Card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
     card->zIndex = 1;
     card->color = GREEN;
+    cardDatabase->AddChild(card);
 
     SString numeCarte1("BLUE");
     Texture2D texture1 = { 0 };
     Card* card1 = new Card(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
     card1->zIndex = 2;
     card1->color = BLUE;
+    cardDatabase->AddChild(card1);
 
     SString numeCarte2("RED");
     Texture2D texture2 = { 0 };
     Card* card2 = new Card(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
     card2->zIndex = 2;
     card2->color = RED;
+    cardDatabase->AddChild(card2);
 
     SString numeCarte3("BLACK");
     Texture2D texture3 = { 0 };
     Card* card3 = new Card(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
     card3->zIndex = 4;
     card3->color = BLACK;
+    cardDatabase->AddChild(card3);
 
     SString numeCarte4("PINK");
     Texture2D texture4 = { 0 };
     Card* card4 = new Card(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
     card4->zIndex = 4;
     card4->color = PINK;
-
-    cardDatabase.emplace_back(card);
-    cardDatabase.emplace_back(card1);
-    cardDatabase.emplace_back(card2);
-    cardDatabase.emplace_back(card3);
-    cardDatabase.emplace_back(card4);
+    cardDatabase->AddChild(card4);
 
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
     SString hand_name("Hand");
-    CardContainer* hand = new CardContainer(hand_name, { 0,0,0,0 });
-    auto draw = ExtractNCardsFrom(cardDatabase, 3);
-    hand->AddList(draw);
+    CardContainer draw = ExtractNCardsFrom(*cardDatabase, 3);
+    CardContainer* hand = (CardContainer*) draw.GetCopy();
+    hand->name = hand_name;
     hand->type = Container::WRAPPER;
 
-    for (auto _card : cardDatabase) {
+    for (auto _card : cardDatabase->children) {
         _card->isActive = false;
     }
 
@@ -134,22 +131,28 @@ int main()
     playerHand->stretchEnabled = false;
 
     AddObjectToArray<Owner, Container>(
-        Manager::activeObjects.children,
+        manager.activeObjects.children,
         *(static_cast<Container*>(playerHand)),
         0,
-        Manager::activeObjects.children.size() - 1,
+        manager.activeObjects.children.size() - 1,
         nullptr
     );
 
+    SString log;
+    Entity player( SString("Player") );
+    Entity enemy(SString("Enemy"));
+    GameServer server(GameServer::Interface::CONSOLE, log, *cardDatabase,player,enemy);
+
+    system("CLS");
     while (!WindowShouldClose())
     {
-        //system("CLS");
-
+        //CHECKBK(server.RunConsole() == 0, "Server exited");
+        
         //Ok deci logica de baza
         
-        Input input = inputManager.ListenToInput();
+        Input input = manager.inputManager.ListenToInput();
         //inregistreaza inputul superficial
-        Action action = actionManager.InterpretInput(input);//------------ poate o sa fie nevoie sa trecem pe multithreading aici - animatia sa continue cat timpin input scrie dragging de ex.
+        Action action = manager.actionManager.InterpretInput(input);//------------ poate o sa fie nevoie sa trecem pe multithreading aici - animatia sa continue cat timpin input scrie dragging de ex.
         //observa inputul primit si il compara cu state-ul curent
         //daca este valid, mai intai salveaza state-ul curent
         //-----(ceea ce inseamna ca o sa avem nevoie de niste functii
@@ -157,23 +160,32 @@ int main()
         //astea 2)
         //dupa care schimba putin state-ul obiectelor (poate muta
         //obiectele care nu au atributul Locked sau NonMovable etc.)
-        Action response = gameManager.ValidateAction(action);
+        Action response = manager.gameManager.ValidateAction(action);
         //verifica cu state-ul jocului daca mutarea este permisa
         //si intoarce rezultatul validarii
-        actionManager.InterpretResponse(response);
+        manager.actionManager.InterpretResponse(response);
         //functiile astea pot folosi niste API uri interne de exemplu
         //moveObject() sau cv
         //aici practic finalizeaza actiunea -- ar trebui facu ceva gen o coada
         //pentru a face animatiile cum trebuie, sau un fel de clasa animatie
         //care intoarce position si rotation in functie de timpul de start
         //si timpul actual
-        screenManager.Draw();
+        manager.screenManager.Draw();
         //deocamdata aici doar deseneaza - la un moment dat poate
         //face in functie de response ceva - desi acum ca ma gandesc action
         //manager este acum cel care se ocupa cu tot - bine, ce-i drept
         //daca ne gandim la animatii, screenManager mai mult se ocupa de 
         //mecanici, fiindca ii trebuie pentru gameManager
     }
+
+    cardDatabase->Destroy();
+    //eroarea de astazi - imi crapa pentru ca dadeam valorile pointerilor din cardDatabase
+    //si erau copiati in active objects iar apoi active objects le distrugea la final dar 
+    //ele erau deja distruse de cardDatabase
+    //am rezolvat asta facand copii dinamice
+    //o eroare pe care am avut-o a fost ca facea copii de GameObject* pentru ca nu am facut o
+    //functie virtuala pt Card ca sa ii intoarca un obiect cu functia potrivita de Draw()
+    //pentru carte => apela Draw() din GO si nu se vedea nimic
 
     return 0;
 }

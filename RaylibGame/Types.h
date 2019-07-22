@@ -9,14 +9,23 @@ namespace Types {
     protected:
         char* value = nullptr;
     public:
-        SString() {}
+        SString()
+        {
+            value = (char*)malloc(1);
+            *value = '\0';
+        }
 
         SString(const char* charString) {
-            if (strlen(charString) > 500)
-                value = nullptr;
-
-            value = (char*)malloc(strlen(charString) + 1);
-            strcpy(value, charString);
+            if (charString != nullptr && strlen(charString) < 300)
+            {
+                value = (char*)malloc(strlen(charString) + 1);
+                strcpy(value, charString);
+            }
+            else
+            {
+                value = (char*)malloc(1);
+                *value = '\0';
+            }
         }
 
         SString(const SString& other) {
@@ -24,10 +33,32 @@ namespace Types {
             strcpy(value, other.value);
         }
 
-        auto operator= (const SString & other) {
-            delete value;
+        SString& operator= (const SString & other) {
+            free(value);
             value = (char*)malloc(strlen(other.value) + 1);
             strcpy(value, other.value);
+            return *this;
+        }
+
+        SString& operator+= (const SString & other)
+        {
+            char* newValue = (char*)malloc(strlen(value) + strlen(other.value) + 1);
+            strcpy(newValue, value);
+            strcpy(newValue + strlen(newValue), other.value);
+            free(value);
+            value = newValue;
+
+            return *this;
+        }
+
+        SString operator+ (const SString & other)
+        {
+            SString str;
+
+            str += *this;
+            str += other;
+
+            return str;
         }
 
         friend ostream & operator << (ostream &out, const SString &c);
@@ -36,16 +67,16 @@ namespace Types {
             return value;
         }
 
-        SString& Substitute(const SString &other) {
-            delete value;
-            value = (char*)malloc(strlen(other.value) + 1);
-            strcpy(value, other.value);
-
-            return *this;
+        void Clear()
+        {
+            free(value);
+            value = (char*)malloc(1);
+            *value = '\0';
         }
 
         ~SString() {
             free(value);
+            value = nullptr;
         }
     };
 
