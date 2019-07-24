@@ -30,70 +30,33 @@ int main()
 
     CardContainer* cardDatabase = new CardContainer;
 
-    Types::SString name("The First Board");
-    Board* board = new Board;
-    board->name = name;
-    board->position = { 0, 0, screenWidth, screenHeight };
-    board->zIndex = -1;
-    manager.activeObjects.AddChild(board);
+    std::string name("The First Board");
+    Board* board = new Board(
+        name,
+        -1,
+        LIGHTGRAY,
+        { 0, 0, screenWidth, screenHeight }
+        );
+    manager.activeObjects.PlaceChild(static_cast<GameObject>(*board), 0, LAST_IDX(manager.activeObjects));
 
-    Types::SString numeCarte("GREEN");
-    Texture2D texture = { 0 };
-    Card* card = new Card(numeCarte, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture);
-    card->zIndex = 1;
-    card->color = GREEN;
-    cardDatabase->AddChild(card);
+    Card* card = new Card(std::string ("GREEN"),1, GREEN, { screenWidth / 2,screenHeight / 2, 225 , 375 });
+    cardDatabase->cards.emplace_back(card);
 
-    Types::SString numeCarte1("BLUE");
-    Texture2D texture1 = { 0 };
-    Card* card1 = new Card(numeCarte1, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture1);
-    card1->zIndex = 2;
-    card1->color = BLUE;
-    cardDatabase->AddChild(card1);
+    Card* card1 = new Card(std::string ("BLUE") , 2, BLUE, { screenWidth / 2,screenHeight / 2, 225 , 375 });
+    cardDatabase->cards.emplace_back(card1);
 
-    Types::SString numeCarte2("RED");
-    Texture2D texture2 = { 0 };
-    Card* card2 = new Card(numeCarte2, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture2);
-    card2->zIndex = 2;
-    card2->color = RED;
-    cardDatabase->AddChild(card2);
+    Card* card2 = new Card(std::string ("RED") , 2, RED, { screenWidth / 2,screenHeight / 2, 225 , 375 });
+    cardDatabase->cards.emplace_back(card2);
 
-    Types::SString numeCarte3("BLACK");
-    Texture2D texture3 = { 0 };
-    Card* card3 = new Card(numeCarte3, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture3);
-    card3->zIndex = 4;
-    card3->color = BLACK;
-    cardDatabase->AddChild(card3);
+    Card* card3 = new Card(std::string ("BLACK"), 4 ,BLACK ,{ screenWidth / 2,screenHeight / 2, 225 , 375 });
+    cardDatabase->cards.emplace_back(card3);
 
-    Types::SString numeCarte4("PINK");
-    Texture2D texture4 = { 0 };
-    Card* card4 = new Card(numeCarte4, { screenWidth / 2,screenHeight / 2, 225 , 375 }, texture4);
-    card4->zIndex = 4;
-    card4->color = PINK;
-    cardDatabase->AddChild(card4);
+    Card* card4 = new Card(std::string ("PINK"),4, PINK, { screenWidth / 2,screenHeight / 2, 225 , 375 });
+    cardDatabase->cards.emplace_back(card4);
 
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 
-    Types::SString hand_name("Hand");
     CardContainer draw = ExtractNCardsFrom(*cardDatabase, 3);
-    CardContainer* hand = (CardContainer*) draw.GetCopy();
-    hand->name = hand_name;
-    hand->type = Container::WRAPPER;
-
-    for (auto _card : cardDatabase->children) {
-        _card->isActive = false;
-    }
-
-    for (auto _card = hand->children.begin(); _card != hand->children.end(); ++_card) {
-        GameObject* pointer = nullptr;
-        if (!(*_card).index)
-            pointer = (*_card).go_pointer;
-        if (pointer)
-        {
-            pointer->isActive = true;
-            pointer->isSelectable = true;
-        }
-    }
 
     /*AddObjectToArray<Owner, Container>(
         Manager::activeObjects.children,
@@ -104,13 +67,16 @@ int main()
     );//this should be a gamemanager object function*/
 
     HorizontalContainer* playerHand = new HorizontalContainer(
-        Types::SString("PlayerHand"),
+        std::string("PlayerHand"),
+        4,
+        PURPLE,
         {
             screenWidth / 4,
             screenHeight / 4,
             screenWidth / 2,
             screenHeight / 2
         },
+        Container::MATERIAL,
         4,
         1,
         10,
@@ -119,28 +85,28 @@ int main()
         10,
         20
     );
-    for (auto _card = hand->children.begin(); _card != hand->children.end(); ++_card)
+    for (auto _card = draw.cards.begin(); _card != draw.cards.end(); ++_card)
     {
-        GameObject* ptr = (*_card).go_pointer;
-        playerHand->AddChild(ptr);
+        playerHand->PlaceChild((static_cast<GameObject>(*_card)),0, LAST_IDX((*playerHand)));
     }
-    hand->children.clear();
-    hand->isActive = false;
     playerHand->isActive = true;
+    for (auto own = playerHand->children.rbegin(); own != playerHand->children.rend(); ++own)
+    {
+        static_cast<GameObject*>(own->GetPointer())->isActive = true;
+        static_cast<GameObject*>(own->GetPointer())->isSelectable = true;
+    }
     playerHand->type = Container::MATERIAL;
     playerHand->stretchEnabled = false;
 
-    AddObjectToArray<Owner, Container>(
-        manager.activeObjects.children,
+    manager.activeObjects.PlaceChild(
         *(static_cast<Container*>(playerHand)),
         0,
-        manager.activeObjects.children.size() - 1,
-        nullptr
+        LAST_IDX(manager.activeObjects)
     );
 
-    Types::SString log;
-    Entity player(Types::SString("Player") );
-    Entity enemy(Types::SString("Enemy"));
+    std::string log;    
+    Entity player(std::string("Player") );
+    Entity enemy(std::string("Enemy"));
     GameServer server(GameServer::Interface::CONSOLE, log, *cardDatabase,player,enemy);
 
     system("CLS");
@@ -178,7 +144,7 @@ int main()
         //mecanici, fiindca ii trebuie pentru gameManager
     }
 
-    cardDatabase->Destroy();
+    //cardDatabase->Destroy();
     //eroarea de astazi - imi crapa pentru ca dadeam valorile pointerilor din cardDatabase
     //si erau copiati in active objects iar apoi active objects le distrugea la final dar 
     //ele erau deja distruse de cardDatabase

@@ -13,18 +13,8 @@ void ScreenManager::Draw()
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    for (auto obj = activeObjects.children.begin(); obj != activeObjects.children.end(); ++obj) {
-
-        if (!(*obj).index) {
-            auto pointer = (*obj).go_pointer;
-            if (pointer->isActive)
-                pointer->Draw();
-        }
-        else {
-            auto pointer = (*obj).c_pointer;
-            if (pointer->isActive)
-                pointer->Draw();
-        }
+    for (auto obj = activeObjects.children.begin(); obj != activeObjects.children.begin(); ++obj) {
+        (*obj).GetDraw()();
     }
 
     EndDrawing();
@@ -46,7 +36,7 @@ Input InputManager::ListenToInput() {
 
     int selectedOrder = 0;
 
-    lastSelectedObject = GetSelectableObjectUnderPoint(mouse, activeObjects, selectedOrder);
+    lastSelectedObject = activeObjects.GetSelectableObjectUnderPoint(mouse, selectedOrder);
     //if (lastSelectedObject == nullptr || (lastSelectedObject != nullptr && !lastSelectedObject->isSelectable))--not allowed for check here - when nullptr comes it has to collide to some conditions
     //{
     //    input.gestureObtained = lastGesture;
@@ -61,7 +51,7 @@ Input InputManager::ListenToInput() {
     }
     if (lastGesture == GESTURE_TAP)
     {
-        if (lastSelectedObject != nullptr && lastSelectedObject->isSelectable)
+        if (lastSelectedObject != nullptr && lastSelectedObject->GetIsSelectable())
         {
             input.action = Input::SELECT_OBJECT;
             input.object = lastSelectedObject;
@@ -71,7 +61,7 @@ Input InputManager::ListenToInput() {
     {
         if (!dragStarted) {
 
-            if (lastSelectedObject != nullptr && lastSelectedObject->isSelectable) {
+            if (lastSelectedObject != nullptr && lastSelectedObject->GetIsSelectable()) {
                 dragStarted = true;
 
                 input.action = Input::BEGIN_DRAG;
@@ -110,14 +100,14 @@ Input InputManager::ListenToInput() {
 }
 void InputManager::ResetLastSelected()
 {
-    previousSelectedObject = static_cast<GameObject*>(nullptr);
+    previousSelectedObject = nullptr;
 }
 
 ActionManager::ActionManager(Container& activeObj) : activeObjects(activeObj)
 {
 
 }
-Action& ActionManager::InterpretInput(Input& input)
+Action ActionManager::InterpretInput(Input& input)
 {
     Action action;
 
@@ -130,19 +120,18 @@ Action& ActionManager::InterpretInput(Input& input)
 
     if (input.action == Input::SELECT_OBJECT)
     {
-        cout << input.object.go_pointer->name << "is selected" << endl;
+        std::cout << static_cast<GameObject*>(input.object->GetPointer())->name.c_str() << "is selected" << std::endl;
         //aici ar veni input.object.on_select(); on_select fiind o valoare de lambda pentru ce se intampla la selectie
 
-        if (input.object.parent->children[input.object.parent->children.empty() ? 0 : input.object.parent->children.size() - 1] != input.object)
+        if (input.object->parent->children.back() != *(input.object))
         {
-            ResetPositionInContainer(
-                *input.object.parent,
+            input.object->parent->ResetChildPosition(
                 input.object,
                 0,
-                input.object.parent->children.size() - 1,
-                [](Container &cont, Owner &obj)->bool
+                LAST_IDX((*input.object->parent)),
+                [](Container &cont, Owner* obj)->bool
             {
-                obj.go_pointer->zIndex = (cont.children.empty()) ? 1 : (cont.children[cont.children.size() - 1].go_pointer)->zIndex + 1;
+                static_cast<GameObject*>(obj->GetPointer())->zIndex = cont.children.back().GetZIndex() + 1;
                 return true;
             }
             );
@@ -150,33 +139,33 @@ Action& ActionManager::InterpretInput(Input& input)
     }
     if (input.action == Input::BEGIN_DRAG)
     {
-        cout << input.object.go_pointer->name << "begin drag" << endl;
+        //cout << input.object.go_pointer->name << "begin drag" << endl;
         //input.object.on_begin_drag();
 
-        mouseGrab = { mouse.x - input.object.go_pointer->position.x, mouse.y - input.object.go_pointer->position.y };
+        mouseGrab = { mouse.x - input.object->GetPosition().x, mouse.y - input.object->GetPosition().y };
 
         //aici in interiorul on_begin_drag() cel mai probabil se va apela un refresh pentru parinte
     }
     if (input.action == Input::CONTINUE_DRAG)
     {
-        cout << input.object.go_pointer->name << "continue drag" << endl;
+        //cout << input.object.go_pointer->name << "continue drag" << endl;
         //input.object.on_drag();
 
         endPos = { mouse.x - mouseGrab.x, mouse.y - mouseGrab.y };
 
-        input.object.go_pointer->position = { endPos.x, endPos.y, input.object.go_pointer->position.width, input.object.go_pointer->position.height };
+        static_cast<GameObject*>(input.object->GetPointer())->position = { endPos.x, endPos.y, input.object->GetPosition().width, input.object->GetPosition().height };
 
         //check peste ce trece, apeleaza - on_dragged_over();
         //de asemenea trebuie retinut obiectul peste care a trecut, daca s-a schimbat, ar trebui apelat on_end_dragged_over();
     }
     if (input.action == Input::END_DRAG)
     {
-        cout << input.object.go_pointer->name << "end drag" << endl;
+        //cout << input.object.go_pointer->name << "end drag" << endl;
         //input.object.on_end_drag();
 
         endPos = { mouse.x - mouseGrab.x, mouse.y - mouseGrab.y };
 
-        input.object.go_pointer->position = { endPos.x, endPos.y, input.object.go_pointer->position.width, input.object.go_pointer->position.height };
+        static_cast<GameObject*>(input.object->GetPointer())->position = { endPos.x, endPos.y, input.object->GetPosition().width, input.object->GetPosition().height };
 
         //trebuie verificat acum peste ce este released - on_release_over();
     }
@@ -185,20 +174,20 @@ Action& ActionManager::InterpretInput(Input& input)
 }
 void ActionManager::SaveState()
 {
-    saveStateObjects.Destroy();
-    saveStateObjects = *activeObjects.GetCopy();
+    //saveStateObjects.Destroy();
+    //saveStateObjects = *activeObjects.GetCopy();
 }
 void ActionManager::LoadState()
 {
-    activeObjects.Destroy();
-    activeObjects = saveStateObjects;
+    //activeObjects.Destroy();
+    //activeObjects = saveStateObjects;
 }
 void ActionManager::InterpretResponse(const Action& action)
 {
 
 }
 
-Action& GameManager::ValidateAction(const Action& action)
+Action GameManager::ValidateAction(const Action& action)
 {
     Action response;
 

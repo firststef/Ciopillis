@@ -9,7 +9,7 @@
 class Entity
 {
 public:
-    Types::SString                                 name;
+    std::string                                 name;
 
     int                                     points = 0;
 
@@ -17,11 +17,8 @@ public:
     CardContainer                           draw;
     CardContainer                           discard;
 
-    Entity(const Types::SString &name) :
-        name(name),
-        hand(Types::SString(name) + Types::SString(" hand"), { 0,0,0,0 }),
-        draw(Types::SString(name) + Types::SString(" draw"), { 0,0,0,0 }),
-        discard(Types::SString(name) + Types::SString(" discard"), { 0,0,0,0 })
+    Entity(const std::string &name) :
+        name(name)
     {}
 };
 
@@ -38,7 +35,7 @@ public:
     const char*                             intro = "<== Card Game Server for Ciopillis ==> \n";
     const char*                             version = "=== Version 0.1 ===\n";
 
-    Types::SString&                                log;
+    std::string&                                log;
 
     CardContainer&                          dataBase;
     Entity&                                 playerOne;
@@ -64,7 +61,7 @@ public:
 
     GameServer(
         Interface inter,
-        Types::SString& log,
+        std::string& log,
         CardContainer& dataBase,
         Entity& pOne,
         Entity& pTwo
@@ -74,7 +71,7 @@ public:
     void                                    Init();
     int                                     RunConsole();
     void                                    RunServer(int opcode, int arg1, int arg2);//the return type is to be decided
-    bool                                    GetInput(Types::SString &operation, Types::SString &arg1, Types::SString &arg2);
+    bool                                    GetInput(std::string &operation, std::string &arg1, std::string &arg2);
     void                                    GetCommandConsole(const char* operation, const char* arg1, const char*arg2, int &opcode, int &iarg1, int &iarg2);
     int                                     RunCommand(int opcode, int iarg1, int iarg2);
 

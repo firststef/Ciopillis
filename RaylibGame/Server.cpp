@@ -1,8 +1,9 @@
 #include "Server.h"
+#include <iostream>
 
 GameServer::GameServer(
     Interface inter,
-    Types::SString& log,
+    std::string& log,
     CardContainer& dataBase,
     Entity& pOne,
     Entity& pTwo
@@ -17,9 +18,9 @@ GameServer::GameServer(
 }
 void GameServer::Init()
 {
-    log.Clear();
-    log += Types::SString(intro);
-    log += Types::SString(version);
+    log.clear();
+    log += std::string(intro);
+    log += std::string(version);
 }
 void GameServer::RunServer(int opcode, int arg1, int arg2)
 {
@@ -27,9 +28,9 @@ void GameServer::RunServer(int opcode, int arg1, int arg2)
 //if it returns > 0 (1 for now) then success, if 0 is returned then exit, if <0 is returned => error
 int GameServer::RunConsole()
 {
-    Types::SString operation;
-    Types::SString arg1;
-    Types::SString arg2;
+    std::string operation;
+    std::string arg1;
+    std::string arg2;
 
     GetInput(operation, arg1, arg2);
 
@@ -37,26 +38,26 @@ int GameServer::RunConsole()
     int iarg1 = 0;
     int iarg2 = 0;
 
-    GetCommandConsole(operation.GetText(), arg1.GetText(), arg2.GetText(), opcode, iarg1, iarg2);
+    GetCommandConsole(operation.c_str(), arg1.c_str(), arg2.c_str(), opcode, iarg1, iarg2);
 
     return RunCommand(opcode, iarg1, iarg2);
 }
-bool GameServer::GetInput(Types::SString &operation, Types::SString &arg1, Types::SString &arg2)
+bool GameServer::GetInput(std::string &operation, std::string &arg1, std::string &arg2)
 {
     system("CLS");
 
-    cout << log.GetText();
-    cout << "$ ";
+    std::cout << log.c_str();
+    std::cout << "$ ";
 
     char command[30];
-    cin.getline(command, 29);
+    std::cin.getline(command, 29);
 
-    log += Types::SString("$ ");
+    log += std::string("$ ");
 
     char* p = strtok(command, " ");
     for (int i = 0; i < 3; i++)
     {
-        log += Types::SString(p);
+        log += std::string(p);
         switch (i)
         {
         case 0:operation = p; break;
@@ -65,12 +66,12 @@ bool GameServer::GetInput(Types::SString &operation, Types::SString &arg1, Types
         default:break;
         }
 
-        log += Types::SString(" ");
+        log += std::string(" ");
 
         p = strtok(NULL, " ");
     }
 
-    log += Types::SString("\n");
+    log += std::string("\n");
 
     return true;
 }
@@ -132,35 +133,35 @@ void GameServer::Show(int iarg1)
     switch (iarg1)
     {
     case 0:
-        log += Types::SString("Showing database:\n");
+        log += std::string("Showing database:\n");
 
-        for (auto child : dataBase.children)
+        for (auto child : dataBase.cards)
         {
-            log += Types::SString("\t");
-            log += Types::SString(child->name);
-            log += Types::SString("\n");
+            log += std::string("\t");
+            log += std::string(child.name);
+            log += std::string("\n");
         }
 
         return;
     case 1:
-        log += Types::SString("Showing player hand:\n");
+        log += std::string("Showing player hand:\n");
 
-        for (auto child : playerOne.hand.children)
+        for (auto child : playerOne.hand.cards)
         {
-            log += Types::SString("\t");
-            log += Types::SString(child->name);
-            log += Types::SString("\n");
+            log += std::string("\t");
+            log += std::string(child.name);
+            log += std::string("\n");
         }
 
         return;
     case 2:
-        log += Types::SString("Showing enemy hand:\n");
+        log += std::string("Showing enemy hand:\n");
 
-        for (auto child : playerTwo.hand.children)
+        for (auto child : playerTwo.hand.cards)
         {
-            log += Types::SString("\t");
-            log += Types::SString(child->name);
-            log += Types::SString("\n");
+            log += std::string("\t");
+            log += std::string(child.name);
+            log += std::string("\n");
         }
 
         return;

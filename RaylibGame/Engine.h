@@ -6,6 +6,7 @@
 #include "Server.h"
 
 class ScreenManager {
+public:
     int                                 screenWidth = 1600;
     int                                 screenHeight = 800;
 
@@ -13,7 +14,7 @@ class ScreenManager {
 
     Container&                          activeObjects;
 
-public:
+
     ScreenManager(int width, int height, Container& activeObj);
     void                                Init();
     void                                Draw();
@@ -33,7 +34,7 @@ struct Input {
 
 
     int                                 gestureObtained;
-    Owner                               object = static_cast<GameObject*>(nullptr);
+    Owner*                              object;
 
     Vector2                             start;
     Vector2                             end;
@@ -45,8 +46,8 @@ public:
 
     int                                 enabledGestures = 0b1111111111111111;
 
-    Owner                               previousSelectedObject = static_cast<GameObject*>(nullptr);
-    Owner                               lastSelectedObject = static_cast<GameObject*>(nullptr);
+    Owner*                              previousSelectedObject;
+    Owner*                              lastSelectedObject;
     int                                 previousGesture = GESTURE_NONE;
 
     //Tap
@@ -56,7 +57,7 @@ public:
 
     InputManager(int enabled, Container& activeObj);
 
-    Input                              ListenToInput();
+    Input                               ListenToInput();
     void                                ResetLastSelected();
 };
 
@@ -80,7 +81,7 @@ class ActionManager {
 public:
     Container&                          activeObjects;
 
-    Container                           saveStateObjects;
+    //Container                         saveStateObjects;
 
     //Select
 
@@ -90,7 +91,7 @@ public:
 
     ActionManager(Container& activeObj);
 
-    Action&                             InterpretInput( Input& input);
+    Action                              InterpretInput( Input& input);
     void                                SaveState();
     void                                LoadState();
     void                                InterpretResponse(const Action& action);
@@ -98,7 +99,7 @@ public:
 
 class GameManager {
 public:
-    Action&                              ValidateAction(const Action& action);
+    Action                              ValidateAction(const Action& action);
 };
 
 class Manager
@@ -115,13 +116,13 @@ public:
     ActionManager                       actionManager;
 
     Manager(int screenWidth = 1600, int screenHeight = 900, int enabledGestures = 0b0000000000001111) :
-        activeObjects(Types::SString("Active Objects"), {0,0,0,0}),
-        playerOne(Types::SString("playerOne")), playerTwo(Types::SString("playerTwo")),
+        activeObjects(std::string("Active Objects"), 0, PINK, {0,0,0,0},Container::ContainerType::LOGICAL),
+        playerOne(std::string("playerOne")), playerTwo(std::string("playerTwo")),
         screenManager(screenWidth,screenHeight,activeObjects),
         inputManager(enabledGestures,activeObjects),
         actionManager(activeObjects)
     {
     }
 
-    ~Manager() { activeObjects.Destroy(); }
+    ~Manager() {}
 };

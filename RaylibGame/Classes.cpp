@@ -1,65 +1,334 @@
 #include  "Classes.h"
 
-using namespace std;
-using namespace  Types;
+GameObject::GameObject(std::string str, int z, Color col, Rectangle pos)
+    : name(std::move(str)), zIndex(z), color(col), position(pos), draw([&]()->void {})
+{
 
-GameObject::GameObject(GameObject &obj)
-{
-    *this = obj;
-    this->name = obj.name;
-}
-GameObject* GameObject::GetCopy()
-{
-    GameObject* go = new GameObject;
-    *go = *this;
-    return go;
 }
 
-void Board::Draw()
+Board::Board(std::string str, int z, Color col, Rectangle pos) : GameObject(std::move(str), z, col, pos)
 {
-    DrawRectangleRec(position, color);
-};
-
-void Card::Draw()
-{
-    DrawRectangleRec(position, color);
-};
-GameObject* Card::GetCopy()
-{
-    Card* go = new Card;
-    *go = *this;
-    return go;
+    draw = [&]()->void {DrawRectangleRec(position, color); };
 }
 
-Owner::Owner(GameObject* pointer)
+Card::Card(std::string str, int z, Color col, Rectangle pos) : GameObject(std::move(str), z, col, pos)
 {
-    go_pointer = pointer;
-    index = 0;
+    draw = [&]()->void {DrawRectangleRec(position, color); };
 }
-Owner::Owner(Container* pointer)
+
+void Owner::SetGameObject(GameObject go)
 {
-    c_pointer = pointer;
-    index = 1;
+    pointer = std::make_unique<GameObject>(std::move(go));
 }
-Owner& Owner::operator=(GameObject* pointer)
+void Owner::SetContainer(Container c)
 {
-    go_pointer = pointer;
-    index = 0;
-    return *this;
+    pointer = std::make_unique<Container>(std::move(c));
 }
-Owner& Owner::operator=(Container* pointer)
+int Owner::GetZIndex()
 {
-    c_pointer = pointer;
-    index = 1;
-    return *this;
+    if (pointer.index() == 0)
+    {
+        return std::get<std::unique_ptr<GameObject>>(pointer)->zIndex;
+    }
+    else
+    {
+        return std::get<std::unique_ptr<Container>>(pointer)->zIndex;
+    }
+}
+Rectangle Owner::GetPosition()
+{
+    if (pointer.index() == 0)
+    {
+        return std::get<std::unique_ptr<GameObject>>(pointer)->position;
+    }
+    else
+    {
+        return std::get<std::unique_ptr<Container>>(pointer)->position;
+    }
+}
+
+bool Owner::GetIsActive()
+{
+    if (pointer.index() == 0)
+    {
+        return std::get<std::unique_ptr<GameObject>>(pointer)->isActive;
+    }
+    else
+    {
+        return std::get<std::unique_ptr<Container>>(pointer)->isActive;
+    }
+}
+bool Owner::GetIsSelectable()
+{
+    if (pointer.index() == 0)
+    {
+        return std::get<std::unique_ptr<GameObject>>(pointer)->isActive;
+    }
+    else
+    {
+        return std::get<std::unique_ptr<Container>>(pointer)->isActive;
+    }
+}
+std::function<void()> Owner::GetDraw()
+{
+    if (pointer.index() == 0)
+    {
+        return std::get<std::unique_ptr<GameObject>>(pointer)->draw;
+    }
+    else
+    {
+        return std::get<std::unique_ptr<Container>>(pointer)->draw;
+    }
+}
+void* Owner::GetPointer()
+{
+    if (pointer.index() == 0)
+    {
+        return static_cast<void*>(std::get<std::unique_ptr<GameObject>>(pointer)._Myptr());
+    }
+    else
+    {
+        return  static_cast<void*>(std::get<std::unique_ptr<Container>>(pointer)._Myptr());
+    }
+}
+
+Container::Container(std::string str, int z, Color col, Rectangle pos, ContainerType t) 
+: GameObject(std::move(str), z, col, pos), type(t)
+{
+    draw = [&]()->void
+    {
+        //Draws himself
+        DrawRectangleRec(position, color);
+
+        //Then his children
+        for (auto obj = children.begin(); obj != children.end(); ++obj)
+        {
+            obj->GetDraw()();
+        }
+    };
+}
+void Container::PlaceChild(Container obj, int beginPos, int endPos) {
+    auto iterator = (!children.empty()) ? children.begin() + endPos : children.begin();
+
+    for (auto own = children.rbegin(); own != children.rend() - beginPos; ++own)
+    {   
+        if (*own == children[children.empty() ? 0 : children.size() - 1])
+        {
+            if (obj.zIndex >= own->GetZIndex())
+                ++iterator;
+        }
+        else if (obj.zIndex < own->GetZIndex() && iterator != children.begin())
+            --iterator;
+    }
+
+    Owner newOwn;
+    newOwn.SetContainer(obj);
+    newOwn.parent = this;
+    children.insert(iterator, newOwn);
+
+    this->zIndex = MAX(this->zIndex, children.back().GetZIndex());
+}
+void Container::PlaceChild(GameObject obj, int beginPos, int endPos) {
+    auto iterator = (!children.empty()) ? children.begin() + endPos : children.begin();
+
+    for (auto own = children.rbegin(); own != children.rend() - beginPos; ++own)
+    {
+        if (*own == children[children.empty() ? 0 : children.size() - 1])
+        {
+            if (obj.zIndex >= own->GetZIndex())
+                ++iterator;
+        }
+        else if (obj.zIndex < own->GetZIndex() && iterator != children.begin())
+            --iterator;
+    }
+
+    Owner newOwn;
+    newOwn.SetGameObject(obj);
+    newOwn.parent = this;
+    children.insert(iterator, newOwn);
+
+    this->zIndex = MAX(this->zIndex, children.back().GetZIndex());
+}
+void Container::Destroy()
+{
+    children.clear();
+}
+void Container::ResetChildPosition(Owner* child, int beginPos, int endPos, bool(* func)(Container& cont, Owner* obj))
+{
+    auto begin = children.begin();
+
+    int idx = beginPos;
+    for (; idx != endPos + 1; ++idx) {
+        if ((*(begin + idx)) == *child) {
+            children.erase(begin + idx);
+            break;
+        }
+    }
+
+    func(*this, child);
+
+    if (idx < beginPos)
+    {
+        --beginPos; --endPos;
+    }
+    else if (idx < endPos)
+        --endPos;
+
+    if (child->pointer.index() == 0)
+        return PlaceChild(*static_cast<GameObject*>(child->GetPointer()), beginPos, endPos);
+    else
+        return PlaceChild(*static_cast<Container*>(child->GetPointer()), beginPos, endPos);
+}
+Owner Container::RemoveChild(int idx)
+{
+    Owner ownr = std::move(children[idx]);
+    auto it = children.begin();
+    std::advance(it, idx);
+    children.erase(it);
+    return std::move(ownr);
+}
+
+//trebuie verificata daca se obtine & bine
+Owner* Container::GetSelectableObjectUnderPoint(Vector2 point, int order)
+{
+    Owner* obj = nullptr;
+
+    --order;
+    int returnOrder = -1;
+    do
+    {
+        ++order;
+        int save = order;
+        obj = GetObjectUnderPoint(point, order);
+        returnOrder = order;
+        order = save;
+    } while (obj->GetZIndex() == 1 && !obj->GetIsSelectable());
+    order = returnOrder;
+
+    return obj;
+}
+Owner* Container::GetGameObjectUnderPoint(Vector2 point, int order)
+{
+    Owner* returnOwner = nullptr;
+
+    for (auto variant_child = children.rbegin(); variant_child != children.rend() && order >= 0; ++variant_child) {
+        if (variant_child->pointer.index() == 0)//GameObject
+        {
+            const auto ptr = &(*variant_child);
+            if (ptr && CheckCollisionPointRec(point, ptr->GetPosition()))
+            {
+
+                if (ptr->GetZIndex() != -1)
+                {
+                    returnOwner = &(*variant_child);
+                    --order;
+                    continue;
+                }
+
+                returnOwner = nullptr;
+                --order;
+
+            }
+        }
+        else {//Container
+            const auto ownr = std::get<std::unique_ptr<Container>>(variant_child->pointer)->GetGameObjectUnderPoint(point, order);
+            if (ownr->GetPointer()) {
+                if (ownr->GetZIndex() != -1)
+                {
+                    returnOwner = &(*variant_child);
+                    --order;
+                    continue;
+                }
+
+                returnOwner = nullptr;
+                --order;
+            }
+        }
+    }
+
+    return returnOwner;
+}
+Owner* Container::GetObjectUnderPoint(Vector2 point, int order)
+{
+    Owner* returnOwner = nullptr;
+
+    for (auto variant_child = children.rbegin(); variant_child != children.rend() && order >= 0; ++variant_child) {
+        if (variant_child->pointer.index() == 0)//GameObject
+        {
+            const auto ptr = &(*variant_child);
+            if (ptr && CheckCollisionPointRec(point, ptr->GetPosition()))
+            {
+
+                if (ptr->GetZIndex() != -1)
+                {
+                    returnOwner = &(*variant_child);
+                    --order;
+                    continue;
+                }
+
+                returnOwner = nullptr;
+                --order;
+
+            }
+        }
+        else {//Container
+            const auto ptr1 = std::get<std::unique_ptr<Container>>(variant_child->pointer)._Myptr();
+            if (ptr1 && CheckCollisionPointRec(point, ptr1->position))
+            {
+                returnOwner = &(*variant_child);
+                --order;
+            }
+
+            if (order < 0)
+                break;
+
+            const auto ownr = std::get<std::unique_ptr<Container>>(variant_child->pointer)->GetObjectUnderPoint(point, order);
+
+            returnOwner = ownr;
+        }
+    }
+
+    return returnOwner;
+}
+Owner* Container::GetParentUnderPoint(Vector2 point, int order, bool getLogical)
+{
+    Owner* returnOwner = nullptr;
+
+    for (auto variant_child = children.rbegin(); variant_child != children.rend() && order >= 0; ++variant_child) {
+        if ((*variant_child).pointer.index() == 1) {//Container
+
+            if (getLogical || CheckCollisionPointRec(point, (*variant_child).GetPosition()))
+            {
+                returnOwner = &(*variant_child);
+                --order;
+            }
+
+            if (order < 0)
+                break;
+
+            const auto ownr = std::get<std::unique_ptr<Container>>(variant_child->pointer)->GetParentUnderPoint(point, order, getLogical);
+
+            returnOwner = ownr;
+
+            if (order < 0)
+                break;
+
+        }
+    }
+
+    return returnOwner;
+}
+Owner* Container::operator[] (int n)
+{
+    return &(children[n]);
 }
 bool Owner::operator==(Owner& other)
 {
-    return go_pointer == other.go_pointer;
+    return GetPointer() == other.GetPointer();
 }
 bool Owner::operator==(void* ptr)
 {
-    return go_pointer == ptr;
+    return GetPointer() == ptr;
 }
 bool Owner::operator!=(Owner& other)
 {
@@ -67,141 +336,32 @@ bool Owner::operator!=(Owner& other)
 }
 bool Owner::operator!=(void* ptr)
 {
-    return !(go_pointer == ptr);
-}
-GameObject* Owner::operator->()
-{
-    return go_pointer;
-}
-Owner::~Owner() {
-
+    return !(GetPointer() == ptr);
 }
 
-Container* Container::GetCopy()
+HorizontalContainer::HorizontalContainer(std::string str, int z, Color col, Rectangle pos, ContainerType t, int columns, int lines,
+    float left, float up, float right, float down, float space) : Container(std::move(str), z, col, pos, t)
 {
-    Container* cont = new Container;
-    cont->type = type;
-    cont->zIndex = zIndex;
-    for (auto obj = children.begin(); obj != children.end(); ++obj)
+    draw = [&]()->void
     {
-        Owner* newOwner = new Owner;
-        newOwner->MakeCopy(*obj);
-        cont->children.emplace_back(*newOwner);
-    }
-    return cont;
-}
-Owner& Container::operator[] (int n)
-{
-    return children[n];
-}
-void Container::Draw() {}
-void Container::AddChild(Container* obj) {
-
-    AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
-
-    this->zIndex = MAX(this->zIndex, obj->zIndex);
-}
-void Container::AddChild(GameObject* obj) {
-
-    AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
-
-    this->zIndex = MAX(this->zIndex, obj->zIndex);
-}
-void Container::Destroy()
-{
-    for (auto obj = children.begin(); obj != children.end(); ++obj)
-    {
-        (*obj).Destroy();
-    }
-    children.clear();
-}
-Container::~Container()
-{
-    //Destroy(); --destroy no longer implicitly called
-}
-
-//From Owner
-void Owner::MakeCopy(Owner& owner)
-{
-    this->index = owner.index;
-    this->go_pointer = owner.go_pointer == nullptr ? nullptr : owner.go_pointer->GetCopy();
-}
-void Owner::Destroy()
-{
-    if (!alreadyDestroyed) {
-        if (index == 0)
-            delete go_pointer;
-        else
-            delete c_pointer;
-
-        alreadyDestroyed = true;
-    }
-}
-
-void CardContainer::Draw() {
-
-    //draws himself first,
-    if (type == OVERLAY || type == MATERIAL)
-        DrawRectangleRec(position, color);
-
-    //then the children
-    if (type == WRAPPER || type == MATERIAL)
-        for (auto card = children.begin(); card != children.end(); ++card) {
-            auto genericObj = (*card).go_pointer;
-            genericObj->Draw();
+        if (!overwritePosOn)
+        {
+            OverwritePos();
+            overwritePosOn = true;
         }
-}
-void CardContainer::AddList(vector<Card*> const &cards) {
-    for (auto card : cards) {
-        AddChild(card);
-    }
-}
-void CardContainer::AddChild(Card* obj) {
 
-    AddObjectToArray<Owner, GameObject>(children, *static_cast<GameObject*>(obj), 0, children.size() - 1, this);
+        if (type == OVERLAY || type == MATERIAL)
+            DrawRectangleRec(position, color);
 
-    this->zIndex = MAX(this->zIndex, obj->zIndex);
-}
-Container* CardContainer::GetCopy()
-{
-    CardContainer* cont = new CardContainer;
-    cont->type = type;
-    cont->zIndex = zIndex;
-    for (auto obj = children.begin(); obj != children.end(); ++obj)
-    {
-        Owner* newOwner = new Owner;
-        newOwner->MakeCopy(*obj);
-        cont->children.emplace_back(*newOwner);
-    }
-    return cont;
-}
+        if (type == WRAPPER || type == MATERIAL)
+            for (auto obj = children.begin(); obj != children.end(); ++obj) {
+                obj->GetDraw()();
+            }
+    };
+    color = PURPLE;
+    InitSize();
+};
 
-HorizontalContainer::HorizontalContainer(Types::SString name, Rectangle pos, int columns, int lines) :
-    Container(name, pos), numOfColumns(columns), numOfLines(lines)
-{
-    color = PURPLE;
-    InitSize();
-};
-HorizontalContainer::HorizontalContainer(int columns, int lines) :
-    numOfColumns(columns), numOfLines(lines)
-{
-    color = PURPLE;
-    InitSize();
-};
-HorizontalContainer::HorizontalContainer(Types::SString name, Rectangle pos, int columns, int lines, float left, float up, float right, float down, float space) :
-    Container(name, pos), numOfColumns(columns), numOfLines(lines),
-    marginLeft(left), marginUp(up), marginRight(right), marginDown(down), spaceBetween(space)
-{
-    color = PURPLE;
-    InitSize();
-};
-HorizontalContainer::HorizontalContainer(int columns, int lines, float left, float up, float right, float down, float space) :
-    numOfColumns(columns), numOfLines(lines),
-    marginLeft(left), marginUp(up), marginRight(right), marginDown(down), spaceBetween(space)
-{
-    color = PURPLE;
-    InitSize();
-};
 void HorizontalContainer::InitSize()
 {
     positionTable = (Rectangle*)calloc(numOfColumns*numOfLines, sizeof(Rectangle));
@@ -253,7 +413,7 @@ void HorizontalContainer::OverwritePos()
 {
     int index = 0;
     for (auto obj = children.begin(); obj != children.end(); ++obj) {
-        auto genericObj = (*obj).go_pointer;
+        auto genericObj = static_cast<GameObject*>((*obj).GetPointer());
 
         savedPositionTable[indexTable[index]] = genericObj->position;
         auto getPos = positionTable[indexTable[index]];
@@ -272,47 +432,9 @@ void HorizontalContainer::OverwritePos()
         }
 
         genericObj->position = getPos;
-        genericObj->Draw();
+        //genericObj->draw();
         index++;
     }
-}
-void HorizontalContainer::Draw()
-{
-    if (!overwritePosOn)
-    {
-        OverwritePos();
-        overwritePosOn = true;
-    }
-
-    if (type == OVERLAY || type == MATERIAL)
-        DrawRectangleRec(position, color);
-
-    if (type == WRAPPER || type == MATERIAL)
-        for (auto obj = children.begin(); obj != children.end(); ++obj) {
-            auto genericObj = (*obj).go_pointer;
-            genericObj->Draw();
-        }
-}
-void HorizontalContainer::AddChild(Container* obj)
-{
-
-    AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
-
-    this->zIndex = MAX(this->zIndex, obj->zIndex);
-
-    indexTable[children.empty() ? 0 : children.size() - 1] = AssignPos();
-
-    overwritePosOn = false;
-}
-void HorizontalContainer::AddChild(GameObject* obj) {
-
-    AddObjectToArray<Owner, GameObject>(children, *obj, 0, children.size() - 1, this);
-
-    this->zIndex = MAX(this->zIndex, obj->zIndex);
-
-    indexTable[children.empty() ? 0 : children.size() - 1] = AssignPos();
-
-    overwritePosOn = false;
 }
 HorizontalContainer::~HorizontalContainer()
 {
@@ -326,13 +448,13 @@ HorizontalContainer::~HorizontalContainer()
 CardContainer ExtractNCardsFrom(CardContainer& container, int n)
 {
     CardContainer cont;
-    vector<int> selectedIndexes;
+    std::vector<int> selectedIndexes;
 
-    if (n > container.children.size())
+    if (n > container.cards.size())
         return cont;
 
     for (int i = n; n >= 1;) {
-        int randomN = GetRandomValue(0, container.children.size() - 1);
+        int randomN = GetRandomValue(0, container.cards.size() - 1);
 
         if ([&]()->bool {for (auto idx : selectedIndexes) { if (idx == randomN) return false; } return true; }()) {
             selectedIndexes.push_back(randomN);
@@ -341,12 +463,12 @@ CardContainer ExtractNCardsFrom(CardContainer& container, int n)
     }
 
     for (auto it : selectedIndexes) {
-        cont.AddChild(dynamic_cast<Card*>(container[it].go_pointer));
+        cont.cards.push_back(container.cards[it]);
     }
 
     return cont;
 }
-GameObject* GetGameObjectUnderPoint(Vector2 point, vector<GameObject*> &objectArray, int& order) {
+/*GameObject* GetGameObjectUnderPoint(Vector2 point, std::vector<GameObject*> &objectArray, int& order) {
     auto it = objectArray.end();
     auto const begin = objectArray.begin();
     --it;
@@ -486,22 +608,7 @@ Owner& GetObjectUnderPoint(Vector2 point, Container& container, int& order) {
 }
 //this actually tries to get a selectable object but still returns an object
 Owner& GetSelectableObjectUnderPoint(Vector2 point, Container& container, int& order) {
-    Owner obj;
-    obj.go_pointer = nullptr;
-
-    --order;
-    int returnOrder = -1;
-    do
-    {
-        ++order;
-        int save = order;
-        obj = GetObjectUnderPoint(point, container, order);
-        returnOrder = order;
-        order = save;
-    } while (obj.index == 1 && !obj.c_pointer->isSelectable);
-    order = returnOrder;
-
-    return obj;
+    
 }
 bool AddObjectToArray(vector<GameObject*> &objectArray, GameObject &object) {
     auto iterator = (objectArray.size()) ? objectArray.end() - 1 : objectArray.end();
@@ -534,25 +641,7 @@ bool AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPo
 }
 template<>
 bool AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObject &object, int beginPos, int endPos, void* parent) {
-    auto iterator = (!objectArray.empty()) ? objectArray.begin() + endPos : objectArray.begin();
-    GameObject* pointer = nullptr;
-
-    for (auto obj = objectArray.rbegin(); obj != objectArray.rend() - beginPos; ++obj)
-    {
-        pointer = (*obj).go_pointer;
-
-        if (*obj == objectArray[objectArray.empty() ? 0 : objectArray.size() - 1])
-        {
-            if (object.zIndex >= pointer->zIndex)
-                ++iterator;
-        }
-        else if (object.zIndex < pointer->zIndex && iterator != objectArray.begin())
-            --iterator;
-    }
-
-    Owner* obj = new Owner(&object);
-    obj->parent = static_cast<Container*>(parent);
-    objectArray.insert(iterator, *obj);//aici apeleaza constructorul de copiere
+    
 
     return true;
 }
@@ -666,4 +755,4 @@ bool ResetPositionInContainer(Container &container, Owner &owner, int beginPos, 
 
     return AddObjectToContainer(container, owner, beginPos, endPos);
 }
-//trebuie neaparat o functie de defragmentare
+//trebuie neaparat o functie de defragmentare*/

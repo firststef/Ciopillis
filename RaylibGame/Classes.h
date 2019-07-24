@@ -1,10 +1,9 @@
 #pragma once
-#include "Types.h"
 #include "raylib.h"
-#include <iostream>
 #include <vector>
-
-using namespace std;
+#include <memory>
+#include <variant>
+#include <functional>
 
 //-----[Macros]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -24,150 +23,95 @@ constexpr int MAX(int x, int y) { return ((x > y) ? x : y); }
 #define INVALID_NEW_INDEX -1
 #define ABSOLUT_NEW_INDEX -2
 
+typedef void (draw)();
+
+#define LAST_IDX(x) (x.children.empty() ? 0 : x.children.size() - 1)
+
 //-----[Classes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-class GameObject;
-class Card;
-class Board;
-class Container;
-struct Owner;
-class CardContainer;
-
-CardContainer ExtractNCardsFrom(CardContainer& container, int n);
-bool                            AddObjectToArray(vector<GameObject*> &objectArray, GameObject &object);
-template<typename T, typename K>
-bool                            AddObjectToArray(vector<T> &objectArray, K &object, int beginPos, int endPos, void* parent);
-template<>
-bool                            AddObjectToArray<Owner, GameObject>(vector< Owner > &objectArray, GameObject &object, int beginPos, int endPos, void* parent);
-template<>
-bool                            AddObjectToArray<Owner, Container>(vector< Owner > &objectArray, Container &object, int beginPos, int endPos, void* parent);
-Owner& GetSelectableObjectUnderPoint(Vector2 point, Container& container, int& order);
-bool ResetPositionInContainer(Container &container, Owner &owner, int beginPos, int endPos, bool(*func)(Container &cont, Owner &obj));
 
 class GameObject {
 public:
-    Types::SString                     name;
-    int                         zIndex = -1;
+    std::string                             name;
+    int                                     zIndex = -1;
 
-    Color                       color = LIGHTGRAY;
-    Rectangle                   position = { 0,0,0,0 };
-    Texture2D                   texture = { 0 };
+    Color                                   color = LIGHTGRAY;
+    Rectangle                               position = { 0,0,0,0 };
+    Texture2D                               texture = { 0 };
 
-    bool                        isActive = true;
-    bool                        isSelectable = false;
+    bool                                    isActive = true;
+    bool                                    isSelectable = false;
 
-    GameObject()                = default;
+    GameObject(std::string str, int z, Color col, Rectangle pos);
 
-    explicit GameObject(Types::SString name, Rectangle pos) : name(name), position(pos) {};
-
-    GameObject(GameObject &obj);
-
-    GameObject&                 operator=(const GameObject &obj) = default;
-
-    virtual GameObject*         GetCopy();
-
-    virtual void Draw()         {};
-
-    virtual ~GameObject()       = default;
+    std::function<void()>                   draw;
 };
 
 class Board : public GameObject {
 public:
-
-    Board()                     {}
-
-    Board(Types::SString name, Rectangle pos) : GameObject(name, pos) {}
-
-    void Draw()                 override;
+    Board(std::string str, int z, Color col, Rectangle pos);
 };
 
 class Card : public GameObject {
 public:
-
-    Card()                      {}
-
-    Card(Types::SString name, Rectangle rectangle, Texture2D image) : GameObject(name, rectangle) {
-        texture = image;
-    }
-
-    //ABILITY
-    ///maybe add a function pointer for each
-    ///or an event type
-
-    void Draw()                 override;
-    GameObject*                 GetCopy() override;
+    Card(std::string str, int z, Color col, Rectangle pos);
 };
+
+class Container;
 
 struct Owner
 {
-    union
-    {
-        GameObject*             go_pointer;
-        Container*              c_pointer;
-    };
-    Container*                  parent = nullptr;
-    char                        index = -1;//trebuie modificat in type
+    std::variant<std::unique_ptr<GameObject>, std::unique_ptr<Container>>   pointer;
 
-    bool                        alreadyDestroyed = false;
+    Container*                                                              parent;
 
-    Owner()                     = default;
-    Owner(GameObject* pointer);
-    Owner(Container* pointer);
-    Owner(const Owner& other)   = default; //these two will not create new objects
-    Owner(Owner&& other)        = default;
+    Owner() = default;
 
-    Owner&                      operator=(const Owner& other) = default; //these two will not create new objects
-    Owner&                      operator=(GameObject* pointer);
-    Owner&                      operator=(Container* pointer);
-    bool                        operator==(Owner& other);
-    bool                        operator==(void* ptr);
-    bool                        operator!=(Owner& other);
-    bool                        operator!=(void* ptr);
-    GameObject*                 operator->();
-    void                        MakeCopy(Owner& owner);
-    void                        Destroy();
+    void SetGameObject(GameObject go);
+    void SetContainer(Container c);
+    int  GetZIndex();
+    Rectangle GetPosition();
+    bool GetIsActive();
+    bool GetIsSelectable();
+    void* GetPointer();
+    std::function<void()> GetDraw();
 
-    ~Owner();
+    bool operator==(Owner& other);
+    bool operator==(void* ptr);
+    bool operator!=(Owner& other);
+    bool operator!=(void* ptr);
 };
 
 class Container : public GameObject {
 public:
-    vector< Owner >             children;
+    std::vector< Owner >                    children;
 
     enum ContainerType {
         LOGICAL,// don't show object or his children
         WRAPPER,// shows only his children 
         OVERLAY,// show only object 
         MATERIAL// show object and his children
-    }                           type = LOGICAL;
+    }                                       type = LOGICAL;
 
-    Container()                 = default;
-    Container(Container &cont)  { *this = cont; };
-    explicit Container(Types::SString name, Rectangle pos) : GameObject(name,pos) {};
+    Container(std::string str, int z, Color col, Rectangle pos, ContainerType t);
 
-    virtual Container*          GetCopy();
-    Owner&                      operator[](int n);
-    void                        Draw();
-    virtual void                AddChild(Container* obj);
-    virtual void                AddChild(GameObject* obj);
-    virtual void                Destroy();
+    virtual void                            PlaceChild(GameObject go, int beginPos, int endPos);
+    virtual void                            PlaceChild(Container cont, int beginPos, int endPos);
+    virtual void                            ResetChildPosition(Owner* child, int beginPos, int endPos, bool(*func)(Container &cont, Owner* obj));
+    virtual Owner                           RemoveChild(int idx);//trebuie testata
+    void                                    Destroy();
 
-    ~Container();
+    virtual Owner*                          GetSelectableObjectUnderPoint(Vector2 point, int order);
+    virtual Owner*                          GetGameObjectUnderPoint(Vector2 point, int order);
+    virtual Owner*                          GetObjectUnderPoint(Vector2 point, int order);
+    virtual Owner*                          GetParentUnderPoint(Vector2 point, int order, bool getLogical = false);
 
-    friend Owner&                GetGameObjectUnderPoint(Vector2 point, Container& container, int& order);
+    Owner*                                  operator[] (int n);
+
 };
 
-class CardContainer : public Container {
+class CardContainer {
 public:
-
-    CardContainer()             = default;
-    CardContainer(CardContainer& cont) { *this = cont; }
-    explicit CardContainer(Types::SString name, Rectangle pos) : Container(name, pos) {};
-
-    void                        Draw();
-    void                        AddList(vector<Card*> const& cards);
-    virtual void                AddChild(Card* obj);
-    Container*                  GetCopy() override;
+    std::vector<Card> cards;
 };
 
 class HorizontalContainer : public Container
@@ -179,36 +123,33 @@ public:
         GET_LAST_AVAILABLE
     };
 
-    AllocateType                allocateType = GET_FIRST_AVAILABLE;
+    AllocateType                            allocateType = GET_FIRST_AVAILABLE;
 
-    int                         numOfColumns = 1;
-    int                         numOfLines = 1;
+    int                                     numOfColumns = 1;
+    int                                     numOfLines = 1;
 
-    float                       marginLeft = 0;
-    float                       marginUp = 0;
-    float                       marginRight = 0;
-    float                       marginDown = 0;
+    float                                   marginLeft = 0;
+    float                                   marginUp = 0;
+    float                                   marginRight = 0;
+    float                                   marginDown = 0;
 
-    float                       spaceBetween = 0;
+    float                                   spaceBetween = 0;
 
-    bool                        stretchEnabled = false;
+    bool                                    stretchEnabled = false;
 
-    Rectangle*                  positionTable = nullptr;
-    Rectangle*                  savedPositionTable = nullptr;
-    int*                        indexTable = nullptr;
-    int*                        optimizeIndexTable = nullptr;
-    bool                        overwritePosOn = false;
+    Rectangle*                              positionTable = nullptr;
+    Rectangle*                              savedPositionTable = nullptr;
+    int*                                    indexTable = nullptr;
+    int*                                    optimizeIndexTable = nullptr;
+    bool                                    overwritePosOn = false;
 
-    explicit HorizontalContainer(Types::SString name, Rectangle pos, int columns, int lines);
-    explicit HorizontalContainer(int columns, int lines);
-    explicit HorizontalContainer(Types::SString name, Rectangle pos, int columns, int lines, float left, float up, float right, float down, float space);
-    explicit HorizontalContainer(int columns, int lines, float left, float up, float right, float down, float space);
+    HorizontalContainer(std::string str, int z, Color col, Rectangle pos, ContainerType t, int columns, int lines, float left, float up, float right, float down, float space);
 
-    void InitSize();
-    int AssignPos();
-    void OverwritePos();
-    void Draw();
-    void AddChild(Container* obj);
-    void AddChild(GameObject* obj);
+    void                                    InitSize();
+    int                                     AssignPos();
+    void                                    OverwritePos();
+
     ~HorizontalContainer();
 };
+
+CardContainer ExtractNCardsFrom(CardContainer& container, int n);
