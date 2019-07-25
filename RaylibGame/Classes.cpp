@@ -16,6 +16,20 @@ Card::Card(std::string str, int z, Color col, Rectangle pos) : GameObject(std::m
     draw = [&]()->void {DrawRectangleRec(position, color); };
 }
 
+Owner::Owner(const Owner& other)
+{
+    memcpy(this, &other, sizeof(Owner));
+    (const_cast<Owner*>(&other))->parent = nullptr;
+    if (other.pointer.index() == 0)
+        std::get<std::unique_ptr<GameObject>>((const_cast<Owner*>(&other))->pointer).reset(nullptr);
+
+    //aici e clar periculos
+}
+void Owner::operator=(const Owner& other)
+{
+    memcpy(this, &other, sizeof(Owner));
+}
+
 void Owner::SetGameObject(GameObject go)
 {
     pointer = std::make_unique<GameObject>(std::move(go));

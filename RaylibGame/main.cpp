@@ -40,19 +40,19 @@ int main()
     manager.activeObjects.PlaceChild(static_cast<GameObject>(*board), 0, LAST_IDX(manager.activeObjects));
 
     Card* card = new Card(std::string ("GREEN"),1, GREEN, { screenWidth / 2,screenHeight / 2, 225 , 375 });
-    cardDatabase->cards.emplace_back(card);
+    cardDatabase->cards.emplace_back(*card);
 
     Card* card1 = new Card(std::string ("BLUE") , 2, BLUE, { screenWidth / 2,screenHeight / 2, 225 , 375 });
-    cardDatabase->cards.emplace_back(card1);
+    cardDatabase->cards.emplace_back(*card1);
 
     Card* card2 = new Card(std::string ("RED") , 2, RED, { screenWidth / 2,screenHeight / 2, 225 , 375 });
-    cardDatabase->cards.emplace_back(card2);
+    cardDatabase->cards.emplace_back(*card2);
 
     Card* card3 = new Card(std::string ("BLACK"), 4 ,BLACK ,{ screenWidth / 2,screenHeight / 2, 225 , 375 });
-    cardDatabase->cards.emplace_back(card3);
+    cardDatabase->cards.emplace_back(*card3);
 
     Card* card4 = new Card(std::string ("PINK"),4, PINK, { screenWidth / 2,screenHeight / 2, 225 , 375 });
-    cardDatabase->cards.emplace_back(card4);
+    cardDatabase->cards.emplace_back(*card4);
 
     /*-----[GAME]-----------------------------------------------------------------------------------------------------------------------------*/
 

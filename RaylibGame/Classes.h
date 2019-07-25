@@ -4,11 +4,14 @@
 #include <memory>
 #include <variant>
 #include <functional>
+#include <iostream>
+#include <stdlib.h>
 
 //-----[Macros]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 constexpr int MAX(int x, int y) { return ((x > y) ? x : y); }
 
+#define SIMPLE(x) x
 #define GET_NAME(x) #x //could be used in combination with SClose for printing variables after destruction of SClose object
 #define CONCAT_NUM( x, y ) x#y
 #define MACRO_CONCAT( x, y ) CONCAT_NUM( x, y )
@@ -62,9 +65,11 @@ struct Owner
 {
     std::variant<std::unique_ptr<GameObject>, std::unique_ptr<Container>>   pointer;
 
-    Container*                                                              parent;
+    Container*                                                              parent = nullptr;
 
     Owner() = default;
+    Owner(const Owner& other);
+    void operator=(const Owner& other);
 
     void SetGameObject(GameObject go);
     void SetContainer(Container c);
