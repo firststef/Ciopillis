@@ -1,12 +1,12 @@
 #pragma once
-template<typename T, typename V>
-struct is_of_type
-{
-    static constexpr bool value = false;
-};
+#include <raylib.h>
 
-template<typename T>
-struct is_of_type<T,T>
+inline Rectangle operator+(Rectangle &a, Rectangle b)
 {
-    static constexpr bool value = true;
-};
+    return Rectangle { a.x + b.x,a.y + b.y,a.width + b.width,a.height + b.height };
+}
+
+inline Rectangle operator-(Rectangle &a, Rectangle b)
+{
+    return Rectangle{ a.x - b.x,a.y - b.y,a.width - b.width,a.height - b.height };
+}
