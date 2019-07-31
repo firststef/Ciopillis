@@ -19,6 +19,11 @@ public:
         systemManager = new SystemManager(pool);
     }
 
+    void Initialize() const
+    {
+        systemManager->Initialize();
+    }
+
     void Update() const 
     {
         systemManager->Execute();

@@ -3,6 +3,8 @@
 #include <bitset>
 #include <array>
 
+class IComponent;
+
 using ComponentID = std::size_t;
 
 inline ComponentID GetComponentID()
@@ -14,6 +16,8 @@ inline ComponentID GetComponentID()
 template <typename T>
 inline ComponentID GetTypeID() noexcept
 {
+    static_assert(std::is_base_of<IComponent, T>::value, "T is not derived from component");
+
     static ComponentID typeID = GetComponentID();
     return typeID;
 }

@@ -47,9 +47,6 @@
     <ClInclude Include="TransformComponent.h">
       <Filter>ECS\Components</Filter>
     </ClInclude>
-    <ClInclude Include="Components.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
     <ClInclude Include="DrawSystem.h">
       <Filter>ECS\Systems</Filter>
     </ClInclude>
@@ -66,6 +63,21 @@
       <Filter>ECS</Filter>
     </ClInclude>
     <ClInclude Include="Systems.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseInputComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseInputSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Components.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="EventComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="EventSystem.h">
       <Filter>ECS\Systems</Filter>
     </ClInclude>
   </ItemGroup>

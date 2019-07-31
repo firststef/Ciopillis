@@ -32,7 +32,7 @@ public:
     std::vector<EntityPtr> GetEntities(ComponentBitset bitset)
     {
         std::vector<EntityPtr> group;
-        for (auto ptr : entities)
+        for (auto& ptr : entities)
         {
             if (ptr->Has(bitset))
             {
@@ -41,6 +41,19 @@ public:
         }
 
         return group;
+    }
+
+    EntityPtr GetEntity(ComponentBitset bitset)
+    {
+        for (auto& ptr : entities)
+        {
+            if (ptr->Has(bitset))
+            {
+                return ptr;
+            }
+        }
+
+        return nullptr;
     }
 
 };

@@ -4,7 +4,7 @@
 class Entity
 {
     bool active = true;
-    std::vector<std::unique_ptr<IComponent>> components;
+    std::vector<std::shared_ptr<IComponent>> components;
 
     ComponentArray componentArray;
     ComponentBitset componentBitset;
@@ -38,8 +38,8 @@ public:
     {
         T* c(new T(std::forward<TArgs>(mArgs)...));
         c->entity = this;
-        std::unique_ptr<IComponent> uPtr{ c };
-        components.push_back(std::move(uPtr));
+        std::shared_ptr<IComponent> uPtr{ c };
+        components.push_back(uPtr);
 
         componentArray[GetTypeID<T>()] = c;
         componentBitset[GetTypeID<T>()] = true;
@@ -60,6 +60,23 @@ public:
     {
         componentArray[GetTypeID<T>()] = { std::forward<TArgs>(mArgs)... };
         return componentArray[GetTypeID<T>()];
+    }
+
+    template <typename T>
+    void Remove()
+    {
+        int idx = 0;
+        for (auto& ptr : components)
+        {
+            if (ptr.get() == componentArray[GetTypeID<T>()])
+            {
+                components.erase(components.begin() + idx);
+                break;
+            }
+            ++idx;
+        }
+        componentArray[GetTypeID<T>()] = nullptr;
+        componentBitset[GetTypeID<T>()] = 0;
     }
 };
 

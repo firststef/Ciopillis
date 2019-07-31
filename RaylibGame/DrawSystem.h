@@ -11,7 +11,7 @@ class DrawSystem : public ISystem
     {
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        for (auto e : pool->GetEntities(1<<GetTypeID<TransformComponent>() | 1<<GetTypeID<SpriteComponent>()))
+        for (auto& e : pool->GetEntities(1<<GetTypeID<TransformComponent>() | 1<<GetTypeID<SpriteComponent>()))
         {
             DrawRectangleRec(e->Get<TransformComponent>().rectangle, e->Get<SpriteComponent>().color);
         }

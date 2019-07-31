@@ -9,13 +9,6 @@ struct SpriteComponent : IComponent
     Color color = RED;
     Texture *texture = nullptr;
 
-    SpriteComponent() = default;
-
-    SpriteComponent(const char* path)
-    {
-
-    }
-
     void Init() override
     {
         position = &entity->Get<TransformComponent>();

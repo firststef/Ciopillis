@@ -144,7 +144,11 @@
     <ClInclude Include="DrawSystem.h" />
     <ClInclude Include="ECS.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="EventComponent.h" />
+    <ClInclude Include="EventSystem.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="MouseInputComponent.h" />
+    <ClInclude Include="MouseInputSystem.h" />
     <ClInclude Include="nvidia.h" />
     <ClInclude Include="Pool.h" />
     <ClInclude Include="PositionComponent.h" />
