@@ -1,34 +1,31 @@
 #pragma once
 #include "Pool.h"
 
-class ISystem
-{
-protected:
-    Pool* pool = nullptr;
+struct EventManager;
+struct IEvent;
 
-public:
+struct ISystem
+{
+    Pool* pool = nullptr;
+    ISystem* systemManager = nullptr; 
+    EventManager* eventManager = nullptr;
 
     ISystem() {}
-    ISystem(Pool* pool) : pool(pool) {}
 
-    virtual void SetPool(Pool* pool)
+    virtual void SetDependencies(Pool* pool, ISystem* systemManager, EventManager* eventManager)
     {
         this->pool = pool;
+        this->systemManager = systemManager;
+        this->eventManager = eventManager;
     }
-    virtual void Initialize() {};
-    virtual void Execute() {};
+    virtual void Initialize() {}
+    virtual void Execute() {}
+    virtual void ResolveEvent(std::shared_ptr<IEvent> event) {}
 };
 
-class SystemManager : public ISystem
+struct SystemManager : public ISystem
 {
     std::vector<std::shared_ptr<ISystem>> systems;
-
-public:
-
-    SystemManager(Pool* pool) : ISystem(pool)
-    {
-        
-    }
 
     void Initialize() override
     {
@@ -50,6 +47,6 @@ public:
     {
         systems.push_back(std::dynamic_pointer_cast<ISystem>(ptr));
 
-        ptr->SetPool(pool);
+        ptr->SetDependencies(pool, this, eventManager);
     }
 };

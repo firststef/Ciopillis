@@ -1,22 +1,22 @@
 #pragma once
-#include "raylib.h"
-#include <vector>
 #include <bitset>
 #include <array>
-#include "Component.h"
-#include "Entity.h"
-#include "System.h"
+#include "Event.h"
 
 class ECSManager
 {
 public:
-    Pool* pool;
-    SystemManager* systemManager;
+    Pool* pool = nullptr;
+    SystemManager* systemManager = nullptr;
+    EventManager* eventManager = nullptr;
 
     ECSManager()
     {
         pool = new Pool;
-        systemManager = new SystemManager(pool);
+        eventManager = new EventManager;
+        systemManager = new SystemManager;
+
+        systemManager->SetDependencies(pool, nullptr, eventManager);
     }
 
     void Initialize() const
@@ -32,6 +32,7 @@ public:
     ~ECSManager()
     {
         delete systemManager;
+        delete eventManager;
         delete pool;
     }
 };

@@ -1,6 +1,5 @@
 ﻿#include "nvidia.h"
 #include <raylib.h>
-#include "Helpers.h"
 #include "ECS.h"
 #include "Components.h"
 #include "Systems.h"
@@ -31,10 +30,20 @@ int enabledGestures = 0b0000000000001111;
 int main()
 {
     ECSManager manager;
-    manager.systemManager->AddSystem(dynamic_pointer_cast<ISystem>(std::make_shared<DrawSystem>(DrawSystem())));
-    manager.systemManager->AddSystem(dynamic_pointer_cast<ISystem>(std::make_shared<MouseInputSystem>(MouseInputSystem())));
-    manager.systemManager->AddSystem(dynamic_pointer_cast<ISystem>(std::make_shared<EventSystem>(EventSystem())));
-    
+
+    //SystemManager
+    auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
+    auto mouseInputSystem = std::make_shared<MouseInputSystem>(MouseInputSystem());
+    auto eventSystem = std::make_shared<EventSystem>(EventSystem());
+
+    manager.systemManager->AddSystem(drawSystem);
+    manager.systemManager->AddSystem(mouseInputSystem);
+    manager.systemManager->AddSystem(eventSystem);
+
+    //EventManager
+    manager.eventManager->Subscribe<MouseEvent>(eventSystem);
+
+    //Pool
     auto newPLayer(manager.pool->AddEntity());
     newPLayer->Add<TransformComponent>();
     newPLayer->Get<TransformComponent>().rectangle = {500,500, 300, 600 };
@@ -46,6 +55,8 @@ int main()
     card->Get<TransformComponent>().rectangle = { 500,500, 300, 600 };
     card->Add<SpriteComponent>().color = BLACK;
     card->Add<MouseInputComponent>();
+
+    card->Remove<MouseInputComponent>();
 
     InitWindow(screenWidth, screenHeight, windowTitle);
     SetTargetFPS(60);

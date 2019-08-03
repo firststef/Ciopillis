@@ -1,6 +1,5 @@
 #pragma once
-#include "Components.h"
-#include "ECS.h"
+#include "Component.h"
 
 struct TransformComponent : IComponent
 {

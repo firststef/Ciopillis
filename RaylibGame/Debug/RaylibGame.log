@@ -1,3 +1,5 @@
 ﻿  main.cpp
-c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(12): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+c:\users\stefan\dropbox\ciopillis\raylibgame\component.h(28): warning C4099: 'IComponent': type name first seen using 'class' now seen using 'struct'
+  c:\users\stefan\dropbox\ciopillis\raylibgame\component.h(27): note: see declaration of 'IComponent'
+     Creating library C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.lib and object C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exp
   RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exe

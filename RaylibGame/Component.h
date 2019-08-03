@@ -24,9 +24,8 @@ inline ComponentID GetTypeID() noexcept
 
 class Entity;
 
-class IComponent
+struct IComponent
 {
-public:
     Entity* entity = nullptr;
 
     virtual void Init() {}

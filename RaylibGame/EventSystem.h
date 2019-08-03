@@ -2,35 +2,36 @@
 #include "raylib.h"
 #include "Components.h"
 #include "System.h"
+#include "Event.h"
 
-class EventSystem : public ISystem
+struct EventSystem : ISystem, Receiver<MouseEvent>
 {
-    void Initialize() override {}
+    void Initialize() override
+    {
+    }
 
     void Execute() override
     {
-        auto ptr = pool->GetEntity(1 << GetTypeID<EventComponent>());
-        if (ptr == nullptr)
-            return;
+    }
 
-        switch (ptr->Get<EventComponent>().type)//probabil aici apeleaza game server
+    void Receive(const MouseEvent& event) override
+    {
+        switch (event.type)//probabil aici apeleaza game server
         {
-        case EventComponent::MOUSE_PRESS:
+        case MouseEvent::MOUSE_PRESS:
             std::printf("Press\n");
             break;
-        case EventComponent::MOUSE_BEGIN_DRAG:
+        case MouseEvent::MOUSE_BEGIN_DRAG:
             std::printf("Begin\n");
             break;
-        case EventComponent::MOUSE_CONTINUE_DRAG:
+        case MouseEvent::MOUSE_CONTINUE_DRAG:
             std::printf("Continue\n");
             break;
-        case EventComponent::MOUSE_END_DRAG:
-            std::printf("End\n");
+        case MouseEvent::MOUSE_END_DRAG:
+            std::printf("End\n"); //---> probabil referinta catre sistem grid si facut un request catre el pentru update
             break;
         default:
             break;
         }
-
-        ptr->Remove<EventComponent>();
     }
 };

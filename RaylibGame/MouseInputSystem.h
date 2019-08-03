@@ -33,7 +33,7 @@ public:
                 OnPress(mouse);
         }
 
-        if (lastGesture == GESTURE_DRAG)//vom introduce o componenta event dupa input, eventsystem o sa rezolve evenimentele si o sa stearga componenta
+        if (lastGesture == GESTURE_DRAG)
         {
             if (!dragStarted) {
 
@@ -68,7 +68,7 @@ public:
 
     void OnPress(Vector2 mouse)
     {
-        entity->Add<EventComponent>(EventComponent::EventType::MOUSE_PRESS);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_PRESS);
     }
 
     void OnBeginDrag(Vector2 mouse)
@@ -76,21 +76,21 @@ public:
         dragStarted = true;
         auto r = entity->Get<TransformComponent>().rectangle;
         mouseGrab = { mouse.x - r.x, mouse.y - r.y };
-        entity->Add<EventComponent>(EventComponent::EventType::MOUSE_BEGIN_DRAG);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_BEGIN_DRAG);
     }
 
     void OnContinueDrag(Vector2 mouse) const 
     {
         auto r = entity->Get<TransformComponent>().rectangle;
         entity->Get<TransformComponent>().rectangle = { mouse.x - mouseGrab.x,mouse.y - mouseGrab.y, r.width, r.height };
-        entity->Add<EventComponent>(EventComponent::EventType::MOUSE_CONTINUE_DRAG);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_CONTINUE_DRAG);
     }
 
     void OnEndDrag()
     {
         dragStarted = false;
         mouseGrab = { 0,0 };
-        entity->Add<EventComponent>(EventComponent::EventType::MOUSE_END_DRAG);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_END_DRAG);
         entity = nullptr;
     }
 };

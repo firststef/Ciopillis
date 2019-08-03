@@ -144,9 +144,13 @@
     <ClInclude Include="DrawSystem.h" />
     <ClInclude Include="ECS.h" />
     <ClInclude Include="Entity.h" />
-    <ClInclude Include="EventComponent.h" />
+    <ClInclude Include="Event.h" />
+    <ClInclude Include="Events.h" />
     <ClInclude Include="EventSystem.h" />
+    <ClInclude Include="GridContainerComponent.h" />
+    <ClInclude Include="GridContainerSystem.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="MouseEvent.h" />
     <ClInclude Include="MouseInputComponent.h" />
     <ClInclude Include="MouseInputSystem.h" />
     <ClInclude Include="nvidia.h" />

@@ -22,6 +22,9 @@
     <Filter Include="ECS\Systems">
       <UniqueIdentifier>{67a182c3-396d-4216-91df-d4346ec02b3b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ECS\Events">
+      <UniqueIdentifier>{90727ad2-9381-47e5-bb3d-8130b0d18fdc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -74,11 +77,23 @@
     <ClInclude Include="Components.h">
       <Filter>ECS\Components</Filter>
     </ClInclude>
-    <ClInclude Include="EventComponent.h">
-      <Filter>ECS\Components</Filter>
-    </ClInclude>
     <ClInclude Include="EventSystem.h">
       <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="GridContainerComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GridContainerSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Event.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseEvent.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Events.h">
+      <Filter>ECS\Events</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
