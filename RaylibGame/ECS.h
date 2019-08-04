@@ -6,33 +6,26 @@
 class ECSManager
 {
 public:
-    Pool* pool = nullptr;
-    SystemManager* systemManager = nullptr;
-    EventManager* eventManager = nullptr;
+    Pool pool;
+    SystemManager systemManager;
+    EventManager eventManager;
 
     ECSManager()
     {
-        pool = new Pool;
-        eventManager = new EventManager;
-        systemManager = new SystemManager;
-
-        systemManager->SetDependencies(pool, nullptr, eventManager);
+        systemManager.SetDependencies(&pool, nullptr, &eventManager);
     }
 
-    void Initialize() const
+    void Initialize() 
     {
-        systemManager->Initialize();
+        systemManager.Initialize();
     }
 
-    void Update() const 
+    void Update()  
     {
-        systemManager->Execute();
+        systemManager.Execute();
     }
 
     ~ECSManager()
     {
-        delete systemManager;
-        delete eventManager;
-        delete pool;
     }
 };

@@ -5,6 +5,7 @@
 
 class DrawSystem : public ISystem
 {
+public:
     void Initialize() override {}
 
     void Execute() override
@@ -13,7 +14,7 @@ class DrawSystem : public ISystem
         ClearBackground(RAYWHITE);
         for (auto& e : pool->GetEntities(1<<GetTypeID<TransformComponent>() | 1<<GetTypeID<SpriteComponent>()))
         {
-            DrawRectangleRec(e->Get<TransformComponent>().rectangle, e->Get<SpriteComponent>().color);
+            DrawRectangleRec(e->Get<TransformComponent>().position, e->Get<SpriteComponent>().color);
         }
         EndDrawing();
     }

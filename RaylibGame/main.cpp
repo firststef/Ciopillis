@@ -35,36 +35,59 @@ int main()
     auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
     auto mouseInputSystem = std::make_shared<MouseInputSystem>(MouseInputSystem());
     auto eventSystem = std::make_shared<EventSystem>(EventSystem());
+    auto gridContainerSystem = std::make_shared<GridContainerSystem>(GridContainerSystem());
 
-    manager.systemManager->AddSystem(drawSystem);
-    manager.systemManager->AddSystem(mouseInputSystem);
-    manager.systemManager->AddSystem(eventSystem);
+    manager.systemManager.AddSystem(drawSystem);
+    manager.systemManager.AddSystem(mouseInputSystem);
+    manager.systemManager.AddSystem(eventSystem);
+    manager.systemManager.AddSystem(gridContainerSystem);
 
     //EventManager
-    manager.eventManager->Subscribe<MouseEvent>(eventSystem);
+    manager.eventManager.Subscribe<MouseEvent>(eventSystem);
 
     //Pool
-    auto newPLayer(manager.pool->AddEntity());
-    newPLayer->Add<TransformComponent>();
-    newPLayer->Get<TransformComponent>().rectangle = {500,500, 300, 600 };
-    newPLayer->Add<SpriteComponent>();
-    newPLayer->Add<MouseInputComponent>();
+    auto board(manager.pool.AddEntity());
+    auto card(manager.pool.AddEntity());
+    auto card1(manager.pool.AddEntity());
+    auto card2(manager.pool.AddEntity());
 
-    auto card(manager.pool->AddEntity());
     card->Add<TransformComponent>();
-    card->Get<TransformComponent>().rectangle = { 500,500, 300, 600 };
+    card->Get<TransformComponent>().position = { 500,500, 300, 600 };
     card->Add<SpriteComponent>().color = BLACK;
     card->Add<MouseInputComponent>();
+    
+    card1->Add<TransformComponent>();
+    card1->Get<TransformComponent>().position = { 500,500, 300, 600 };
+    card1->Add<SpriteComponent>().color = GREEN;
+    card1->Add<MouseInputComponent>();
 
-    card->Remove<MouseInputComponent>();
+    card2->Add<TransformComponent>();
+    card2->Get<TransformComponent>().position = { 500,500, 300, 600 };
+    card2->Add<SpriteComponent>().color = BLUE;
+    card2->Add<MouseInputComponent>();
+
+    board->Add<TransformComponent>();
+    board->Get<TransformComponent>().position = {screenWidth / 4, screenHeight / 4, screenWidth / 2, screenHeight / 2};
+    board->Add<SpriteComponent>();
+    board->Add<GridContainerComponent>(4, 1, 10, 10, 10, 10, 20);
 
     InitWindow(screenWidth, screenHeight, windowTitle);
     SetTargetFPS(60);
 
     manager.Initialize();
+
+    gridContainerSystem->AddItem(board, card);
+    gridContainerSystem->AddItem(board, card1);
+    gridContainerSystem->AddItem(board, card2);
+
     while (!WindowShouldClose())
     {
         manager.Update();
+        int ok = 0;
+        if (ok)//turn ok on while running in debug
+        {
+            gridContainerSystem->ReleaseItem(board, card2);
+        }
     }
 
     return 0;

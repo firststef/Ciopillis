@@ -1,182 +1,190 @@
 #pragma once
 #include "raylib.h"
+#include <algorithm>
 #include "System.h"
 #include "Components.h"
-#include <queue>
-
-class HorizontalContainer : public Container
-{
-public:
-    enum AllocateType
-    {
-        GET_FIRST_AVAILABLE,
-        GET_LAST_AVAILABLE
-    };
-
-    AllocateType                            allocateType = GET_FIRST_AVAILABLE;
-
-    int                                     numOfColumns = 1;
-    int                                     numOfLines = 1;
-
-    float                                   marginLeft = 0;
-    float                                   marginUp = 0;
-    float                                   marginRight = 0;
-    float                                   marginDown = 0;
-
-    float                                   spaceBetween = 0;
-
-    bool                                    stretchEnabled = false;
-
-    Rectangle*                              positionTable = nullptr;
-    Rectangle*                              savedPositionTable = nullptr;
-    int*                                    indexTable = nullptr;
-    int*                                    optimizeIndexTable = nullptr;
-    bool                                    overwritePosOn = false;
-
-    HorizontalContainer(std::string str, int z, Color col, Rectangle pos, ContainerType t, int columns, int lines, float left, float up, float right, float down, float space);
-
-    void                                    InitSize();
-    int                                     AssignPos();
-    void                                    OverwritePos();
-
-    ~HorizontalContainer();
-};
-HorizontalContainer::HorizontalContainer(std::string str, int z, Color col, Rectangle pos, ContainerType t, int columns, int lines,
-    float left, float up, float right, float down, float space) : Container(std::move(str), z, col, pos, t)
-{
-    draw = [&]()->void
-    {
-        if (!overwritePosOn)
-        {
-            OverwritePos();
-            overwritePosOn = true;
-        }
-
-        if (type == OVERLAY || type == MATERIAL)
-            DrawRectangleRec(position, color);
-
-        if (type == WRAPPER || type == MATERIAL)
-            for (auto obj = children.begin(); obj != children.end(); ++obj) {
-                obj->GetDraw()();
-            }
-    };
-    color = PURPLE;
-    InitSize();
-};
-
-void HorizontalContainer::InitSize()
-{
-    positionTable = (Rectangle*)calloc(numOfColumns*numOfLines, sizeof(Rectangle));
-
-    const auto totalHeight = position.height - marginUp - marginDown - spaceBetween * (static_cast<float>(numOfLines) - 1.0f);
-    const auto totalWidth = position.width - marginLeft - marginRight - spaceBetween * (static_cast<float>(numOfColumns) - 1.0f);
-
-    const auto width = totalWidth / static_cast<float>(numOfColumns);
-    const auto height = totalHeight / static_cast<float>(numOfLines);
-
-    for (int lin = 0; lin < numOfLines; lin++)
-        for (int col = 0; col < numOfColumns; col++)
-        {//CAUTION: turning corner position into center positions
-            float y = position.y + marginUp + spaceBetween * static_cast<float>(lin) + height * static_cast<float>(lin) + height / 2;
-            float x = position.x + marginLeft + spaceBetween * static_cast<float>(col) + width * static_cast<float>(col) + width / 2;
-
-            const Rectangle aux{ x,y,width,height };
-            positionTable[numOfLines * lin + col] = aux;
-        }
-
-    indexTable = (int*)calloc(numOfColumns*numOfLines, sizeof(int));
-    optimizeIndexTable = (int*)calloc(numOfColumns*numOfLines, sizeof(int));
-    savedPositionTable = (Rectangle*)calloc(numOfColumns*numOfLines, sizeof(Rectangle));
-}
-int HorizontalContainer::AssignPos()
-{
-    switch (allocateType)
-    {
-    case GET_LAST_AVAILABLE:
-        for (int idx = numOfColumns * numOfLines - 1; idx >= 0; idx--)
-            if (optimizeIndexTable[idx] == 0)
-            {
-                optimizeIndexTable[idx] = 1;
-                return idx;
-            }
-        return -1;
-    case GET_FIRST_AVAILABLE:
-    default:
-        for (int idx = 0; idx < numOfColumns*numOfLines; idx++)
-            if (optimizeIndexTable[idx] == 0)
-            {
-                optimizeIndexTable[idx] = 1;
-                return idx;
-            }
-        return -1;
-    }
-}
-void HorizontalContainer::OverwritePos()
-{
-    int index = 0;
-    for (auto obj = children.begin(); obj != children.end(); ++obj) {
-        auto genericObj = static_cast<GameObject*>((*obj).GetPointer());
-
-        savedPositionTable[indexTable[index]] = genericObj->position;
-        auto getPos = positionTable[indexTable[index]];
-
-        if (stretchEnabled)
-        {
-            getPos.x -= getPos.width / 2;
-            getPos.y -= getPos.height / 2;
-        }
-        else
-        {
-            getPos.width = genericObj->position.width;
-            getPos.height = genericObj->position.height;
-            getPos.x -= getPos.width / 2;
-            getPos.y -= getPos.height / 2;
-        }
-
-        genericObj->position = getPos;
-        //genericObj->draw();
-        index++;
-    }
-}
-HorizontalContainer::~HorizontalContainer()
-{
-    free(positionTable);
-    free(indexTable);
-    free(optimizeIndexTable);
-    free(savedPositionTable);
-}
 
 class GridContainerSystem : public ISystem
 {
 public:
 
-    struct EventRequest
+    void Initialize() override
     {
-        enum RequestType
+        for (auto& e : pool->GetEntities(1 << GetTypeID<GridContainerComponent>() | 1 << GetTypeID<TransformComponent>()))
         {
-            NONE
-        };
-
-        EntityPtr entity;
-        EntityPtr container;
-    };
-
-    std::queue<EventRequest> queue;
-
-    void Initialize() override {}
+            auto& grid = e->Get<GridContainerComponent>();
+            Update(e);
+            grid.needsUpdate = false;
+        }
+    }
 
     void Execute() override
+    {
+        for (auto& e : pool->GetEntities(1 << GetTypeID<GridContainerComponent>() | 1 << GetTypeID<TransformComponent>()))
         {
-        for (auto& e : pool->GetEntities(1 << GetTypeID<GridContainerComponent>()))
+            auto& grid = e->Get<GridContainerComponent>();
+            if (grid.needsUpdate)
             {
-            auto& comp = e->Get<GridContainerComponent>();
-            if (comp.needsUpdate)
-                comp.Update();
+                Update(e);
+                grid.needsUpdate = false;
             }
         }
+    }
 
-private:
-    bool CreateFrame(EntityPtr ptr);
-    int GetEmptyPos();
-    bool 
+    void CreateFrame(EntityPtr e)
+    {
+        auto& grid = e->Get<GridContainerComponent>();
+        const auto pos = e->Get<TransformComponent>();
+
+        const auto totalHeight = pos.position.height - grid.marginUp - grid.marginDown - grid.spaceBetween * (static_cast<float>(grid.numOfLines) - 1.0f);
+        const auto totalWidth = pos.position.width - grid.marginLeft - grid.marginRight - grid.spaceBetween * (static_cast<float>(grid.numOfColumns) - 1.0f);
+
+        const auto width = totalWidth / static_cast<float>(grid.numOfColumns);
+        const auto height = totalHeight / static_cast<float>(grid.numOfLines);
+
+        for (int lin = 0; lin < grid.numOfLines; lin++)
+            for (int col = 0; col < grid.numOfColumns; col++)
+            {//CAUTION: turning corner position into center positions
+                float y = pos.position.y + grid.marginUp + grid.spaceBetween * static_cast<float>(lin) + height * static_cast<float>(lin) + height / 2;
+                float x = pos.position.x + grid.marginLeft + grid.spaceBetween * static_cast<float>(col) + width * static_cast<float>(col) + width / 2;
+
+                const Rectangle aux{ x,y,width,height };
+                grid.positionTable[grid.numOfLines * lin + col] = aux;
+            }
+    }
+    int GetFreeFrameIdx(EntityPtr e)
+    {
+        auto& grid = e->Get<GridContainerComponent>();
+
+        int idx = 0;
+        for (auto& el : grid.items)
+        {
+            if (el == nullptr)
+            {
+                return idx;
+            }
+            ++idx;
+        }
+
+        if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES) {
+            return idx;
+        }
+
+        return -1;
+    }
+    void RecountFrameCells(EntityPtr e)
+    {
+        auto& grid = e->Get<GridContainerComponent>();
+        
+        if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES)
+        {
+            grid.numOfColumns = 0;
+            grid.numOfLines = 0;
+
+            if (grid.numberOfContainedElements == 0)
+                return;
+
+            grid.numOfLines = 1;
+            if (grid.numberOfContainedElements <= grid.maxNumOfColumns)
+            {
+                grid.numOfColumns = grid.numberOfContainedElements;
+                return;
+            }
+
+            grid.numOfColumns = grid.maxNumOfColumns;
+
+            while(grid.numOfColumns*grid.numOfLines < grid.numberOfContainedElements)
+            {
+                ++grid.numOfLines;
+            }
+        }
+    }
+    void PlaceItemsInFrame(EntityPtr e)
+    {
+        auto& grid = e->Get<GridContainerComponent>();
+
+        int idx = 0;
+        for (auto& obj : grid.items) {
+
+            if (obj == nullptr)
+                continue;
+
+            auto& pos = obj->Get<TransformComponent>().position;
+
+            auto getPos = grid.positionTable[idx];
+
+            if (grid.stretchEnabled)
+            {
+                getPos.x -= getPos.width / 2;
+                getPos.y -= getPos.height / 2;
+            }
+            else
+            {
+                getPos.width = pos.width;
+                getPos.height = pos.height;
+                getPos.x -= getPos.width / 2;
+                getPos.y -= getPos.height / 2;
+            }
+
+            pos = getPos;
+
+            ++idx;
+        }
+    }
+    bool AddItem(EntityPtr grid, EntityPtr item)
+    {
+        auto& cont = grid->Get<GridContainerComponent>();
+
+        auto idx = GetFreeFrameIdx(grid);
+
+        if (idx == cont.items.size())//dynamic add
+            cont.items.push_back(nullptr);
+        cont.items[idx] = item;
+
+        ++cont.numberOfContainedElements;
+
+        RecountFrameCells(grid);
+
+        cont.needsUpdate = true;
+
+        return true;
+    }
+    void ReleaseItem(EntityPtr e, EntityPtr item)
+    {
+        auto& grid = e->Get<GridContainerComponent>();
+
+        auto it = std::find(grid.items.begin(), grid.items.end(), item);
+        if (it == grid.items.end())
+            return;
+
+        int idx = std::distance(grid.items.begin(), it);
+
+        grid.items[idx] = nullptr;
+        grid.numberOfContainedElements--;
+
+        if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES)
+        {
+            std::remove(grid.items.begin() + idx, grid.items.begin() + idx + 1, nullptr);
+        }
+
+        RecountFrameCells(e);
+
+        grid.needsUpdate = true;
+    }
+    void ReinitFrame(EntityPtr e)
+    {
+        auto& grid = e->Get<GridContainerComponent>();
+
+        if (grid.items.size() != grid.numOfColumns * grid.numOfLines)
+            grid.items.resize(grid.numOfColumns * grid.numOfLines);
+
+        grid.positionTable.clear();
+        grid.positionTable.resize(grid.numOfColumns * grid.numOfLines);
+    }
+    void Update(EntityPtr e)
+    {
+        ReinitFrame(e);
+        CreateFrame(e);
+        PlaceItemsInFrame(e);
+    }
 };

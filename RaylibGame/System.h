@@ -20,7 +20,6 @@ struct ISystem
     }
     virtual void Initialize() {}
     virtual void Execute() {}
-    virtual void ResolveEvent(std::shared_ptr<IEvent> event) {}
 };
 
 struct SystemManager : public ISystem

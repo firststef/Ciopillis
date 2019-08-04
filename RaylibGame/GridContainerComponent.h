@@ -7,14 +7,18 @@ struct GridContainerComponent : IComponent
     bool needsUpdate = true;
 
     //System-related
-    enum AllocateType
+    enum ItemSetMode
     {
-        GET_FIRST_AVAILABLE,
-        GET_LAST_AVAILABLE
-    } allocateType = GET_FIRST_AVAILABLE;
+        FIXED_GET_FIRST_AVAILABLE,
+        FIXED_SET_IN_PLACE,
+        DYNAMIC_ERASE_SPACES
+    } itemSetMode = FIXED_GET_FIRST_AVAILABLE;
 
     int                                     numOfColumns = 1;
     int                                     numOfLines = 1;
+
+    int                                     maxNumOfColumns = 1;
+    int                                     maxNumOfLines = 1;
 
     float                                   marginLeft = 0;
     float                                   marginUp = 0;
@@ -25,70 +29,15 @@ struct GridContainerComponent : IComponent
 
     bool                                    stretchEnabled = false;
 
-    Rectangle*                              positionTable = nullptr;
-    Rectangle*                              savedPositionTable = nullptr;
-    int*                                    indexTable = nullptr;
-    int*                                    optimizeIndexTable = nullptr;
-    bool                                    overwritePosOn = false;
+    std::vector<Rectangle>                  positionTable;
 
-    GridContainerComponent(int columns, int lines, float left, float up, float right, float down, float space);
-    int AssignPos();
-};
+    int                                     numberOfContainedElements = 0;
+    std::vector<EntityPtr>                  items;
 
-inline GridContainerComponent::GridContainerComponent(int columns, int lines, float left, float up, float right,
-    float down, float space)
-{
-
-    InitSize();
-}
-
-int GridContainerComponent::AssignPos()
-{
-    switch (allocateType)
+    GridContainerComponent(int columns, int lines, float left, float up, float right, float down, float space,
+        bool stretch = false, ItemSetMode itemSetMode = FIXED_GET_FIRST_AVAILABLE)
+    : itemSetMode(itemSetMode), numOfColumns(columns), numOfLines(lines), maxNumOfColumns(columns), maxNumOfLines(lines),
+        marginLeft(left), marginUp(up), marginRight(right), marginDown(down), spaceBetween(space), stretchEnabled(stretch)
     {
-    case GET_LAST_AVAILABLE:
-        for (int idx = numOfColumns * numOfLines - 1; idx >= 0; idx--)
-            if (optimizeIndexTable[idx] == 0)
-            {
-                optimizeIndexTable[idx] = 1;
-                return idx;
-            }
-        return -1;
-    case GET_FIRST_AVAILABLE:
-    default:
-        for (int idx = 0; idx < numOfColumns*numOfLines; idx++)
-            if (optimizeIndexTable[idx] == 0)
-            {
-                optimizeIndexTable[idx] = 1;
-                return idx;
-            }
-        return -1;
     }
-}
-void GridContainerComponent::OverwritePos()
-{
-    int index = 0;
-    for (auto obj = children.begin(); obj != children.end(); ++obj) {
-        auto genericObj = static_cast<GameObject*>((*obj).GetPointer());
-
-        savedPositionTable[indexTable[index]] = genericObj->position;
-        auto getPos = positionTable[indexTable[index]];
-
-        if (stretchEnabled)
-        {
-            getPos.x -= getPos.width / 2;
-            getPos.y -= getPos.height / 2;
-        }
-        else
-        {
-            getPos.width = genericObj->position.width;
-            getPos.height = genericObj->position.height;
-            getPos.x -= getPos.width / 2;
-            getPos.y -= getPos.height / 2;
-        }
-
-        genericObj->position = getPos;
-        //genericObj->draw();
-        index++;
-    }
-}
+};

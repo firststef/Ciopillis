@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 #include <vector>
 #include "System.h"
 #include <functional>
@@ -28,12 +29,6 @@ struct IEvent
 {
 };
 
-template<typename Event>
-struct Receiver
-{
-    virtual void Receive(const Event& event) {}
-};
-
 struct ReceiverCallbacksHolder
 {
     std::vector<std::function<void(const void*)>> typeSubscribers;
@@ -42,7 +37,7 @@ struct ReceiverCallbacksHolder
 template<typename E>
 struct TFuncToVoidFuncConverter
 {
-    TFuncToVoidFuncConverter(std::function<void(const E &)> callback) : callback(callback) {}
+    TFuncToVoidFuncConverter(std::function<void(const E &)> callback) : callback(std::move(callback)) {}
     void operator()(const void *event) { callback(*(static_cast<const E*>(event))); }
     std::function<void(const E &)> callback;
 };
@@ -65,9 +60,7 @@ struct EventManager
             holders[GetEventTypeID<Event>()] = new ReceiverCallbacksHolder;
         }
 
-        holders[GetEventTypeID<Event>()]->typeSubscribers.push_back(nullptr);
-        auto& copy = holders[GetEventTypeID<Event>()]->typeSubscribers.back();
-        copy = std::move(converter);
+        holders[GetEventTypeID<Event>()]->typeSubscribers.push_back(converter);
     }
 
     template<typename Event, typename System>

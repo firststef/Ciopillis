@@ -3,16 +3,16 @@
 
 struct TransformComponent : IComponent
 {
-    Rectangle rectangle;
+    Rectangle position;
 
     TransformComponent()
     {
-        rectangle.x = 0;
-        rectangle.y = 0;
-        rectangle.width = 100;
-        rectangle.height = 100;
+        position.x = 0;
+        position.y = 0;
+        position.width = 100;
+        position.height = 100;
     }
     
-    TransformComponent(Rectangle rect) : rectangle(rect) {}
+    TransformComponent(Rectangle rect) : position(rect) {}
 
 };

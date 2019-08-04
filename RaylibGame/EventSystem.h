@@ -1,11 +1,10 @@
 #pragma once
-#include "raylib.h"
 #include "Components.h"
 #include "System.h"
-#include "Event.h"
 
-struct EventSystem : ISystem, Receiver<MouseEvent>
+class EventSystem : public ISystem
 {
+public:
     void Initialize() override
     {
     }
@@ -14,7 +13,7 @@ struct EventSystem : ISystem, Receiver<MouseEvent>
     {
     }
 
-    void Receive(const MouseEvent& event) override
+    void Receive(const MouseEvent& event)
     {
         switch (event.type)//probabil aici apeleaza game server
         {
