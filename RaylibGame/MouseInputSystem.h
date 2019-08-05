@@ -24,7 +24,7 @@ class MouseInputSystem : public ISystem
 
     void OnPress(Vector2 mouse)
     {
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_PRESS);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_PRESS, entity);
     }
 
     void OnBeginDrag(Vector2 mouse)
@@ -32,21 +32,21 @@ class MouseInputSystem : public ISystem
         dragStarted = true;
         auto r = entity->Get<TransformComponent>().position;
         mouseGrab = { mouse.x - r.x, mouse.y - r.y };
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_BEGIN_DRAG);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_BEGIN_DRAG, entity);
     }
 
     void OnContinueDrag(Vector2 mouse) 
     {
         auto r = entity->Get<TransformComponent>().position;
         entity->Get<TransformComponent>().position = { mouse.x - mouseGrab.x,mouse.y - mouseGrab.y, r.width, r.height };
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_CONTINUE_DRAG);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_CONTINUE_DRAG, entity);
     }
 
     void OnEndDrag()
     {
         dragStarted = false;
         mouseGrab = { 0,0 };
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_END_DRAG);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_END_DRAG, entity);
         entity = nullptr;
     }
 

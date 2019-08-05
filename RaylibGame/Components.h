@@ -5,3 +5,4 @@
 #include "SpriteComponent.h"
 #include "MouseInputComponent.h"
 #include "GridContainerComponent.h"
+#include "GridContainerChildComponent.h"

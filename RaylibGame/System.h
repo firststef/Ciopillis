@@ -3,16 +3,17 @@
 
 struct EventManager;
 struct IEvent;
+struct SystemManager;
 
 struct ISystem
 {
     Pool* pool = nullptr;
-    ISystem* systemManager = nullptr; 
+    SystemManager* systemManager = nullptr;
     EventManager* eventManager = nullptr;
 
     ISystem() {}
 
-    virtual void SetDependencies(Pool* pool, ISystem* systemManager, EventManager* eventManager)
+    virtual void SetDependencies(Pool* pool, SystemManager* systemManager, EventManager* eventManager)
     {
         this->pool = pool;
         this->systemManager = systemManager;
@@ -47,5 +48,16 @@ struct SystemManager : public ISystem
         systems.push_back(std::dynamic_pointer_cast<ISystem>(ptr));
 
         ptr->SetDependencies(pool, this, eventManager);
+    }
+
+    template<typename T>
+    T* Get() const
+    {
+        for (const auto& ptr : systems)
+        {
+            if (std::dynamic_pointer_cast<T, ISystem>(std::make_shared<ISystem>(*(ptr.get())))!= nullptr)
+                return std::dynamic_pointer_cast<T, ISystem>(std::make_shared<ISystem>(*(ptr.get()))).get();
+        }
+        return nullptr;
     }
 };

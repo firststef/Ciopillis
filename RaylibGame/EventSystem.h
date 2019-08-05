@@ -1,10 +1,13 @@
 #pragma once
 #include "Components.h"
 #include "System.h"
+#include "GridContainerSystem.h"
 
 class EventSystem : public ISystem
 {
 public:
+    EntityPtr parent;//trebuie scos si extras la end_Drag, asta e doar pt teste
+
     void Initialize() override
     {
     }
@@ -13,24 +16,36 @@ public:
     {
     }
 
-    void Receive(const MouseEvent& event)
+    void Receive(const MouseEvent& event)//probabil aici apeleaza game server
     {
-        switch (event.type)//probabil aici apeleaza game server
+        if (event.type == MouseEvent::MOUSE_PRESS)
         {
-        case MouseEvent::MOUSE_PRESS:
             std::printf("Press\n");
-            break;
-        case MouseEvent::MOUSE_BEGIN_DRAG:
+        } 
+        else if(event.type == MouseEvent::MOUSE_BEGIN_DRAG)
+        {
             std::printf("Begin\n");
-            break;
-        case MouseEvent::MOUSE_CONTINUE_DRAG:
+
+            //parent = event.entity->Get<GridContainerChildComponent>().parent;
+            //eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, parent);
+
+            if (event.entity->Has(1 << GetTypeID<GridContainerChildComponent>()))
+            {
+                parent = event.entity->Get<GridContainerChildComponent>().parent;
+                systemManager->Get<GridContainerSystem>()->ReleaseItem(parent, event.entity);
+            }
+        }
+        else if (event.type == MouseEvent::MOUSE_CONTINUE_DRAG) 
+        {
             std::printf("Continue\n");
-            break;
-        case MouseEvent::MOUSE_END_DRAG:
-            std::printf("End\n"); //---> probabil referinta catre sistem grid si facut un request catre el pentru update
-            break;
-        default:
-            break;
+        }
+        else if (event.type == MouseEvent::MOUSE_END_DRAG) 
+        {
+            std::printf("End\n");
+            
+            //eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, event.entity, parent);
+            systemManager->Get<GridContainerSystem>()->AddItem(parent, event.entity);
+            parent = nullptr;
         }
     }
 };

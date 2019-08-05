@@ -8,11 +8,9 @@ using namespace std;
 
 //-----[Notes]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
-
 //i could do a free roam option - you can drag around the cards and at some point when you want to tidy up,
 //you can click a button to bring them back - being that they are all stored in the memory, it  should be
 //easy to locate their place - perhaps some option added to the input manager
-
 */
 //-----[Globals]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -44,6 +42,7 @@ int main()
 
     //EventManager
     manager.eventManager.Subscribe<MouseEvent>(eventSystem);
+    manager.eventManager.Subscribe<GridAddRemoveEvent>(gridContainerSystem);
 
     //Pool
     auto board(manager.pool.AddEntity());
@@ -71,11 +70,13 @@ int main()
     board->Add<SpriteComponent>();
     board->Add<GridContainerComponent>(4, 1, 10, 10, 10, 10, 20);
 
+    //Initialization
     InitWindow(screenWidth, screenHeight, windowTitle);
     SetTargetFPS(60);
 
     manager.Initialize();
 
+    //Game actions
     gridContainerSystem->AddItem(board, card);
     gridContainerSystem->AddItem(board, card1);
     gridContainerSystem->AddItem(board, card2);

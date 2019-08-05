@@ -41,9 +41,6 @@
     <ClInclude Include="ECS.h">
       <Filter>ECS</Filter>
     </ClInclude>
-    <ClInclude Include="PositionComponent.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
     <ClInclude Include="SpriteComponent.h">
       <Filter>ECS\Components</Filter>
     </ClInclude>
@@ -54,12 +51,6 @@
       <Filter>ECS\Systems</Filter>
     </ClInclude>
     <ClInclude Include="Entity.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="Component.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="System.h">
       <Filter>ECS</Filter>
     </ClInclude>
     <ClInclude Include="Pool.h">
@@ -93,6 +84,18 @@
       <Filter>ECS\Events</Filter>
     </ClInclude>
     <ClInclude Include="Events.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="GridContainerChildComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="System.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="GridAddRemoveEvent.h">
       <Filter>ECS\Events</Filter>
     </ClInclude>
   </ItemGroup>

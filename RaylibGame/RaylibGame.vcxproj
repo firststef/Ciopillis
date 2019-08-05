@@ -147,6 +147,8 @@
     <ClInclude Include="Event.h" />
     <ClInclude Include="Events.h" />
     <ClInclude Include="EventSystem.h" />
+    <ClInclude Include="GridAddRemoveEvent.h" />
+    <ClInclude Include="GridContainerChildComponent.h" />
     <ClInclude Include="GridContainerComponent.h" />
     <ClInclude Include="GridContainerSystem.h" />
     <ClInclude Include="Helpers.h" />
@@ -155,7 +157,6 @@
     <ClInclude Include="MouseInputSystem.h" />
     <ClInclude Include="nvidia.h" />
     <ClInclude Include="Pool.h" />
-    <ClInclude Include="PositionComponent.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Systems.h" />

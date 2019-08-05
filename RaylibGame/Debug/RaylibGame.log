@@ -1,1 +1,16 @@
-﻿
+﻿  main.cpp
+c:\users\stefan\dropbox\ciopillis\raylibgame\component.h(27): warning C4099: 'IComponent': type name first seen using 'class' now seen using 'struct'
+  c:\users\stefan\dropbox\ciopillis\raylibgame\component.h(26): note: see declaration of 'IComponent'
+c:\users\stefan\dropbox\ciopillis\raylibgame\gridcontainersystem.h(171): warning C4834: discarding return value of function with 'nodiscard' attribute
+c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(32): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+c:\users\stefan\dropbox\ciopillis\raylibgame\entity.h(39): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=int
+          ]
+  c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(71): note: see reference to function template instantiation 'T &Entity::Add<GridContainerComponent,int,int,int,int,int,int,int>(int &&,int &&,int &&,int &&,int &&,int &&,int &&)' being compiled
+          with
+          [
+              T=GridContainerComponent
+          ]
+  RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exe

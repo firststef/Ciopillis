@@ -139,7 +139,9 @@ public:
 
         if (idx == cont.items.size())//dynamic add
             cont.items.push_back(nullptr);
+        
         cont.items[idx] = item;
+        item->Add<GridContainerChildComponent>(grid);
 
         ++cont.numberOfContainedElements;
 
@@ -160,6 +162,8 @@ public:
         int idx = std::distance(grid.items.begin(), it);
 
         grid.items[idx] = nullptr;
+        item->Remove<GridContainerChildComponent>();
+
         grid.numberOfContainedElements--;
 
         if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES)
@@ -186,5 +190,17 @@ public:
         ReinitFrame(e);
         CreateFrame(e);
         PlaceItemsInFrame(e);
+    }
+
+    void Receive(const GridAddRemoveEvent& event)
+    {
+        if (event.type == GridAddRemoveEvent::ADD)
+        {
+            AddItem(event.parent, event.entity);
+        }
+        else if(event.type == GridAddRemoveEvent::REMOVE)
+        {
+            ReleaseItem(event.parent, event.entity);
+        }
     }
 };

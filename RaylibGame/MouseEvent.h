@@ -12,12 +12,9 @@ struct MouseEvent : IEvent
         MOUSE_END_DRAG
     } type = NONE;
 
-    MouseEvent(MouseAction action) : type(action)
-    {
-    }
+    EntityPtr entity;
 
-    MouseEvent(char x)
+    MouseEvent(MouseAction action, EntityPtr entity) : type(action), entity(entity)
     {
-
     }
 };
