@@ -4,6 +4,7 @@
 struct TransformComponent : IComponent
 {
     Rectangle position;
+    int zIndex = -1;
 
     TransformComponent()
     {

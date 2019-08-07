@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.329
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaylibGame", "RaylibGame\RaylibGame.vcxproj", "{F64DCF43-F9AA-4580-8A81-F11E3FCD4842}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameServer", "GameServer\GameServer.vcxproj", "{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{F64DCF43-F9AA-4580-8A81-F11E3FCD4842}.Release|x64.Build.0 = Release|x64
 		{F64DCF43-F9AA-4580-8A81-F11E3FCD4842}.Release|x86.ActiveCfg = Release|Win32
 		{F64DCF43-F9AA-4580-8A81-F11E3FCD4842}.Release|x86.Build.0 = Release|Win32
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Debug|x64.ActiveCfg = Debug|x64
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Debug|x64.Build.0 = Debug|x64
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Debug|x86.ActiveCfg = Debug|Win32
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Debug|x86.Build.0 = Debug|Win32
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Release|x64.ActiveCfg = Release|x64
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Release|x64.Build.0 = Release|x64
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Release|x86.ActiveCfg = Release|Win32
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

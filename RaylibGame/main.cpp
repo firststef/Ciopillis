@@ -1,4 +1,8 @@
-﻿#include "nvidia.h"
+﻿// This is a personal academic project. Dear PVS-Studio, please check it.
+
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
+#include "nvidia.h"
 #include <raylib.h>
 #include "ECS.h"
 #include "Components.h"
@@ -68,7 +72,7 @@ int main()
     board->Add<TransformComponent>();
     board->Get<TransformComponent>().position = {screenWidth / 4, screenHeight / 4, screenWidth / 2, screenHeight / 2};
     board->Add<SpriteComponent>();
-    board->Add<GridContainerComponent>(4, 1, 10, 10, 10, 10, 20);
+    board->Add<GridContainerComponent>(4, 1, 10, 10, 10, 10, 20, false, GridContainerComponent::DYNAMIC_ERASE_SPACES);
 
     //Initialization
     InitWindow(screenWidth, screenHeight, windowTitle);

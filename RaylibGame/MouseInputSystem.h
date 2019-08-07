@@ -24,7 +24,7 @@ class MouseInputSystem : public ISystem
 
     void OnPress(Vector2 mouse)
     {
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_PRESS, entity);
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_PRESS, entity, mouse);
     }
 
     void OnBeginDrag(Vector2 mouse)
@@ -32,21 +32,24 @@ class MouseInputSystem : public ISystem
         dragStarted = true;
         auto r = entity->Get<TransformComponent>().position;
         mouseGrab = { mouse.x - r.x, mouse.y - r.y };
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_BEGIN_DRAG, entity);
+
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_BEGIN_DRAG, entity, mouse);
     }
 
     void OnContinueDrag(Vector2 mouse) 
     {
         auto r = entity->Get<TransformComponent>().position;
         entity->Get<TransformComponent>().position = { mouse.x - mouseGrab.x,mouse.y - mouseGrab.y, r.width, r.height };
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_CONTINUE_DRAG, entity);
+
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_CONTINUE_DRAG, entity, mouse);
     }
 
-    void OnEndDrag()
+    void OnEndDrag(Vector2 mouse)//aici o sa am nevoie de coordonate mouse deci cred ca trebuie sa scap de MouseEvent sau sa il modific sau cv
     {
+        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_END_DRAG, entity, mouse);
+        
         dragStarted = false;
         mouseGrab = { 0,0 };
-        eventManager->Notify<MouseEvent>(MouseEvent::MOUSE_END_DRAG, entity);
         entity = nullptr;
     }
 
@@ -86,9 +89,14 @@ public:
                 OnContinueDrag(mouse);
             }
         }
-        else if (previousGesture == GESTURE_DRAG) {
+        else if (previousGesture == GESTURE_DRAG || previousGesture == GESTURE_HOLD) {
             if (dragStarted)
-                OnEndDrag();
+            {
+                if (lastGesture == GESTURE_HOLD)
+                    OnContinueDrag(mouse);
+                else
+                    OnEndDrag(mouse);
+            }              
         }
 
         previousGesture = lastGesture;

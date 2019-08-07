@@ -1,6 +1,6 @@
 #pragma once
 #include "Entity.h"
-#include <unordered_set>
+#include "TransformComponent.h" 
 
 class Pool
 {
@@ -21,6 +21,7 @@ public:
     {
         EntityPtr e (new Entity());
         entities.push_back(std::move(e));
+
         return entities.back();
     }
 
@@ -29,7 +30,7 @@ public:
         return std::vector<EntityPtr>(entities.begin(), entities.end());
     }
 
-    std::vector<EntityPtr> GetEntities(ComponentBitset bitset)
+    std::vector<EntityPtr> GetEntities(const ComponentBitset& bitset)
     {
         std::vector<EntityPtr> group;
         for (auto& ptr : entities)
@@ -43,7 +44,7 @@ public:
         return group;
     }
 
-    EntityPtr GetEntity(ComponentBitset bitset)
+    EntityPtr GetEntity(const ComponentBitset& bitset)
     {
         for (auto& ptr : entities)
         {
@@ -55,5 +56,4 @@ public:
 
         return nullptr;
     }
-
 };

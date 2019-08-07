@@ -50,8 +50,8 @@ struct EventManager
     void Subscribe(const std::shared_ptr<System>& system)
     {
         void (System::*Receive)(const Event &) = &System::Receive;
-        if (Receive == nullptr)
-            throw std::exception("Function conversion failed");
+        //if (Receive == nullptr)
+        //    throw std::exception("Function conversion failed"); -> SFINAE way to determine if class has function
 
         auto converter = TFuncToVoidFuncConverter<Event>(std::bind(Receive, static_cast<System*>(system.get()), std::placeholders::_1));
 

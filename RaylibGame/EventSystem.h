@@ -6,7 +6,6 @@
 class EventSystem : public ISystem
 {
 public:
-    EntityPtr parent;//trebuie scos si extras la end_Drag, asta e doar pt teste
 
     void Initialize() override
     {
@@ -26,13 +25,9 @@ public:
         {
             std::printf("Begin\n");
 
-            //parent = event.entity->Get<GridContainerChildComponent>().parent;
-            //eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, parent);
-
-            if (event.entity->Has(1 << GetTypeID<GridContainerChildComponent>()))
-            {
-                parent = event.entity->Get<GridContainerChildComponent>().parent;
-                systemManager->Get<GridContainerSystem>()->ReleaseItem(parent, event.entity);
+            if (event.entity->Has(1 << GetTypeID<GridContainerChildComponent>())) {
+                auto parent = event.entity->Get<GridContainerChildComponent>().parent;
+                eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, event.entity, parent);
             }
         }
         else if (event.type == MouseEvent::MOUSE_CONTINUE_DRAG) 
@@ -42,10 +37,38 @@ public:
         else if (event.type == MouseEvent::MOUSE_END_DRAG) 
         {
             std::printf("End\n");
-            
-            //eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, event.entity, parent);
-            systemManager->Get<GridContainerSystem>()->AddItem(parent, event.entity);
-            parent = nullptr;
+
+            const auto coord = event.entity->Get<TransformComponent>().position;
+            Vector2 center = { coord.x + coord.width / 2, coord.y + coord.height / 2 };
+;
+            auto objects = pool->GetEntities(1 << GetTypeID<TransformComponent>());
+            std::sort(objects.begin(), objects.end(), [](EntityPtr left, EntityPtr right)->bool
+            {
+                return left->Get<TransformComponent>().zIndex > right->Get<TransformComponent>().zIndex;
+            });
+
+            EntityPtr parent;
+            for (auto& zObj : objects)
+            {
+                if (zObj->Has(1 << GetTypeID<GridContainerComponent>()))
+                {
+                    const auto parentCoord = zObj->Get<TransformComponent>().position;
+
+                    if (CheckCollisionPointRec(center, parentCoord))
+                    {
+                        parent = zObj;
+                        break;
+                    }
+                }
+            }
+
+            if (parent != nullptr)
+                eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, parent);
         }
+    }
+
+    bool QueryServer()
+    {
+        
     }
 };

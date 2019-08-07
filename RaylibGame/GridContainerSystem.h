@@ -61,13 +61,16 @@ public:
         {
             if (el == nullptr)
             {
-                return idx;
+                break;
             }
             ++idx;
         }
 
-        if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES) {
+        if (grid.itemSetMode == GridContainerComponent::FIXED_GET_FIRST_AVAILABLE) {
             return idx;
+        }
+        if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES) {
+            return grid.items.size();
         }
 
         return -1;
@@ -103,32 +106,67 @@ public:
     {
         auto& grid = e->Get<GridContainerComponent>();
 
-        int idx = 0;
-        for (auto& obj : grid.items) {
+        if (grid.itemSetMode == GridContainerComponent::FIXED_GET_FIRST_AVAILABLE || grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES) {
+            int idx = 0;
+            for (auto& obj : grid.items) {
 
-            if (obj == nullptr)
-                continue;
+                if (obj == nullptr)
+                    continue;
 
-            auto& pos = obj->Get<TransformComponent>().position;
+                auto& pos = obj->Get<TransformComponent>().position;
 
-            auto getPos = grid.positionTable[idx];
+                auto getPos = grid.positionTable[idx];
 
-            if (grid.stretchEnabled)
-            {
-                getPos.x -= getPos.width / 2;
-                getPos.y -= getPos.height / 2;
+                if (grid.stretchEnabled)
+                {
+                    getPos.x -= getPos.width / 2;
+                    getPos.y -= getPos.height / 2;
+                }
+                else
+                {
+                    getPos.width = pos.width;
+                    getPos.height = pos.height;
+                    getPos.x -= getPos.width / 2;
+                    getPos.y -= getPos.height / 2;
+                }
+
+                pos = getPos;
+
+                ++idx;
             }
-            else
-            {
-                getPos.width = pos.width;
-                getPos.height = pos.height;
-                getPos.x -= getPos.width / 2;
-                getPos.y -= getPos.height / 2;
+        }
+        else if (grid.itemSetMode == GridContainerComponent::FIXED_SET_IN_PLACE)
+        {
+            int idx = 0;
+            for (auto& obj : grid.items) {
+
+                if (obj == nullptr)
+                {
+                    ++idx;
+                    continue;
+                }
+
+                auto& pos = obj->Get<TransformComponent>().position;
+
+                auto getPos = grid.positionTable[idx];
+
+                if (grid.stretchEnabled)
+                {
+                    getPos.x -= getPos.width / 2;
+                    getPos.y -= getPos.height / 2;
+                }
+                else
+                {
+                    getPos.width = pos.width;
+                    getPos.height = pos.height;
+                    getPos.x -= getPos.width / 2;
+                    getPos.y -= getPos.height / 2;
+                }
+
+                pos = getPos;
+
+                ++idx;
             }
-
-            pos = getPos;
-
-            ++idx;
         }
     }
     bool AddItem(EntityPtr grid, EntityPtr item)
@@ -166,9 +204,14 @@ public:
 
         grid.numberOfContainedElements--;
 
-        if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES)
+        if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES || grid.itemSetMode == GridContainerComponent::FIXED_GET_FIRST_AVAILABLE)
         {
-            std::remove(grid.items.begin() + idx, grid.items.begin() + idx + 1, nullptr);
+            grid.items.erase(grid.items.begin() + idx, grid.items.begin() + idx + 1);//erase
+
+            if (grid.itemSetMode == GridContainerComponent::FIXED_GET_FIRST_AVAILABLE)
+            {
+                grid.items.push_back(nullptr);
+            }
         }
 
         RecountFrameCells(e);
@@ -187,6 +230,7 @@ public:
     }
     void Update(EntityPtr e)
     {
+        RecountFrameCells(e);
         ReinitFrame(e);
         CreateFrame(e);
         PlaceItemsInFrame(e);

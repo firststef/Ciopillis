@@ -28,7 +28,7 @@ public:
     {
         return componentBitset[GetTypeID<T>()];
     }
-    bool Has(ComponentBitset bitset) const
+    bool Has(const ComponentBitset& bitset) const
     {
         return ((bitset & componentBitset)==bitset);
     }

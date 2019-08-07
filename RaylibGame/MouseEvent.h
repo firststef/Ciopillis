@@ -13,8 +13,9 @@ struct MouseEvent : IEvent
     } type = NONE;
 
     EntityPtr entity;
+    Vector2 mousePos;
 
-    MouseEvent(MouseAction action, EntityPtr entity) : type(action), entity(entity)
+    MouseEvent(MouseAction action, EntityPtr entity, Vector2 mouse) : type(action), entity(entity), mousePos(mouse)
     {
     }
 };
