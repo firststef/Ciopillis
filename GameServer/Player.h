@@ -5,16 +5,20 @@
 class Player
 {
 public:
-    std::string                                 name;
+    std::string                             name;
 
     int                                     points = 0;
+
+    CardContainer                           base;
 
     CardContainer                           hand;
     CardContainer                           draw;
     CardContainer                           discard;
 
-    Player(std::string name) :
-        name(std::move(name))
+    unsigned                                cardsRemainedToDraw = 1;
+
+    Player(std::string name, CardContainer base) :
+        name(std::move(name)), base(base)
     {
         
     }

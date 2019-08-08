@@ -2,27 +2,30 @@
 #include <string>
 #include "Player.h"
 
-#define CMP(x,y) (strcmp(x,y) == 0)
-
-#define OP_SHOW "show"
-#define OP_EXIT "exit"
-
 enum ServerOpCodes
 {
     UNRECOGNIZED = -1,
     EXIT,
-    SHOW
+    START,
+    SHOW,
+    ADD,
+    DRAW,
+    DISCARD,
+    DELETE,
+    END_TURN,
+    PLAY_CARD
 };
 
 class GameServer
 {
 public:
     const char*                             intro = "<== Card Game Server for Ciopillis ==> \n";
-    const char*                             version = "=== Version 0.1 ===\n";
+    const char*                             version = "=== Version 0.2 ===\n";
 
     std::string&                            log;
 
     CardContainer&                          dataBase;
+
     Player&                                 playerOne;
     Player&                                 playerTwo;
 
@@ -30,19 +33,33 @@ public:
     {
         SERVER,
         CONSOLE
-    }                                       interface = SERVER;
+    }                 interface = SERVER;
 
-    enum Turn
+    enum Identifiers
     {
-        PLAYER_ONE,
+        PLAYER_ONE = 1,
         PLAYER_TWO
-    }                                       currentTurn = PLAYER_ONE;
+    };
+
+    int                                     currentTurn = PLAYER_ONE;
 
     enum GameType
     {
         SINGLEPLAYER,
         MULTIPLAYER
-    }                                       gameType = SINGLEPLAYER;
+    }                  gameType = SINGLEPLAYER;
+
+    enum ServerErrors
+    {
+        GENERIC = -1,
+        WRONG_TURN = -2,
+        CONTAINER_EMPTY = -3,
+        BAD_INDEX = -4,
+        CANNOT_DRAW,
+        CARDS_REMAINED_TO_DRAW,
+        CANNOT_PLAY_CARD,
+        CARD_NOT_PLAYED
+    };
 
     GameServer(
         Interface inter,
@@ -55,11 +72,21 @@ public:
     //Class Functions
     void                                    Init();
     int                                     RunConsole();
-    void                                    RunServer(int opcode, int arg1, int arg2);//the return type is to be decided
+    int                                     RunServer(int opcode, int iarg1, int iarg2);//the return type is to be decided
     bool                                    GetInput(std::string &operation, std::string &arg1, std::string &arg2);
     void                                    GetCommandConsole(const char* operation, const char* arg1, const char*arg2, int &opcode, int &iarg1, int &iarg2);
     int                                     RunCommand(int opcode, int iarg1, int iarg2);
 
     //Game Functions
+    void                                    Start();
     void                                    Show(int iarg1);
+    void                                    ShowCard(const Card& card);
+    void                                    Add(int iarg1, unsigned iarg2);
+    int                                     Draw(int iarg1);
+    int                                     Discard(int iarg1, unsigned iarg2);
+    int                                     Delete(int iarg1, unsigned iarg2);
+    int                                     EndTurn(int iarg1);
+    int                                     Play(int iarg1, unsigned iarg2);
+    
+    int                                     vm_run_card_functionality(std::vector<std::string> evalVector);
 };

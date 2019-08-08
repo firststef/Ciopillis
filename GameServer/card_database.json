@@ -1,10 +1,58 @@
 {
   "cards": [
     {
-      "name" : "Carte1"
+      "name": "Carte1",
+      "description": "Generic description",
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
     },
     {
-      "name": "Carte2"
+      "name": "Carte2",
+      "description": "Generic description",
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Carte3",
+      "description": "Generic description",
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Carte4",
+      "description": "Generic description",
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Carte5",
+      "description": "Generic description",
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Carte6",
+      "description": "Generic description",
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
     }
   ]
 }

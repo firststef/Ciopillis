@@ -6,7 +6,7 @@ class CardGenerator
 public:
     CardContainer container;
     
-    CardGenerator();
+    CardGenerator() = default;
     CardGenerator(std::string path);
     ~CardGenerator();
 
