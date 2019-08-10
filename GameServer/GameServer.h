@@ -13,7 +13,9 @@ enum ServerOpCodes
     DISCARD,
     DELETE,
     END_TURN,
-    PLAY_CARD
+    PLAY_CARD,
+    CONFRONT_CARDS,
+    EVAL
 };
 
 class GameServer
@@ -33,21 +35,33 @@ public:
     {
         SERVER,
         CONSOLE
-    }                 interface = SERVER;
+    }                                       interface = SERVER;
 
     enum Identifiers
     {
         PLAYER_ONE = 1,
-        PLAYER_TWO
-    };
+        PLAYER_TWO = 2,
+        CONFRONT = 3
+    }                                       currentTurn = PLAYER_ONE,
+                                            previousTurn = CONFRONT;
 
-    int                                     currentTurn = PLAYER_ONE;
+    enum TurnAction
+    {
+        ATTACK = 0,
+        DEFEND = 1,
+    }                                       turnAction = ATTACK;
+
+    enum GameState
+    {
+        RUNNING = 1,
+        ENDED = 0
+    }                                       gameState = RUNNING;
 
     enum GameType
     {
         SINGLEPLAYER,
         MULTIPLAYER
-    }                  gameType = SINGLEPLAYER;
+    }                                       gameType = SINGLEPLAYER;
 
     enum ServerErrors
     {
@@ -55,10 +69,10 @@ public:
         WRONG_TURN = -2,
         CONTAINER_EMPTY = -3,
         BAD_INDEX = -4,
-        CANNOT_DRAW,
-        CARDS_REMAINED_TO_DRAW,
-        CANNOT_PLAY_CARD,
-        CARD_NOT_PLAYED
+        CANNOT_DRAW = -5,
+        CANNOT_PLAY_CARD = -6,
+        INVALID_CARD = -7,
+        CARD_NOT_PLAYED =-8
     };
 
     GameServer(
@@ -87,6 +101,9 @@ public:
     int                                     Delete(int iarg1, unsigned iarg2);
     int                                     EndTurn(int iarg1);
     int                                     Play(int iarg1, unsigned iarg2);
+    int                                     Confront();
+    int                                     Eval();
     
-    int                                     vm_run_card_functionality(std::vector<std::string> evalVector);
+    int                                     vm_run_card_functionality(const Card& card);
+    int                                     validate_play_card(const Card& card);
 };

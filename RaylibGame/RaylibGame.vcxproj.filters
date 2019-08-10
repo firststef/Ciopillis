@@ -71,12 +71,6 @@
     <ClInclude Include="EventSystem.h">
       <Filter>ECS\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="GridContainerComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GridContainerSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Event.h">
       <Filter>ECS\Events</Filter>
     </ClInclude>
@@ -97,6 +91,24 @@
     </ClInclude>
     <ClInclude Include="GridAddRemoveEvent.h">
       <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameServer\GameServer.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GameServer\CardGenerator.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="GridContainerSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="GridContainerComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="CardComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -11,7 +11,8 @@ struct GridContainerComponent : IComponent
     {
         FIXED_GET_FIRST_AVAILABLE,
         FIXED_SET_IN_PLACE,
-        DYNAMIC_ERASE_SPACES
+        DYNAMIC_ERASE_SPACES,
+        INFINITE_STACK
     } itemSetMode = FIXED_GET_FIRST_AVAILABLE;
 
     int                                     numOfColumns = 1;

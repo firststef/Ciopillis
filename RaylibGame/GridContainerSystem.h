@@ -49,14 +49,14 @@ public:
                 float x = pos.position.x + grid.marginLeft + grid.spaceBetween * static_cast<float>(col) + width * static_cast<float>(col) + width / 2;
 
                 const Rectangle aux{ x,y,width,height };
-                grid.positionTable[grid.numOfLines * lin + col] = aux;
+                grid.positionTable[(grid.numOfLines - 1)* lin + col] = aux;
             }
     }
     int GetFreeFrameIdx(EntityPtr e)
     {
         auto& grid = e->Get<GridContainerComponent>();
 
-        int idx = 0;
+        unsigned idx = 0;
         for (auto& el : grid.items)
         {
             if (el == nullptr)
@@ -67,10 +67,16 @@ public:
         }
 
         if (grid.itemSetMode == GridContainerComponent::FIXED_GET_FIRST_AVAILABLE) {
+            if (idx == grid.items.size())
+                return -1;
             return idx;
         }
         if (grid.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES) {
             return grid.items.size();
+        }
+        //IF SETINPLACE - TREBuie verificat in ce locatie trebuie pusa cartea
+        if (grid.itemSetMode == GridContainerComponent::INFINITE_STACK) {
+            return 0;
         }
 
         return -1;
@@ -168,6 +174,32 @@ public:
                 ++idx;
             }
         }
+        else if (grid.itemSetMode == GridContainerComponent::INFINITE_STACK) {
+            for (auto& obj : grid.items) {
+
+                if (obj == nullptr)
+                    continue;
+
+                auto& pos = obj->Get<TransformComponent>().position;
+
+                auto getPos = grid.positionTable[0];
+
+                if (grid.stretchEnabled)
+                {
+                    getPos.x -= getPos.width / 2;
+                    getPos.y -= getPos.height / 2;
+                }
+                else
+                {
+                    getPos.width = pos.width;
+                    getPos.height = pos.height;
+                    getPos.x -= getPos.width / 2;
+                    getPos.y -= getPos.height / 2;
+                }
+
+                pos = getPos;
+            }
+        }
     }
     bool AddItem(EntityPtr grid, EntityPtr item)
     {
@@ -175,11 +207,15 @@ public:
 
         auto idx = GetFreeFrameIdx(grid);
 
-        if (idx == cont.items.size())//dynamic add
+        if (cont.itemSetMode == GridContainerComponent::FIXED_GET_FIRST_AVAILABLE || cont.itemSetMode == GridContainerComponent::FIXED_SET_IN_PLACE)
+            if (idx == -1)
+                return false;
+
+        if (cont.itemSetMode == GridContainerComponent::DYNAMIC_ERASE_SPACES || cont.itemSetMode == GridContainerComponent::INFINITE_STACK)
             cont.items.push_back(nullptr);
         
         cont.items[idx] = item;
-        item->Add<GridContainerChildComponent>(grid);
+        item->Add<GridContainerChildComponent>(grid, idx);
 
         ++cont.numberOfContainedElements;
 

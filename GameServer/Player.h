@@ -6,6 +6,7 @@ class Player
 {
 public:
     std::string                             name;
+    Element                                 currentElement = None;
 
     int                                     points = 0;
 
@@ -15,7 +16,9 @@ public:
     CardContainer                           draw;
     CardContainer                           discard;
 
-    unsigned                                cardsRemainedToDraw = 1;
+    unsigned                                maxCards = 5;
+    bool                                    cardPlayed = false;
+    unsigned                                selectedCardIndex = -1;
 
     Player(std::string name, CardContainer base) :
         name(std::move(name)), base(base)

@@ -1,8 +1,10 @@
 {
   "cards": [
     {
-      "name": "Carte1",
+      "name": "Dark Wind",
       "description": "Generic description",
+      "element" : "Wind",
+      "type" : 0,
       "functionality": [
         "op1",
         "op1",
@@ -10,8 +12,10 @@
       ]
     },
     {
-      "name": "Carte2",
+      "name": "Wind Shield",
       "description": "Generic description",
+      "element" : "Wind",
+      "type" : 1,
       "functionality": [
         "op1",
         "op1",
@@ -19,8 +23,10 @@
       ]
     },
     {
-      "name": "Carte3",
+      "name": "Tornado",
       "description": "Generic description",
+      "element" : "Wind",
+      "type" : 2,
       "functionality": [
         "op1",
         "op1",
@@ -28,8 +34,10 @@
       ]
     },
     {
-      "name": "Carte4",
+      "name": "Light of redemption",
       "description": "Generic description",
+      "element" : "Light",
+      "type" : 1,
       "functionality": [
         "op1",
         "op1",
@@ -37,8 +45,10 @@
       ]
     },
     {
-      "name": "Carte5",
+      "name": "Shining darkness",
       "description": "Generic description",
+      "element" : "Light",
+      "type" : 2,
       "functionality": [
         "op1",
         "op1",
@@ -46,8 +56,439 @@
       ]
     },
     {
-      "name": "Carte6",
+      "name": "Light Ray",
       "description": "Generic description",
+      "element" : "Light",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Volcano",
+      "description": "Generic description",
+      "element" : "Fire",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "FireBringer",
+      "description": "Generic description",
+      "element" : "Fire",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Rain of Fire",
+      "description": "Generic description",
+      "element" : "Fire",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Lightning",
+      "description": "Generic description",
+      "element" : "Energy",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Tesla's secret",
+      "description": "Generic description",
+      "element": "Energy",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "A.I.-m alive",
+      "description": "Generic description",
+      "element": "Energy",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Genetics",
+      "description": "Generic description",
+      "element": "Life",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Invisible Life",
+      "description": "Generic description",
+      "element": "Life",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Mutation",
+      "description": "Generic description",
+      "element": "Life",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Pseudo-natural life",
+      "description": "Generic description",
+      "element": "Plant",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Photo-Genesys",
+      "description": "Generic description",
+      "element": "Plant",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Green Carnivore",
+      "description": "Generic description",
+      "element": "Plant",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "The ritual",
+      "description": "Generic description",
+      "element": "Arcanum",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "The box",
+      "description": "Generic description",
+      "element": "Arcanum",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Gate of wonders",
+      "description": "Generic description",
+      "element": "Arcanum",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Magnetic force",
+      "description": "Generic description",
+      "element": "Force",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Energy manipulation",
+      "description": "Generic description",
+      "element": "Force",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Blocks of reality",
+      "description": "Generic description",
+      "element": "Force",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Multiply",
+      "description": "Generic description",
+      "element": "Information",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Inheritance",
+      "description": "Generic description",
+      "element": "Information",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "CicliCITY",
+      "description": "Generic description",
+      "element": "Information",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Earth's prison",
+      "description": "Generic description",
+      "element": "Earth",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Eye of Gaia",
+      "description": "Generic description",
+      "element": "Earth",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Mines of doom",
+      "description": "Generic description",
+      "element": "Earth",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Petrify",
+      "description": "Generic description",
+      "element": "Matter",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Immunity",
+      "description": "Generic description",
+      "element": "Matter",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Minerals of Chaos",
+      "description": "Generic description",
+      "element": "Matter",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Null Aether",
+      "description": "Generic description",
+      "element": "Aether",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Soul Burn",
+      "description": "Generic description",
+      "element": "Aether",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "The price of sin",
+      "description": "Generic description",
+      "element": "Aether",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Rage of the storm",
+      "description": "Generic description",
+      "element": "Water",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Gaia's blood",
+      "description": "Generic description",
+      "element": "Water",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Waterfall",
+      "description": "Generic description",
+      "element": "Water",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Chaos Scream",
+      "description": "Generic description",
+      "element": "Chaos",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "War Storm",
+      "description": "Generic description",
+      "element": "Chaos",
+      "type" : 2,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Earth without form",
+      "description": "Generic description",
+      "element": "Chaos",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Restraint",
+      "description": "Generic description",
+      "element": "Gaia",
+      "type" : 1,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Banish",
+      "description": "Generic description",
+      "element": "Gaia",
+      "type" : 0,
+      "functionality": [
+        "op1",
+        "op1",
+        "op1"
+      ]
+    },
+    {
+      "name": "Evolve",
+      "description": "Generic description",
+      "element": "Gaia",
+      "type" : 2,
       "functionality": [
         "op1",
         "op1",

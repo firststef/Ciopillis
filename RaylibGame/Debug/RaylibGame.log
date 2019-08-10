@@ -1,18 +1,17 @@
 ﻿  main.cpp
-c:\users\spetrovici\dropbox\ciopillis\raylibgame\component.h(27): warning C4099: 'IComponent': type name first seen using 'class' now seen using 'struct'
-  c:\users\spetrovici\dropbox\ciopillis\raylibgame\component.h(26): note: see declaration of 'IComponent'
-c:\users\spetrovici\dropbox\ciopillis\raylibgame\eventsystem.h(28): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
-c:\users\spetrovici\dropbox\ciopillis\raylibgame\eventsystem.h(44): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
-c:\users\spetrovici\dropbox\ciopillis\raylibgame\eventsystem.h(53): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
-c:\users\spetrovici\dropbox\ciopillis\raylibgame\entity.h(39): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
+c:\users\stefan\dropbox\ciopillis\raylibgame\component.h(27): warning C4099: 'IComponent': type name first seen using 'class' now seen using 'struct'
+  c:\users\stefan\dropbox\ciopillis\raylibgame\component.h(26): note: see declaration of 'IComponent'
+c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(43): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(63): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(72): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+c:\users\stefan\dropbox\ciopillis\raylibgame\entity.h(39): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
           with
           [
               _Ty=int
           ]
-  c:\users\spetrovici\dropbox\ciopillis\raylibgame\main.cpp(75): note: see reference to function template instantiation 'T &Entity::Add<GridContainerComponent,int,int,int,int,int,int,int,bool,GridContainerComponent::ItemSetMode>(int &&,int &&,int &&,int &&,int &&,int &&,int &&,bool &&,GridContainerComponent::ItemSetMode &&)' being compiled
+  c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(73): note: see reference to function template instantiation 'T &Entity::Add<GridContainerComponent,int,int,int,int,int,int,int,bool,GridContainerComponent::ItemSetMode>(int &&,int &&,int &&,int &&,int &&,int &&,int &&,bool &&,GridContainerComponent::ItemSetMode &&)' being compiled
           with
           [
               T=GridContainerComponent
           ]
-     Creating library C:\Users\spetrovici\Dropbox\Ciopillis\Debug\RaylibGame.lib and object C:\Users\spetrovici\Dropbox\Ciopillis\Debug\RaylibGame.exp
-  RaylibGame.vcxproj -> C:\Users\spetrovici\Dropbox\Ciopillis\Debug\RaylibGame.exe
+  RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\Ciopillis\Debug\RaylibGame.exe

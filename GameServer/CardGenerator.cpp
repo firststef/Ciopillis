@@ -13,7 +13,6 @@ CardGenerator::CardGenerator(std::string path)
 {
     container = GetDatabase(path);
 }
-CardGenerator::~CardGenerator() = default;
 
 void from_json(const json& j, Card& card) {
     const std::string aux1 = j.at("name");
@@ -24,6 +23,9 @@ void from_json(const json& j, Card& card) {
     const json& sj = j.at("functionality");
     card.functionality.resize(sj.size());
     std::copy(sj.begin(), sj.end(), card.functionality.begin());
+
+    const int aux3 = j.at("type");
+    card.type = CardType(aux3);
 }
 
 void from_json(const json& j, CardContainer& cont) {

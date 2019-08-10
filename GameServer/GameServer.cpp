@@ -1,3 +1,4 @@
+#include "GameServer.h"
 // This is an open source non-commercial project. Dear PVS-Studio, please check it.
 
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
@@ -19,6 +20,8 @@
 #define OP_DELETE "delete"
 #define OP_END_TURN "endturn"
 #define OP_PLAY_CARD "play"
+#define OP_EVAL "eval"
+#define OP_CONFRONT "confront"
 
 bool is_number(const std::string & s)
 {
@@ -26,7 +29,7 @@ bool is_number(const std::string & s)
     return true;
 }
 
-GameServer::GameServer(Interface inter, std::string& log, CardContainer& dataBase, Player& pOne, Player& pTwo)
+GameServer::GameServer(Interface inter, std::string & log, CardContainer & dataBase, Player & pOne, Player & pTwo)
     : interface(inter), log(log), dataBase(dataBase), playerOne(pOne), playerTwo(pTwo)
 {
     Init();
@@ -119,6 +122,10 @@ int GameServer::RunCommand(int opcode, int iarg1, int iarg2)
         return EndTurn(iarg1);
     case PLAY_CARD:
         return Play(iarg1,iarg2);
+    case EVAL:
+        return Eval();
+    case CONFRONT_CARDS:
+        return Confront();
     default:
     case UNRECOGNIZED:
         log += "Command not found, use --help for a list of commands.\n";
@@ -253,6 +260,14 @@ void GameServer::GetCommandConsole(const char* operation, const char* arg1, cons
             iarg2 = atoi(arg2);
         }
     }
+    else if (CMP(operation, OP_EVAL))
+    {
+        opcode = EVAL;
+    }
+    else if (CMP(operation, OP_CONFRONT))
+    {
+        opcode = CONFRONT_CARDS;
+    }
 }
 
 void GameServer::Start()
@@ -266,7 +281,7 @@ void GameServer::Start()
     std::shuffle(playerOne.draw.cards.begin(), playerOne.draw.cards.end(), std::default_random_engine(time(NULL)));
 
     playerTwo.draw.cards = playerTwo.base.cards;
-    std::shuffle(playerTwo.draw.cards.begin(), playerTwo.draw.cards.end(), std::default_random_engine(time(NULL)));
+    std::shuffle(playerTwo.draw.cards.begin(), playerTwo.draw.cards.end(), std::default_random_engine(time(NULL) + 1000));
 
     log += std::string("Game started\n");
 }
@@ -323,6 +338,9 @@ void GameServer::Show(int iarg1)
 void GameServer::ShowCard(const Card& card)
 {
     log += std::string(card.name);
+    log += std::string("\n\t\t");
+    log += std::string("Type:");
+    log += std::string(std::to_string(card.type));
 }
 void GameServer::Add(int iarg1, unsigned iarg2)
 {
@@ -350,7 +368,7 @@ int GameServer::Draw(int iarg1)
     }
 
     if (iarg1 == PLAYER_ONE) {
-        if (!playerOne.cardsRemainedToDraw)
+        if (playerOne.hand.cards.size() == playerOne.maxCards)
         {
             log += "Cannot draw card\n";
             return CANNOT_DRAW;
@@ -361,12 +379,11 @@ int GameServer::Draw(int iarg1)
             playerOne.hand.cards.push_back(playerOne.draw.cards.back());
             playerOne.draw.cards.pop_back();
             log += std::string("Added card to player1 hand\n");
-            playerOne.cardsRemainedToDraw--;
-            return 1;
+            return playerOne.hand.cards.back().id + 1;
         }
     }
     else if (iarg1 == PLAYER_TWO) {
-        if (!playerTwo.cardsRemainedToDraw)
+        if (playerTwo.hand.cards.size() == playerTwo.maxCards)
         {
             log += "Cannot draw card\n";
             return CANNOT_DRAW;
@@ -377,8 +394,7 @@ int GameServer::Draw(int iarg1)
             playerTwo.hand.cards.push_back(playerTwo.draw.cards.back());
             playerTwo.draw.cards.pop_back();
             log += std::string("Added card to player2 hand\n");
-            playerTwo.cardsRemainedToDraw--;
-            return 1;
+            return playerTwo.hand.cards.back().id + 1;
         }
     }
     log += std::string("No cards in draw\n");
@@ -464,15 +480,24 @@ int GameServer::EndTurn(int iarg1)
             return GENERIC;
         }
 
-        if (playerOne.cardsRemainedToDraw)
+        if (!playerOne.cardPlayed)
         {
-            log += std::string("You still have cards to draw\n");
-            return CARDS_REMAINED_TO_DRAW;
+            log += std::string("You have not played a card this round\n");
+            return CARD_NOT_PLAYED;
         }
 
+        if (turnAction == DEFEND) {
+            previousTurn = currentTurn;
+            currentTurn = CONFRONT;
+        }
+        else
+        {
+            currentTurn = Identifiers(currentTurn % 2 + 1);
+        }
+
+        turnAction = TurnAction((turnAction + 1) % 2);
+
         log += std::string("Turn changed\n");
-        currentTurn = PLAYER_TWO;
-        playerTwo.cardsRemainedToDraw = 1;
         return 1;
     }
     else if (iarg1 == PLAYER_TWO)
@@ -483,15 +508,24 @@ int GameServer::EndTurn(int iarg1)
             return GENERIC;
         }
 
-        if (playerTwo.cardsRemainedToDraw)
+        if (!playerTwo.cardPlayed)
         {
-            log += std::string("You still have cards to draw\n");
-            return CARDS_REMAINED_TO_DRAW;
+            log += std::string("You have not played a card this round\n");
+            return CARD_NOT_PLAYED;
         }
 
+        if (turnAction == DEFEND) {
+            previousTurn = currentTurn;
+            currentTurn = CONFRONT;
+        }
+        else
+        {
+            currentTurn = Identifiers(currentTurn % 2 + 1);
+        }
+
+        turnAction = TurnAction((turnAction + 1) % 2);
+
         log += std::string("Turn changed\n");
-        currentTurn = PLAYER_ONE;
-        playerOne.cardsRemainedToDraw = 1;
         return 1;
     }
 
@@ -510,8 +544,18 @@ int GameServer::Play(int iarg1, unsigned iarg2)
         {
             if (iarg2 < playerOne.hand.cards.size())
             {
-                vm_run_card_functionality(playerOne.hand.cards[iarg2].functionality);
-                log += std::string("Removed card from player1 hand\n");
+                if (playerOne.cardPlayed)
+                {
+                    log += std::string("Already played a card\n");
+                    return CANNOT_PLAY_CARD;
+                }
+                if (validate_play_card(playerOne.hand.cards[iarg2]) == INVALID_CARD)
+                    return CANNOT_PLAY_CARD;
+
+                playerOne.cardPlayed = 1;
+                log += std::string("Played card from player1 hand\n");
+
+                playerOne.selectedCardIndex = iarg2;
                 return 1;
             }
         }
@@ -522,8 +566,18 @@ int GameServer::Play(int iarg1, unsigned iarg2)
         {
             if (iarg2 < playerTwo.hand.cards.size())
             {
-                vm_run_card_functionality(playerTwo.hand.cards[iarg2].functionality);
-                log += std::string("Removed card from player2 hand\n");
+                if (playerTwo.cardPlayed)
+                {
+                    log += std::string("Already played a card\n");
+                    return CANNOT_PLAY_CARD;
+                }
+                if (validate_play_card(playerTwo.hand.cards[iarg2]) == INVALID_CARD)
+                    return CANNOT_PLAY_CARD;
+
+                playerTwo.cardPlayed = 1;
+                log += std::string("Played card from player2 hand\n");
+
+                playerTwo.selectedCardIndex = iarg2;
                 return 1;
             }
         }
@@ -532,8 +586,62 @@ int GameServer::Play(int iarg1, unsigned iarg2)
 
     return GENERIC;
 }
+int GameServer::Confront()
+{
+    if (currentTurn != CONFRONT || playerOne.selectedCardIndex == -1 || playerTwo.selectedCardIndex == -1)
+    {
+        log += std::string("Play cards not selected\n");
+        return CARD_NOT_PLAYED;
+    }
 
-int GameServer::vm_run_card_functionality(std::vector<std::string> evalVector)
+    log += std::string("Playing ");
+    log += playerOne.hand.cards[playerOne.selectedCardIndex].name;
+    log += std::string(" against ");
+    log += playerTwo.hand.cards[playerTwo.selectedCardIndex].name;
+    log += std::string("\n");
+        
+    int result;
+    if (true)//aici se verifica care carte e mai bun
+        result = vm_run_card_functionality(playerOne.hand.cards[playerOne.selectedCardIndex]);
+    else
+        result = vm_run_card_functionality(playerTwo.hand.cards[playerTwo.selectedCardIndex]);
+
+    currentTurn = previousTurn;
+
+    playerOne.selectedCardIndex = -1;
+    playerTwo.selectedCardIndex = -1;
+    playerOne.cardPlayed = false;
+    playerTwo.cardPlayed = false;
+
+    return result;
+}
+int GameServer::Eval()
+{
+    if (playerOne.points <= 0)
+    {
+        log += std::string("Player2 wins");//ar trebui scos automat numele
+        return 2;
+    }
+    if (playerTwo.points <= 0)
+    {
+        log += std::string("Player2 wins");
+        return 1;
+    }
+    return 0;
+}
+
+int GameServer::vm_run_card_functionality(const Card& card)
 {
     return GENERIC;
+}
+int GameServer::validate_play_card(const Card& card)
+{
+    if (card.type == VERSATILE || card.type == turnAction)
+    {
+        return true;
+    }
+
+    log += std::string("Card invalid\n");
+    return INVALID_CARD;
+
 }

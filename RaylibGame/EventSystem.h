@@ -2,13 +2,23 @@
 #include "Components.h"
 #include "System.h"
 #include "GridContainerSystem.h"
+#include "../GameServer/GameServer.h"
+#include "../GameServer/CardGenerator.h"
 
 class EventSystem : public ISystem
 {
 public:
 
+    GameServer& server;
+
+    EntityPtr dragParentOrigin;
+    int indexInDragParentOrigin;
+
+    EventSystem(GameServer& server) : server(server) {}
+
     void Initialize() override
     {
+        server.RunServer(START, -1,-1);
     }
 
     void Execute() override
@@ -20,14 +30,23 @@ public:
         if (event.type == MouseEvent::MOUSE_PRESS)
         {
             std::printf("Press\n");
+
+            if (event.entity->Get<SpriteComponent>().name == std::string("Endturn Button"))
+            {
+                server.RunServer(END_TURN, 1, -1);
+            }
         } 
         else if(event.type == MouseEvent::MOUSE_BEGIN_DRAG)
         {
             std::printf("Begin\n");
 
             if (event.entity->Has(1 << GetTypeID<GridContainerChildComponent>())) {
-                auto parent = event.entity->Get<GridContainerChildComponent>().parent;
-                eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, event.entity, parent);
+                auto& childC = event.entity->Get<GridContainerChildComponent>();
+
+                dragParentOrigin = childC.parent; 
+                indexInDragParentOrigin = childC.indexInParent;
+
+                eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, event.entity, dragParentOrigin);
             }
         }
         else if (event.type == MouseEvent::MOUSE_CONTINUE_DRAG) 
@@ -47,7 +66,7 @@ public:
                 return left->Get<TransformComponent>().zIndex > right->Get<TransformComponent>().zIndex;
             });
 
-            EntityPtr parent;
+            EntityPtr highestParentObject;
             for (auto& zObj : objects)
             {
                 if (zObj->Has(1 << GetTypeID<GridContainerComponent>()))
@@ -56,14 +75,53 @@ public:
 
                     if (CheckCollisionPointRec(center, parentCoord))
                     {
-                        parent = zObj;
+                        highestParentObject = zObj;
                         break;
                     }
                 }
             }
 
-            if (parent != nullptr)
-                eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, parent);
+            if (highestParentObject != nullptr) {
+
+                auto sourceObjectSprite = dragParentOrigin->Get<SpriteComponent>();
+                auto destObjectSprite = highestParentObject->Get<SpriteComponent>();
+
+                if (sourceObjectSprite.name == std::string("Draw") && destObjectSprite.name == std::string("Hand"))
+                {
+                    const auto idx = server.RunServer(DRAW, 1, -1);
+                    if (idx > 0) {
+                        //event.entity->Get<S
+
+                        auto newCard = pool->AddEntity();
+                        newCard->Add<TransformComponent>();
+                        newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
+                        newCard->Add<SpriteComponent>(std::string("Card"), Color(PINK));
+                        newCard->Add<MouseInputComponent>();
+                        newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
+
+                        eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, newCard, highestParentObject);
+                        eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, dragParentOrigin);
+
+                        return;
+                    }
+                }
+                if (sourceObjectSprite.name == std::string("Hand") && destObjectSprite.name == std::string("Discard"))
+                {
+                    if (server.RunServer(DISCARD, 1, indexInDragParentOrigin) > 0) {
+                        eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, highestParentObject);
+                        return;
+                    }
+                }
+                if (sourceObjectSprite.name == std::string("Hand") && destObjectSprite.name == std::string("Play Zone"))
+                {
+                    if (server.RunServer(PLAY_CARD, 1, indexInDragParentOrigin) > 0) {
+                        eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, highestParentObject);
+                        return;
+                    }
+                }
+            }
+            
+            eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, dragParentOrigin);
         }
     }
 

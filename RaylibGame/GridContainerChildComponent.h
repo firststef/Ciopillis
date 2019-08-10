@@ -4,6 +4,7 @@
 struct GridContainerChildComponent : IComponent
 {
     EntityPtr parent;
+    int indexInParent;
 
-    GridContainerChildComponent(EntityPtr p) : parent(p) {}
+    GridContainerChildComponent(EntityPtr p, int index) : parent(p), indexInParent(index) {}
 };

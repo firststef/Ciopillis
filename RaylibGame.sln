@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.28307.329
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaylibGame", "RaylibGame\RaylibGame.vcxproj", "{F64DCF43-F9AA-4580-8A81-F11E3FCD4842}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F14AC1E6-A7A8-4270-AD57-F182F44DF21C} = {F14AC1E6-A7A8-4270-AD57-F182F44DF21C}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameServer", "GameServer\GameServer.vcxproj", "{F14AC1E6-A7A8-4270-AD57-F182F44DF21C}"
 EndProject

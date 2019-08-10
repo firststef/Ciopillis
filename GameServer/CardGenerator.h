@@ -8,7 +8,6 @@ public:
     
     CardGenerator() = default;
     CardGenerator(std::string path);
-    ~CardGenerator();
 
     CardContainer GetDatabase(std::string path);
 };
