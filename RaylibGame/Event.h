@@ -85,6 +85,7 @@ struct EventManager
         auto end = holders[GetEventTypeID<T>()]->typeSubscribers.end();
         for (auto func = *it; it != end; ++it)
         {
+            func = *it;
             T event = T(std::forward<TArgs>(mArgs)...);
             func(&event);
         }

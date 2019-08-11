@@ -4,7 +4,6 @@
 #include "GridContainerSystem.h"
 #include "../GameServer/GameServer.h"
 #include "../GameServer/CardGenerator.h"
-
 class EventSystem : public ISystem
 {
 public:
@@ -25,7 +24,7 @@ public:
     {
     }
 
-    void Receive(const MouseEvent& event)//probabil aici apeleaza game server
+    void Receive(const MouseEvent& event)
     {
         if (event.type == MouseEvent::MOUSE_PRESS)
         {
@@ -33,7 +32,19 @@ public:
 
             if (event.entity->Get<SpriteComponent>().name == std::string("Endturn Button"))
             {
-                server.RunServer(END_TURN, 1, -1);
+                if (server.RunServer(END_TURN, 1, -1) > 0) {
+
+                    const auto turn = server.RunServer(TURN, -1, -1);
+
+                    if ( turn == GameServer::PLAYER_TWO)
+                    {
+                        eventManager->Notify<EnemyEvent>(EnemyEvent::ENEMY_TURN);
+                    }
+                    if ( turn == GameServer::CONFRONT)
+                    {
+                        server.RunServer(CONFRONT_CARDS, -1, -1);
+                    }
+                }
             }
         } 
         else if(event.type == MouseEvent::MOUSE_BEGIN_DRAG)
@@ -63,7 +74,7 @@ public:
             auto objects = pool->GetEntities(1 << GetTypeID<TransformComponent>());
             std::sort(objects.begin(), objects.end(), [](EntityPtr left, EntityPtr right)->bool
             {
-                return left->Get<TransformComponent>().zIndex > right->Get<TransformComponent>().zIndex;
+                return left->Get<TransformComponent>().zIndex > right->Get<TransformComponent>().zIndex;//aici nu stiu ce compara 
             });
 
             EntityPtr highestParentObject;
@@ -90,13 +101,11 @@ public:
                 {
                     const auto idx = server.RunServer(DRAW, 1, -1);
                     if (idx > 0) {
-                        //event.entity->Get<S
-
                         auto newCard = pool->AddEntity();
                         newCard->Add<TransformComponent>();
                         newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
                         newCard->Add<SpriteComponent>(std::string("Card"), Color(PINK));
-                        newCard->Add<MouseInputComponent>();
+                        newCard->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::DRAG) | (1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
                         newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
 
                         eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, newCard, highestParentObject);
@@ -123,10 +132,5 @@ public:
             
             eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, dragParentOrigin);
         }
-    }
-
-    bool QueryServer()
-    {
-        
     }
 };

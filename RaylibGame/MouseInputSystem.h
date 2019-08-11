@@ -5,6 +5,8 @@
 
 class MouseInputSystem : public ISystem
 {
+    bool inputEnabled = true;
+
     EntityPtr entity;
     Vector2 mouseGrab = {0,0};
     bool dragStarted = false;
@@ -14,6 +16,9 @@ class MouseInputSystem : public ISystem
     {
         for (auto& e : pool->GetEntities(1 << GetTypeID<MouseInputComponent>() | 1 << GetTypeID<TransformComponent>()))
         {
+            if (!e->Get<MouseInputComponent>().gestures[MouseInputComponent::SELECT]) {
+                continue;
+            }
             if (CheckCollisionPointRec(mouse, e->Get<TransformComponent>().position))
             {
                 entity = e;
@@ -58,6 +63,9 @@ public:
     void Initialize() override {}
     void Execute() override
     {
+        if (!inputEnabled)
+            return;
+
         const int lastGesture = GetGestureDetected();
         const Vector2 mouse = GetMousePosition();
 
@@ -72,7 +80,7 @@ public:
         } 
         else if( (previousGesture == GESTURE_TAP && lastGesture == GESTURE_NONE ) || (previousGesture == GESTURE_HOLD && lastGesture == GESTURE_NONE) || (previousGesture == GESTURE_DOUBLETAP && lastGesture == GESTURE_NONE))
         {
-            if (entity != nullptr)
+            if (entity != nullptr && entity->Get<MouseInputComponent>().gestures[MouseInputComponent::PRESS])
                 OnPress(mouse);
         }
 
@@ -80,7 +88,7 @@ public:
         {
             if (!dragStarted) {
 
-                if (entity != nullptr /*&& lastSelectedObject->GetIsSelectable()*/) {
+                if (entity != nullptr && (entity->Get<MouseInputComponent>().gestures[MouseInputComponent::DRAG])) {
                     OnBeginDrag(mouse);
                 }
             }
@@ -100,5 +108,17 @@ public:
         }
 
         previousGesture = lastGesture;
+    }
+
+    void Receive(const MouseEvent& event)
+    {
+        if (event.type == MouseEvent::DISABLE_MOUSE)
+        {
+            inputEnabled = false;
+        }
+        else if (event.type == MouseEvent::ENABLE_MOUSE)
+        {
+            inputEnabled = true;
+        }
     }
 };

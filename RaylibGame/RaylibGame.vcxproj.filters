@@ -30,6 +30,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="External.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nvidia.h">
@@ -92,12 +95,6 @@
     <ClInclude Include="GridAddRemoveEvent.h">
       <Filter>ECS\Events</Filter>
     </ClInclude>
-    <ClInclude Include="..\GameServer\GameServer.h">
-      <Filter>ECS\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\GameServer\CardGenerator.h">
-      <Filter>ECS\Events</Filter>
-    </ClInclude>
     <ClInclude Include="GridContainerSystem.h">
       <Filter>ECS\Systems</Filter>
     </ClInclude>
@@ -108,6 +105,15 @@
       <Filter>ECS\Components</Filter>
     </ClInclude>
     <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyEvent.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemySystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="External.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

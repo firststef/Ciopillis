@@ -136,21 +136,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="External.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\GameServer\CardGenerator.h" />
-    <ClInclude Include="..\GameServer\GameServer.h" />
     <ClInclude Include="CardComponent.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Components.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DrawSystem.h" />
     <ClInclude Include="ECS.h" />
+    <ClInclude Include="EnemyEvent.h" />
+    <ClInclude Include="EnemySystem.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="Events.h" />
     <ClInclude Include="EventSystem.h" />
+    <ClInclude Include="External.h" />
     <ClInclude Include="GridAddRemoveEvent.h" />
     <ClInclude Include="GridContainerChildComponent.h" />
     <ClInclude Include="GridContainerComponent.h" />

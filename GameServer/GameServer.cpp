@@ -22,6 +22,7 @@
 #define OP_PLAY_CARD "play"
 #define OP_EVAL "eval"
 #define OP_CONFRONT "confront"
+#define OP_TURN "turn"
 
 bool is_number(const std::string & s)
 {
@@ -126,6 +127,8 @@ int GameServer::RunCommand(int opcode, int iarg1, int iarg2)
         return Eval();
     case CONFRONT_CARDS:
         return Confront();
+    case TURN:
+        return Turn();
     default:
     case UNRECOGNIZED:
         log += "Command not found, use --help for a list of commands.\n";
@@ -267,6 +270,10 @@ void GameServer::GetCommandConsole(const char* operation, const char* arg1, cons
     else if (CMP(operation, OP_CONFRONT))
     {
         opcode = CONFRONT_CARDS;
+    }
+    else if (CMP(operation, OP_TURN))
+    {
+        opcode = TURN;
     }
 }
 
@@ -628,6 +635,10 @@ int GameServer::Eval()
         return 1;
     }
     return 0;
+}
+int GameServer::Turn()
+{
+    return currentTurn;
 }
 
 int GameServer::vm_run_card_functionality(const Card& card)

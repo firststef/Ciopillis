@@ -219,8 +219,6 @@ public:
 
         ++cont.numberOfContainedElements;
 
-        RecountFrameCells(grid);
-
         cont.needsUpdate = true;
 
         return true;
@@ -249,8 +247,6 @@ public:
                 grid.items.push_back(nullptr);
             }
         }
-
-        RecountFrameCells(e);
 
         grid.needsUpdate = true;
     }

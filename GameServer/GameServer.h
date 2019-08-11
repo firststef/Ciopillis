@@ -15,7 +15,8 @@ enum ServerOpCodes
     END_TURN,
     PLAY_CARD,
     CONFRONT_CARDS,
-    EVAL
+    EVAL,
+    TURN
 };
 
 class GameServer
@@ -103,6 +104,7 @@ public:
     int                                     Play(int iarg1, unsigned iarg2);
     int                                     Confront();
     int                                     Eval();
+    int                                     Turn();
     
     int                                     vm_run_card_functionality(const Card& card);
     int                                     validate_play_card(const Card& card);
