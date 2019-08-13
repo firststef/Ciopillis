@@ -18,6 +18,10 @@ int enabledGestures = 0b0000000000001111;
 
 int main()
 {
+    //Initialization
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
+    SetTargetFPS(60);
+
     std::string gameLog;
 
     CardGenerator generator("../GameServer/card_database.json");
@@ -68,7 +72,7 @@ int main()
     endturnButton->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
 
     playerDrawCard->Add<TransformComponent>(Rectangle{ -500,-500, CARD_WIDTH, CARD_HEIGHT });
-    playerDrawCard->Add<SpriteComponent>(std::string("Draw Card"), Color(PINK));
+    playerDrawCard->Add<SpriteComponent>(std::string("Draw Card"), manager.textureManager.Load("../cards/backface.png"));
     playerDrawCard->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::DRAG) | (1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
 
     enemyHand->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH / 2 - HAND_BOARD_WIDTH / 2, 0, HAND_BOARD_WIDTH, 120 });
@@ -84,7 +88,7 @@ int main()
     enemyDiscard->Add<GridContainerComponent>(1, 1, 10, 10, 10, 10, 20, false, GridContainerComponent::INFINITE_STACK);
 
     enemyDrawCard->Add<TransformComponent>(Rectangle{ -500,-500, CARD_WIDTH, CARD_HEIGHT });
-    enemyDrawCard->Add<SpriteComponent>(std::string("Enemy Draw Card"), Color(MAGENTA));
+    enemyDrawCard->Add<SpriteComponent>(std::string("Enemy Draw Card"), manager.textureManager.Load("../cards/backface.png"));
 
     //SystemManager
     auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
@@ -104,10 +108,6 @@ int main()
     manager.eventManager.Subscribe<MouseEvent>(mouseInputSystem);
     manager.eventManager.Subscribe<GridAddRemoveEvent>(gridContainerSystem);
     manager.eventManager.Subscribe<EnemyEvent>(enemySystem);
-
-    //Initialization
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
-    SetTargetFPS(60);
 
     manager.Initialize();
 

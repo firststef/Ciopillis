@@ -5,9 +5,9 @@
 struct SpriteComponent : IComponent
 {
     std::string name;
-
+    Texture2D texture {0};
     Color color = RED;
-    Texture *texture = nullptr;
 
     SpriteComponent(std::string name, Color color) : name(std::move(name)), color(color) {}
+    SpriteComponent(std::string name, Texture2D tex) :name(std::move(name)), texture(tex) {}
 };

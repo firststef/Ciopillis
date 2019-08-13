@@ -166,6 +166,7 @@
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Systems.h" />
+    <ClInclude Include="TextureManager.h" />
     <ClInclude Include="TransformComponent.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

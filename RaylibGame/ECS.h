@@ -2,10 +2,12 @@
 #include <bitset>
 #include <array>
 #include "Event.h"
+#include "TextureManager.h"
 
 class ECSManager
 {
 public:
+    TextureManager textureManager;
     Pool pool;
     SystemManager systemManager;
     EventManager eventManager;

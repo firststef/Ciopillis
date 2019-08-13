@@ -9,7 +9,7 @@ c:\users\stefan\dropbox\ciopillis\raylibgame\entity.h(39): warning C4244: 'argum
           [
               _Ty=int
           ]
-  c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(52): note: see reference to function template instantiation 'T &Entity::Add<GridContainerComponent,int,int,int,int,int,int,int,bool,GridContainerComponent::ItemSetMode>(int &&,int &&,int &&,int &&,int &&,int &&,int &&,bool &&,GridContainerComponent::ItemSetMode &&)' being compiled
+  c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(56): note: see reference to function template instantiation 'T &Entity::Add<GridContainerComponent,int,int,int,int,int,int,int,bool,GridContainerComponent::ItemSetMode>(int &&,int &&,int &&,int &&,int &&,int &&,int &&,bool &&,GridContainerComponent::ItemSetMode &&)' being compiled
           with
           [
               T=GridContainerComponent
