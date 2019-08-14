@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <memory>
 
 using CardID = unsigned int;
 
@@ -14,6 +13,7 @@ enum CardType
 struct Card
 {
     std::string name;
+    std::string path;
     std::string description;
     std::vector<std::string> functionality;
     CardType type;

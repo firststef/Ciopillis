@@ -23,6 +23,7 @@
     <ProjectGuid>{F64DCF43-F9AA-4580-8A81-F11E3FCD4842}</ProjectGuid>
     <RootNamespace>RaylibGame</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <ProjectName>CardGame</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -76,14 +77,14 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\raylib\raylib\src;C:\Users\Stefan\Dropbox\Ciopillis\GameServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Stefan\Dropbox\Ciopillis\ECSlib;C:\raylib\raylib\src;C:\Users\Stefan\Dropbox\Ciopillis\GameServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GRAPHICS_API_OPENGL_33;PLATFORM_DESKTOP;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\Stefan\Dropbox\Ciopillis\Debug;C:\raylib\raylib\projects\VS2017\raylib\Debug.DLL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>raylib.lib;GameServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\raylib\raylib\projects\VS2017\raylib\Debug.DLL;C:\Users\Stefan\Dropbox\Ciopillis\ECSlib\ECSlibDir;C:\Users\Stefan\Dropbox\Ciopillis\GameServer\GameServerDir;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>raylib.lib;GameServer.lib;ECSlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -136,38 +137,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="External.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CardComponent.h" />
-    <ClInclude Include="Component.h" />
-    <ClInclude Include="Components.h" />
+    <ClInclude Include="CardGameComponents.h" />
     <ClInclude Include="Constants.h" />
-    <ClInclude Include="DrawSystem.h" />
-    <ClInclude Include="ECS.h" />
     <ClInclude Include="EnemyEvent.h" />
     <ClInclude Include="EnemySystem.h" />
-    <ClInclude Include="Entity.h" />
-    <ClInclude Include="Event.h" />
-    <ClInclude Include="Events.h" />
+    <ClInclude Include="CardGameEvents.h" />
     <ClInclude Include="EventSystem.h" />
-    <ClInclude Include="External.h" />
-    <ClInclude Include="GridAddRemoveEvent.h" />
-    <ClInclude Include="GridContainerChildComponent.h" />
-    <ClInclude Include="GridContainerComponent.h" />
-    <ClInclude Include="GridContainerSystem.h" />
-    <ClInclude Include="Helpers.h" />
-    <ClInclude Include="MouseEvent.h" />
-    <ClInclude Include="MouseInputComponent.h" />
-    <ClInclude Include="MouseInputSystem.h" />
-    <ClInclude Include="nvidia.h" />
-    <ClInclude Include="Pool.h" />
-    <ClInclude Include="SpriteComponent.h" />
-    <ClInclude Include="System.h" />
-    <ClInclude Include="Systems.h" />
-    <ClInclude Include="TextureManager.h" />
-    <ClInclude Include="TransformComponent.h" />
+    <ClInclude Include="CardGameSystems.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

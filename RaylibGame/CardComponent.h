@@ -1,7 +1,4 @@
 #pragma once
-#include "Component.h"
-#include "Card.h"
-
 struct CardComponent : IComponent
 {
     Card card;

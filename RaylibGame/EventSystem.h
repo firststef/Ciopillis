@@ -1,9 +1,7 @@
 #pragma once
-#include "Components.h"
-#include "System.h"
-#include "GridContainerSystem.h"
-#include "../GameServer/GameServer.h"
-#include "../GameServer/CardGenerator.h"
+#include "CardGameComponents.h"
+#include "EnemyEvent.h"
+
 class EventSystem : public ISystem
 {
 public:
@@ -104,7 +102,7 @@ public:
                         auto newCard = pool->AddEntity();
                         newCard->Add<TransformComponent>();
                         newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
-                        newCard->Add<SpriteComponent>(std::string("Card"), Color(PINK));
+                        newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load(server.dataBase.cards[idx - 1].path.c_str()));
                         newCard->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::DRAG) | (1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
                         newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
 

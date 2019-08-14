@@ -1,7 +1,4 @@
 #pragma once
-#include "Event.h"
-#include "EventComponent.h"
-
 struct EnemyEvent : IEvent
 {
     enum EventAction

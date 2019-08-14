@@ -30,76 +30,10 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="External.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="nvidia.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ECS.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="SpriteComponent.h">
-      <Filter>ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="TransformComponent.h">
-      <Filter>ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawSystem.h">
-      <Filter>ECS\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="Pool.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="Systems.h">
-      <Filter>ECS\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="MouseInputComponent.h">
-      <Filter>ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="MouseInputSystem.h">
-      <Filter>ECS\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="Components.h">
-      <Filter>ECS\Components</Filter>
-    </ClInclude>
     <ClInclude Include="EventSystem.h">
       <Filter>ECS\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="Event.h">
-      <Filter>ECS\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="MouseEvent.h">
-      <Filter>ECS\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="Events.h">
-      <Filter>ECS\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="GridContainerChildComponent.h">
-      <Filter>ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Component.h">
-      <Filter>ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="System.h">
-      <Filter>ECS\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="GridAddRemoveEvent.h">
-      <Filter>ECS\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="GridContainerSystem.h">
-      <Filter>ECS\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="GridContainerComponent.h">
-      <Filter>ECS\Components</Filter>
     </ClInclude>
     <ClInclude Include="CardComponent.h">
       <Filter>ECS\Components</Filter>
@@ -113,11 +47,14 @@
     <ClInclude Include="EnemySystem.h">
       <Filter>ECS\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="External.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="CardGameSystems.h">
+      <Filter>ECS\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="TextureManager.h">
-      <Filter>ECS</Filter>
+    <ClInclude Include="CardGameEvents.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="CardGameComponents.h">
+      <Filter>ECS\Components</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

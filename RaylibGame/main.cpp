@@ -1,18 +1,10 @@
-﻿// This is a personal academic project. Dear PVS-Studio, please check it.
-
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
-
-#include "nvidia.h"
-#include <raylib.h>
-#include "External.h"
+﻿#include "ECSlib.h"
 #include "Constants.h"
-#include "ECS.h"
-#include "Components.h"
-#include "Systems.h"
+#include "GameServer.h"
+#include "CardGenerator.h"
+#include "CardGameSystems.h"
 
 using namespace std;
-
-//-----[Main]---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 int enabledGestures = 0b0000000000001111;
 
@@ -53,7 +45,7 @@ int main()
 
     hand->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH / 2 - HAND_BOARD_WIDTH / 2, SCREEN_HEIGHT - HAND_BOARD_HEIGHT, HAND_BOARD_WIDTH, HAND_BOARD_HEIGHT });
     hand->Add<SpriteComponent>(std::string("Hand"), Color(PURPLE));
-    hand->Add<GridContainerComponent>(4, 1, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES);
+    hand->Add<GridContainerComponent>(5, 1, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES, true);
     
     discard->Add<TransformComponent>(Rectangle{ 70, SCREEN_HEIGHT - 40 - CARD_HEIGHT, CARD_WIDTH + 20, CARD_HEIGHT + 20 });
     discard->Add<SpriteComponent>(std::string("Discard"), Color(BLACK));
@@ -65,7 +57,7 @@ int main()
 
     playZone->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH / 2 - HAND_BOARD_WIDTH / 2 + 80, 160, HAND_BOARD_WIDTH - 160, 400 });
     playZone->Add<SpriteComponent>(std::string("Play Zone"), Color(GRAY));
-    playZone->Add<GridContainerComponent>(1, 2, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES);
+    playZone->Add<GridContainerComponent>(1, 2, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES, true);
 
     endturnButton->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH / 2 + HAND_BOARD_WIDTH / 2  - 60, SCREEN_HEIGHT/2 - 10, 120, 120 });
     endturnButton->Add<SpriteComponent>(std::string("Endturn Button"), Color(GREEN));
@@ -77,7 +69,7 @@ int main()
 
     enemyHand->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH / 2 - HAND_BOARD_WIDTH / 2, 0, HAND_BOARD_WIDTH, 120 });
     enemyHand->Add<SpriteComponent>(std::string("Enemy Hand"), Color(DARKPURPLE));
-    enemyHand->Add<GridContainerComponent>(4, 1, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES);
+    enemyHand->Add<GridContainerComponent>(5, 1, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES);
 
     enemyDraw->Add<TransformComponent>(Rectangle{ 70, 20, CARD_WIDTH + 20, CARD_HEIGHT + 20 });
     enemyDraw->Add<SpriteComponent>(std::string("Enemy Draw"), Color(MAROON));

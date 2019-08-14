@@ -1,7 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
-
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
-
 #include "CardGenerator.h"
 #include "Card.h"
 #include "json.hpp"
@@ -37,6 +33,7 @@ void from_json(const json& j, CardContainer& cont) {
     for (auto& card : cont.cards)
     {
         card.id = idx++;
+        card.path = std::string("../cards/Card") + std::string(std::to_string(idx)) + std::string(".png");
     }
 }
 

@@ -1,8 +1,7 @@
 #pragma once
-#include "Components.h"
 #include "../GameServer/GameServer.h"
-#include "../GameServer/CardGenerator.h"
 #include "EnemyEvent.h"
+#include "../ECSlib/External.h"
 
 class EnemySystem : public ISystem
 {
@@ -58,27 +57,27 @@ public:
     {
         while (true)
         {
-            SleepFunc(100);
+            //SleepFunc(100);
             const auto idx = server.RunServer(DRAW, 2, -1);
             if (idx > 0) {
 
                 auto newCard = pool->AddEntity();
                 newCard->Add<TransformComponent>();
                 newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
-                newCard->Add<SpriteComponent>(std::string("Card"), Color(BLUE));
+                newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load(server.dataBase.cards[idx - 1].path.c_str()));
                 newCard->Add<MouseInputComponent>(std::bitset<32>(0));
                 newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
 
                 eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, newCard, enemyHand);
 
-                SleepFunc(100);
+                //SleepFunc(100);
             }
             else {
                 break;
             }
         }
 
-        SleepFunc(700);
+        //SleepFunc(700);
 
         unsigned cardIdx = 0;
         while (true)
