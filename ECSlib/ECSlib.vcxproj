@@ -164,6 +164,7 @@
     <ClInclude Include="Pool.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="System.h" />
+    <ClInclude Include="SystemControlEvent.h" />
     <ClInclude Include="Systems.h" />
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="TransformComponent.h" />

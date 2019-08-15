@@ -3,11 +3,10 @@
 #include "System.h"
 #include "Components.h"
 #include "MouseEvent.h"
+#include "SystemControlEvent.h"
 
 class MouseInputSystem : public ISystem
 {
-    bool inputEnabled = true;
-
     EntityPtr entity;
     Vector2 mouseGrab = {0,0};
     bool dragStarted = false;
@@ -61,12 +60,11 @@ class MouseInputSystem : public ISystem
 
 public:
 
+    MouseInputSystem() : ISystem(std::string("MouseInputSystem")) {}
+
     void Initialize() override {}
     void Execute() override
     {
-        if (!inputEnabled)
-            return;
-
         const int lastGesture = GetGestureDetected();
         const Vector2 mouse = GetMousePosition();
 
@@ -109,17 +107,5 @@ public:
         }
 
         previousGesture = lastGesture;
-    }
-
-    void Receive(const MouseEvent& event)
-    {
-        if (event.type == MouseEvent::DISABLE_MOUSE)
-        {
-            inputEnabled = false;
-        }
-        else if (event.type == MouseEvent::ENABLE_MOUSE)
-        {
-            inputEnabled = true;
-        }
     }
 };

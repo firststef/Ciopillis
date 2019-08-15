@@ -16,7 +16,7 @@ public:
     EntityPtr& playZone;
 
     EnemySystem(GameServer& server, EntityPtr& enemyHand, EntityPtr& enemyDraw, EntityPtr& enemyDiscard, EntityPtr& playZone) 
-    : server(server), enemyHand(enemyHand), enemyDraw(enemyDraw), enemyDiscard(enemyDiscard), playZone(playZone)
+    : server(server), enemyHand(enemyHand), enemyDraw(enemyDraw), enemyDiscard(enemyDiscard), playZone(playZone), ISystem(std::string("EnemySystem"))
     {
     }
 
@@ -30,7 +30,7 @@ public:
 
     void Receive(const EnemyEvent& enemy)
     {
-        eventManager->Notify<MouseEvent>(MouseEvent::DISABLE_MOUSE, nullptr, Vector2({ 0,0 }));
+        eventManager->Notify<SystemControlEvent>(SystemControlEvent::DISABLE, std::string("MouseInputSystem"));
 
         PlayTurn();
 
@@ -50,7 +50,7 @@ public:
             }
         }
 
-        eventManager->Notify<MouseEvent>(MouseEvent::ENABLE_MOUSE, nullptr, Vector2({ 0,0 }));
+        eventManager->Notify<SystemControlEvent>(SystemControlEvent::DISABLE, std::string("MouseInputSystem"));
     }
 
     void PlayTurn()

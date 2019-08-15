@@ -45,7 +45,7 @@ int main()
 
     hand->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH / 2 - HAND_BOARD_WIDTH / 2, SCREEN_HEIGHT - HAND_BOARD_HEIGHT, HAND_BOARD_WIDTH, HAND_BOARD_HEIGHT });
     hand->Add<SpriteComponent>(std::string("Hand"), Color(PURPLE));
-    hand->Add<GridContainerComponent>(5, 1, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES, true);
+    hand->Add<GridContainerComponent>(5, 1, 10, 10, 10, 10, -200, false, GridContainerComponent::DYNAMIC_ERASE_SPACES, true);
     
     discard->Add<TransformComponent>(Rectangle{ 70, SCREEN_HEIGHT - 40 - CARD_HEIGHT, CARD_WIDTH + 20, CARD_HEIGHT + 20 });
     discard->Add<SpriteComponent>(std::string("Discard"), Color(BLACK));
@@ -97,7 +97,7 @@ int main()
 
     //EventManager
     manager.eventManager.Subscribe<MouseEvent>(eventSystem);
-    manager.eventManager.Subscribe<MouseEvent>(mouseInputSystem);
+    manager.eventManager.Subscribe<SystemControlEvent>(mouseInputSystem);
     manager.eventManager.Subscribe<GridAddRemoveEvent>(gridContainerSystem);
     manager.eventManager.Subscribe<EnemyEvent>(enemySystem);
 

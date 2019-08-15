@@ -6,6 +6,8 @@
 class DrawSystem : public ISystem
 {
 public:
+    DrawSystem() : ISystem(std::string("DrawSystem")) {}
+
     void Initialize() override {}
 
     void Execute() override

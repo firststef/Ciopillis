@@ -107,5 +107,8 @@
     <ClInclude Include="TextureManager.h">
       <Filter>ECS\Textures</Filter>
     </ClInclude>
+    <ClInclude Include="SystemControlEvent.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

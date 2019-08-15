@@ -12,6 +12,12 @@ class KeyboardInputSystem : public ISystem
             this->entity = entity;
     }
 
+    void SetFocusedEntity(EntityPtr entity)
+    {
+        if (entity->Has(1 << GetTypeID<TransformComponent>()))
+            this->entity = entity;
+    }
+
     void Initialize() override {}
 
     void Execute() override

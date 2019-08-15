@@ -2,12 +2,17 @@
 
 class ArenaSystem : public ISystem
 {
-    void Initialize() override {}
+    ArenaSystem() : ISystem(std::string("ArenaSystem")) {}
 
-    void Execute() override {}
+    void Initialize() override
+    {   
+    }
 
-    void Receive(const ArenaEvent& event)
+    void Execute() override
     {
-        
+        for (auto& e : pool->GetEntities(1 << GetTypeID<ArenaGameComponent>()))
+        {
+
+        }
     }
 };

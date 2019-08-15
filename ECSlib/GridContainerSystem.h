@@ -9,6 +9,8 @@ class GridContainerSystem : public ISystem
 {
 public:
 
+    GridContainerSystem() : ISystem(std::string("GridContainerSystem")) {}
+
     void Initialize() override
     {
         for (auto& e : pool->GetEntities(1 << GetTypeID<GridContainerComponent>() | 1 << GetTypeID<TransformComponent>()))
@@ -48,7 +50,7 @@ public:
             {//CAUTION: turning corner position into center positions
                 float y = pos.position.y + grid.marginUp + grid.spaceBetween * static_cast<float>(lin) + height * static_cast<float>(lin) + height / 2;
                 float x = pos.position.x + grid.marginLeft + grid.spaceBetween * static_cast<float>(col) + width * static_cast<float>(col) + width / 2;
-
+                //TODO: aici nu se potriveste pentru dinamic pentru ca ia in calcul marginile
                 const Rectangle aux{ x,y,width,height };
 
                 if (!grid.reversedPositions)

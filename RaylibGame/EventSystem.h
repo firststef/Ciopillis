@@ -11,7 +11,7 @@ public:
     EntityPtr dragParentOrigin;
     int indexInDragParentOrigin;
 
-    EventSystem(GameServer& server) : server(server) {}
+    EventSystem(GameServer& server) : server(server), ISystem(std::string("EventSystem")) {}
 
     void Initialize() override
     {

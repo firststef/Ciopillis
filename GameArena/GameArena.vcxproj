@@ -125,6 +125,14 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArenaEvent.h" />
+    <ClInclude Include="ArenaEventSystem.h" />
+    <ClInclude Include="ArenaSystem.h" />
+    <ClInclude Include="Constants.h" />
+    <ClInclude Include="KeyboardEvent.h" />
+    <ClInclude Include="KeyboardInputSystem.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

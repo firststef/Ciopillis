@@ -10,8 +10,6 @@ struct MouseEvent : IEvent
         MOUSE_BEGIN_DRAG,
         MOUSE_CONTINUE_DRAG,
         MOUSE_END_DRAG,
-        DISABLE_MOUSE,
-        ENABLE_MOUSE
     } type = NONE;
 
     EntityPtr entity;
