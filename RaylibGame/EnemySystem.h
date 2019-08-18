@@ -64,7 +64,7 @@ public:
                 auto newCard = pool->AddEntity();
                 newCard->Add<TransformComponent>();
                 newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
-                newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load(server.dataBase.cards[idx - 1].path.c_str()));
+                newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load(server.dataBase.cards[idx - 1].path.c_str()), Color(WHITE));
                 newCard->Add<MouseInputComponent>(std::bitset<32>(0));
                 newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
 

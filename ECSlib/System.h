@@ -4,7 +4,6 @@
 
 class TextureManager;
 class EventManager;
-struct IEvent;
 class SystemManager;
 
 class ISystem
@@ -60,7 +59,7 @@ public:
     }
 
     void Execute() override
-    {//TODO: Implementarea multithreaded va merge doar daca pun la subscribe si sistemul care va fi apelat ca sa il opreasca cu enabled=false din rulare 
+    {
         for (const auto& ptr : systems)
         {
             if (ptr->enabled)

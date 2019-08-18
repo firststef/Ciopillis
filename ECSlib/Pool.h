@@ -15,7 +15,10 @@ public:
         return entities.back();
     }
 
-    //TODO: de adaugat RemoveEntity
+    void RemoveEntity(EntityPtr e)
+    {
+        entities.erase(std::remove(entities.begin(), entities.end(), e), entities.end());
+    }
 
     std::vector<EntityPtr> GetEntities()
     {

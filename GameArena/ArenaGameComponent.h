@@ -8,6 +8,8 @@ struct ArenaGameComponent : IComponent
         INIT,
         RUNNING,
         ENDED
-    }
-    state = INIT;
+    }                               state = INIT;
+
+    std::vector<EntityPtr>          generatedEntities;
+
 };

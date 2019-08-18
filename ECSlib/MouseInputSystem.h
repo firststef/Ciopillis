@@ -3,7 +3,6 @@
 #include "System.h"
 #include "Components.h"
 #include "MouseEvent.h"
-#include "SystemControlEvent.h"
 
 class MouseInputSystem : public ISystem
 {
@@ -14,7 +13,7 @@ class MouseInputSystem : public ISystem
 
     void OnSelect(Vector2 mouse)
     {
-        for (auto& e : pool->GetEntities(1 << GetTypeID<MouseInputComponent>() | 1 << GetTypeID<TransformComponent>()))
+        for (auto& e : pool->GetEntities(1 << GetTypeID<MouseInputComponent>() | 1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<SpriteComponent>()))
         {
             if (!e->Get<MouseInputComponent>().gestures[MouseInputComponent::SELECT]) {
                 continue;

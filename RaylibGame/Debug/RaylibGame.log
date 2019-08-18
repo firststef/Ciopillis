@@ -1,17 +1,2 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(391,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (RaylibGame.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  main.cpp
-c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(52): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
-c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(72): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
-c:\users\stefan\dropbox\ciopillis\raylibgame\eventsystem.h(81): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
-c:\users\stefan\dropbox\ciopillis\ecslib\entity.h(40): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
-          with
-          [
-              _Ty=int
-          ]
-  c:\users\stefan\dropbox\ciopillis\raylibgame\main.cpp(48): note: see reference to function template instantiation 'T &Entity::Add<GridContainerComponent,int,int,int,int,int,int,int,bool,GridContainerComponent::ItemSetMode,bool>(int &&,int &&,int &&,int &&,int &&,int &&,int &&,bool &&,GridContainerComponent::ItemSetMode &&,bool &&)' being compiled
-          with
-          [
-              T=GridContainerComponent
-          ]
-     Creating library C:\Users\Stefan\Dropbox\Ciopillis\Debug\CardGame.lib and object C:\Users\Stefan\Dropbox\Ciopillis\Debug\CardGame.exp
   RaylibGame.vcxproj -> C:\Users\Stefan\Dropbox\Ciopillis\Debug\CardGame.exe

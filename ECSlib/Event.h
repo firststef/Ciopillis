@@ -1,8 +1,11 @@
 #pragma once
-#include "System.h"
 #include <utility>
 #include <vector>
 #include <functional>
+
+struct IEvent
+{
+};
 
 using EventID = std::size_t;
 
@@ -25,9 +28,7 @@ inline EventID GetEventTypeID() noexcept
     return typeID;
 }
 
-struct IEvent
-{
-};
+#include "System.h"
 
 struct ReceiverCallbacksHolder
 {

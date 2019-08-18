@@ -9,6 +9,5 @@ class ArenaEventSystem : ISystem
 
     void Receive (const KeyboardEvent& event)
     {
-        
     }
 };

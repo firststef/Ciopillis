@@ -79,7 +79,8 @@
       <AdditionalIncludeDirectories>C:\Users\Stefan\Dropbox\Ciopillis\ECSlib;C:\raylib\raylib\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GRAPHICS_API_OPENGL_33;PLATFORM_DESKTOP;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard />
+      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\raylib\raylib\projects\VS2017\raylib\Debug.DLL;C:\Users\Stefan\Dropbox\Ciopillis\ECSlib\ECSlibDir;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -128,6 +129,7 @@
   <ItemGroup>
     <ClInclude Include="ArenaEvent.h" />
     <ClInclude Include="ArenaEventSystem.h" />
+    <ClInclude Include="ArenaGameComponent.h" />
     <ClInclude Include="ArenaSystem.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="KeyboardEvent.h" />
