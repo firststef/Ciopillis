@@ -4,17 +4,13 @@
 
 struct TransformComponent : IComponent
 {
-    Rectangle position;
+    Rectangle position = {0,0,100,100};
     int zIndex = -1;
 
     TransformComponent()
     {
-        position.x = 0;
-        position.y = 0;
-        position.width = 100;
-        position.height = 100;
     }
     
-    TransformComponent(Rectangle rect) : position(rect) {}
+    TransformComponent(Rectangle rect, int zIndex = -1) : position(rect), zIndex(zIndex) {}
 
 };

@@ -13,16 +13,20 @@ class MouseInputSystem : public ISystem
 
     void OnSelect(Vector2 mouse)
     {
-        for (auto& e : pool->GetEntities(1 << GetTypeID<MouseInputComponent>() | 1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<SpriteComponent>()))
+        auto entities = pool->GetEntities([](EntityPtr ptr, void* context)->bool
         {
-            if (!e->Get<MouseInputComponent>().gestures[MouseInputComponent::SELECT]) {
-                continue;
-            }
-            if (CheckCollisionPointRec(mouse, e->Get<TransformComponent>().position))
-            {
-                entity = e;
-                break;//trebuie facut un sistem de selectie dupa z
-            }
+            return ptr->Has(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<SpriteComponent>()) &&
+                CheckCollisionPointRec(*static_cast<Vector2*>(context), ptr->Get<TransformComponent>().position);
+        }, &mouse);
+
+        std::sort(entities.begin(), entities.end(), [](EntityPtr a, EntityPtr b)
+        {
+            return a->Get<TransformComponent>().zIndex < b->Get<TransformComponent>().zIndex;
+        });
+
+        if (entities.back()->Has(1 << GetTypeID<MouseInputComponent>()) && entities.back()->Get<MouseInputComponent>().gestures[MouseInputComponent::SELECT])
+        {
+            entity = entities.back();
         }
     }
 

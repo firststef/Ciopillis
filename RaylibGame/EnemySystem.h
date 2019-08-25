@@ -1,7 +1,6 @@
 #pragma once
-#include "../GameServer/GameServer.h"
+#include "GameServer.h"
 #include "EnemyEvent.h"
-#include "../ECSlib/External.h"
 
 class EnemySystem : public ISystem
 {
@@ -64,7 +63,7 @@ public:
                 auto newCard = pool->AddEntity();
                 newCard->Add<TransformComponent>();
                 newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
-                newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load(server.dataBase.cards[idx - 1].path.c_str()), Color(WHITE));
+                newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load("../cards/backface.png"), Color(WHITE));
                 newCard->Add<MouseInputComponent>(std::bitset<32>(0));
                 newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
 
@@ -88,7 +87,7 @@ public:
 
             cardIdx++;
 
-            if (cardIdx == server.playerTwo.hand.cards.size())
+            if (cardIdx == server.playerTwo.hand->cards.size())
             {
                 server.log += std::string("No card available for play\n");
                 return;
@@ -97,9 +96,13 @@ public:
 
         for (auto card : enemyHand->Get<GridContainerComponent>().items)
         {
-            if (card->Get<CardComponent>().card.id == server.playerTwo.hand.cards[server.playerTwo.selectedCardIndex].id)
+            auto& cardComp = card->Get<CardComponent>();
+            auto& spriteComp = card->Get<SpriteComponent>();
+            if (cardComp.card.id == server.playerTwo.hand->cards[server.playerTwo.selectedCardIndex].id)
             {
                 eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, card, enemyHand);
+                textureManager->Unload(spriteComp.texture);
+                spriteComp.texture = textureManager->Load(server.dataBase.cards[cardComp.card.id - 1].path.c_str());
                 eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, card, playZone);
                 break;
             }

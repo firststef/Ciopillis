@@ -56,13 +56,19 @@ public:
     {
         RUNNING = 1,
         ENDED = 0
-    }                                       gameState = RUNNING;
+    }                                       gameState = RUNNING;//TODO: cand ai numai carti de atac/defence trebuie sa inlocuiesti o carte
+
+    enum GameMode
+    {
+        VS_COMPUTER,
+        PVP
+    }                                       gameMode = VS_COMPUTER;//TODO: la momentul actual alegerea PC este facuta in EventSystem, trebuie facuta in server
 
     enum GameType
     {
-        SINGLEPLAYER,
-        MULTIPLAYER
-    }                                       gameType = SINGLEPLAYER;
+        SINGLE_DECK,
+        INDIVIDUAL_DECK
+    }                                       gameType = SINGLE_DECK;
 
     enum ServerErrors
     {

@@ -26,8 +26,6 @@ public:
     {
         if (event.type == MouseEvent::MOUSE_PRESS)
         {
-            std::printf("Press\n");
-
             if (event.entity->Get<SpriteComponent>().name == std::string("Endturn Button"))
             {
                 if (server.RunServer(END_TURN, 1, -1) > 0) {
@@ -47,8 +45,6 @@ public:
         } 
         else if(event.type == MouseEvent::MOUSE_BEGIN_DRAG)
         {
-            std::printf("Begin\n");
-
             if (event.entity->Has(1 << GetTypeID<GridContainerChildComponent>())) {
                 auto& childC = event.entity->Get<GridContainerChildComponent>();
 
@@ -56,16 +52,15 @@ public:
                 indexInDragParentOrigin = childC.indexInParent;
 
                 eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, event.entity, dragParentOrigin);
+                event.entity->Get<TransformComponent>().zIndex = SELECTED_CARD_Z;
             }
         }
         else if (event.type == MouseEvent::MOUSE_CONTINUE_DRAG) 
         {
-            std::printf("Continue\n");
+
         }
         else if (event.type == MouseEvent::MOUSE_END_DRAG) 
         {
-            std::printf("End\n");
-
             const auto coord = event.entity->Get<TransformComponent>().position;
             Vector2 center = { coord.x + coord.width / 2, coord.y + coord.height / 2 };
 ;

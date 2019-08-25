@@ -14,7 +14,14 @@ public:
     {
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        for (auto& e : pool->GetEntities(1<<GetTypeID<TransformComponent>() | 1<<GetTypeID<SpriteComponent>()))
+
+        auto entities = pool->GetEntities(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<SpriteComponent>());
+        std::sort(entities.begin(), entities.end(), [](EntityPtr a, EntityPtr b)
+        {
+            return a->Get<TransformComponent>().zIndex < b->Get<TransformComponent>().zIndex;
+        });
+
+        for (auto& e : entities)
         {
             const auto transform = e->Get<TransformComponent>();
             const auto sprite = e->Get<SpriteComponent>();

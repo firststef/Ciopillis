@@ -39,7 +39,7 @@ struct GridContainerComponent : IComponent
     std::vector<EntityPtr>                  items;
 
     GridContainerComponent(int columns, int lines, float left, float up, float right, float down, float space,
-        bool stretch = false, ItemSetMode itemSetMode = FIXED_GET_FIRST_AVAILABLE, bool reversed = false)
+        bool stretch = false, ItemSetMode itemSetMode = FIXED_GET_FIRST_AVAILABLE, bool reversed = false, int zIndex = 0)
     : itemSetMode(itemSetMode), numOfColumns(columns), numOfLines(lines), maxNumOfColumns(columns), maxNumOfLines(lines),
         marginLeft(left), marginUp(up), marginRight(right), marginDown(down), spaceBetween(space), stretchEnabled(stretch),
         reversedPositions(reversed)

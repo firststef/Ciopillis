@@ -274,16 +274,38 @@ void GameServer::GetCommandConsole(const char* operation, const char* arg1, cons
 
 void GameServer::Start()
 {
-    playerOne.hand.cards.clear();
-    playerTwo.hand.cards.clear();
-    playerOne.discard.cards.clear();
-    playerTwo.discard.cards.clear();
+    if (playerOne.hand != nullptr)
+        playerOne.hand->cards.clear();
+    if (playerTwo.hand != nullptr)
+        playerTwo.hand->cards.clear();
+    if (playerOne.discard != nullptr)
+        playerOne.discard->cards.clear();
+    if (playerTwo.discard != nullptr)
+        playerTwo.discard->cards.clear();
 
-    playerOne.draw.cards = playerOne.base.cards;
-    std::shuffle(playerOne.draw.cards.begin(), playerOne.draw.cards.end(), std::default_random_engine(time(NULL)));
+    
+    if (gameType == SINGLE_DECK) {
+        playerOne.draw = std::make_shared<CardContainer>(playerOne.base);
+        playerTwo.draw = playerOne.draw;
+        std::shuffle(playerOne.draw->cards.begin(), playerOne.draw->cards.end(), std::default_random_engine(time(NULL)));
 
-    playerTwo.draw.cards = playerTwo.base.cards;
-    std::shuffle(playerTwo.draw.cards.begin(), playerTwo.draw.cards.end(), std::default_random_engine(time(NULL) + 1000));
+        playerTwo.discard = playerOne.discard = std::make_shared<CardContainer>();
+        playerOne.hand = std::make_shared<CardContainer>();
+        playerTwo.hand = std::make_shared<CardContainer>();
+    }
+    else 
+    {
+        playerOne.draw = std::make_shared<CardContainer>(playerOne.base);
+        playerTwo.draw = std::make_shared<CardContainer>(playerTwo.base);
+
+        std::shuffle(playerOne.draw->cards.begin(), playerOne.draw->cards.end(), std::default_random_engine(time(NULL)));
+        std::shuffle(playerTwo.draw->cards.begin(), playerTwo.draw->cards.end(), std::default_random_engine(time(NULL) + 1000));
+
+        playerOne.hand = std::make_shared<CardContainer>();
+        playerTwo.hand = std::make_shared<CardContainer>();
+        playerOne.discard = std::make_shared<CardContainer>();
+        playerTwo.discard = std::make_shared<CardContainer>();
+    }
 
     log += std::string("Game started\n");
 }
@@ -310,7 +332,7 @@ void GameServer::Show(int iarg1)
     case PLAYER_ONE:
         log += std::string("Showing player hand:\n");
 
-        for (auto& child : playerOne.hand.cards)
+        for (auto& child : playerOne.hand->cards)
         {
             log += std::string("\t");
             log += std::string(std::to_string(idx));
@@ -324,7 +346,7 @@ void GameServer::Show(int iarg1)
     case PLAYER_TWO:
         log += std::string("Showing enemy hand:\n");
 
-        for (auto& child : playerTwo.hand.cards)
+        for (auto& child : playerTwo.hand->cards)
         {
             log += std::string("\t");
             log += std::string(std::to_string(idx));
@@ -353,11 +375,11 @@ void GameServer::Add(int iarg1, unsigned iarg2)
     }
 
     if (iarg1 == PLAYER_ONE) {
-        playerOne.hand.cards.push_back(dataBase.cards[iarg2]);
+        playerOne.hand->cards.push_back(dataBase.cards[iarg2]);
         log += std::string("Added card to player1 hand\n");
     }
     else if (iarg1 == PLAYER_TWO) {
-        playerTwo.hand.cards.push_back(dataBase.cards[iarg2]);
+        playerTwo.hand->cards.push_back(dataBase.cards[iarg2]);
         log += std::string("Added card to player2 hand\n");
     }
 }
@@ -370,33 +392,33 @@ int GameServer::Draw(int iarg1)
     }
 
     if (iarg1 == PLAYER_ONE) {
-        if (playerOne.hand.cards.size() == playerOne.maxCards)
+        if (playerOne.hand->cards.size() == playerOne.maxCards)
         {
             log += "Cannot draw card\n";
             return CANNOT_DRAW;
         }
 
-        if (!playerOne.draw.cards.empty())
+        if (!playerOne.draw->cards.empty())
         {
-            playerOne.hand.cards.push_back(playerOne.draw.cards.back());
-            playerOne.draw.cards.pop_back();
+            playerOne.hand->cards.push_back(playerOne.draw->cards.back());
+            playerOne.draw->cards.pop_back();
             log += std::string("Added card to player1 hand\n");
-            return playerOne.hand.cards.back().id + 1;
+            return playerOne.hand->cards.back().id + 1;
         }
     }
     else if (iarg1 == PLAYER_TWO) {
-        if (playerTwo.hand.cards.size() == playerTwo.maxCards)
+        if (playerTwo.hand->cards.size() == playerTwo.maxCards)
         {
             log += "Cannot draw card\n";
             return CANNOT_DRAW;
         }
 
-        if (!playerTwo.draw.cards.empty())
+        if (!playerTwo.draw->cards.empty())
         {
-            playerTwo.hand.cards.push_back(playerTwo.draw.cards.back());
-            playerTwo.draw.cards.pop_back();
+            playerTwo.hand->cards.push_back(playerTwo.draw->cards.back());
+            playerTwo.draw->cards.pop_back();
             log += std::string("Added card to player2 hand\n");
-            return playerTwo.hand.cards.back().id + 1;
+            return playerTwo.hand->cards.back().id + 1;
         }
     }
     log += std::string("No cards in draw\n");
@@ -411,12 +433,12 @@ int GameServer::Discard(int iarg1, unsigned iarg2)
     }
 
     if (iarg1 == PLAYER_ONE) {
-        if (!playerOne.hand.cards.empty())
+        if (!playerOne.hand->cards.empty())
         {
-            if (iarg2 < playerOne.hand.cards.size())
+            if (iarg2 < playerOne.hand->cards.size())
             {
-                playerOne.discard.cards.push_back(*(playerOne.hand.cards.begin() + iarg2));
-                playerOne.hand.cards.erase(playerOne.hand.cards.begin() + iarg2);
+                playerOne.discard->cards.push_back(*(playerOne.hand->cards.begin() + iarg2));
+                playerOne.hand->cards.erase(playerOne.hand->cards.begin() + iarg2);
                 log += std::string("Removed card from player1 hand\n");
                 return 1;
             }
@@ -424,12 +446,12 @@ int GameServer::Discard(int iarg1, unsigned iarg2)
             return BAD_INDEX;
         }
     } else if (iarg1 == PLAYER_TWO) {
-        if (!playerTwo.hand.cards.empty())
+        if (!playerTwo.hand->cards.empty())
         {
-            if (iarg2 < playerTwo.hand.cards.size())
+            if (iarg2 < playerTwo.hand->cards.size())
             {
-                playerTwo.discard.cards.push_back(*(playerTwo.hand.cards.begin() + iarg2));
-                playerTwo.hand.cards.erase(playerTwo.hand.cards.begin() + iarg2);
+                playerTwo.discard->cards.push_back(*(playerTwo.hand->cards.begin() + iarg2));
+                playerTwo.hand->cards.erase(playerTwo.hand->cards.begin() + iarg2);
                 log += std::string("Removed card from player2 hand\n");
                 return 1;
             }
@@ -444,11 +466,11 @@ int GameServer::Discard(int iarg1, unsigned iarg2)
 int GameServer::Delete(int iarg1, unsigned iarg2)
 {
     if (iarg1 == PLAYER_ONE) {
-        if (!playerOne.hand.cards.empty())
+        if (!playerOne.hand->cards.empty())
         {
-            if (iarg2 < playerOne.hand.cards.size())
+            if (iarg2 < playerOne.hand->cards.size())
             {
-                playerOne.hand.cards.erase(playerOne.hand.cards.begin() + iarg2);
+                playerOne.hand->cards.erase(playerOne.hand->cards.begin() + iarg2);
                 log += std::string("Removed card from player1 hand\n");
                 return 1;
             }
@@ -456,11 +478,11 @@ int GameServer::Delete(int iarg1, unsigned iarg2)
             return BAD_INDEX;
         }
     } else if (iarg1 == PLAYER_TWO) {
-        if (!playerTwo.hand.cards.empty())
+        if (!playerTwo.hand->cards.empty())
         {
-            if (iarg2 < playerTwo.hand.cards.size())
+            if (iarg2 < playerTwo.hand->cards.size())
             {
-                playerTwo.hand.cards.erase(playerTwo.hand.cards.begin() + iarg2);
+                playerTwo.hand->cards.erase(playerTwo.hand->cards.begin() + iarg2);
                 log += std::string("Removed card from player2 hand\n");
                 return 1;
             }
@@ -542,16 +564,16 @@ int GameServer::Play(int iarg1, unsigned iarg2)
     }
 
     if (iarg1 == PLAYER_ONE) {
-        if (!playerOne.hand.cards.empty())
+        if (!playerOne.hand->cards.empty())
         {
-            if (iarg2 < playerOne.hand.cards.size())
+            if (iarg2 < playerOne.hand->cards.size())
             {
                 if (playerOne.cardPlayed)
                 {
                     log += std::string("Already played a card\n");
                     return CANNOT_PLAY_CARD;
                 }
-                if (validate_play_card(playerOne.hand.cards[iarg2]) == INVALID_CARD)
+                if (validate_play_card(playerOne.hand->cards[iarg2]) == INVALID_CARD)
                     return CANNOT_PLAY_CARD;
 
                 playerOne.cardPlayed = 1;
@@ -564,16 +586,16 @@ int GameServer::Play(int iarg1, unsigned iarg2)
         return BAD_INDEX;
     }
     else if (iarg1 == PLAYER_TWO) {
-        if (!playerTwo.hand.cards.empty())
+        if (!playerTwo.hand->cards.empty())
         {
-            if (iarg2 < playerTwo.hand.cards.size())
+            if (iarg2 < playerTwo.hand->cards.size())
             {
                 if (playerTwo.cardPlayed)
                 {
                     log += std::string("Already played a card\n");
                     return CANNOT_PLAY_CARD;
                 }
-                if (validate_play_card(playerTwo.hand.cards[iarg2]) == INVALID_CARD)
+                if (validate_play_card(playerTwo.hand->cards[iarg2]) == INVALID_CARD)
                     return CANNOT_PLAY_CARD;
 
                 playerTwo.cardPlayed = 1;
@@ -597,16 +619,16 @@ int GameServer::Confront()
     }
 
     log += std::string("Playing ");
-    log += playerOne.hand.cards[playerOne.selectedCardIndex].name;
+    log += playerOne.hand->cards[playerOne.selectedCardIndex].name;
     log += std::string(" against ");
-    log += playerTwo.hand.cards[playerTwo.selectedCardIndex].name;
+    log += playerTwo.hand->cards[playerTwo.selectedCardIndex].name;
     log += std::string("\n");
         
     int result;
     if (true)//aici se verifica care carte e mai bun
-        result = vm_run_card_functionality(playerOne.hand.cards[playerOne.selectedCardIndex]);
+        result = vm_run_card_functionality(playerOne.hand->cards[playerOne.selectedCardIndex]);
     else
-        result = vm_run_card_functionality(playerTwo.hand.cards[playerTwo.selectedCardIndex]);
+        result = vm_run_card_functionality(playerTwo.hand->cards[playerTwo.selectedCardIndex]);
 
     currentTurn = previousTurn;
 

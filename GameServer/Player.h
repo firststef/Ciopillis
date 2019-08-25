@@ -12,9 +12,9 @@ public:
 
     CardContainer                           base;
 
-    CardContainer                           hand;
-    CardContainer                           draw;
-    CardContainer                           discard;
+    std::shared_ptr<CardContainer>          hand;
+    std::shared_ptr<CardContainer>          draw;
+    std::shared_ptr<CardContainer>          discard;
 
     unsigned                                maxCards = 5;
     bool                                    cardPlayed = false;

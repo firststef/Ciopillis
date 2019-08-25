@@ -39,12 +39,12 @@ public:
         return group;
     }
 
-    std::vector<EntityPtr> GetEntities(bool(*func)(EntityPtr ptr))
+    std::vector<EntityPtr> GetEntities(bool(*func)(EntityPtr ptr, void* context), void* context)
     {
         std::vector<EntityPtr> group;
         for (auto& ptr : entities)
         {
-            if (func(ptr))
+            if (func(ptr, context))
             {
                 group.push_back(ptr);
             }
