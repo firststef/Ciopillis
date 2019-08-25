@@ -216,6 +216,7 @@ public:
             }
         }
         else if (grid.itemSetMode == GridContainerComponent::INFINITE_STACK) {
+            int idx = 1;
             for (auto& obj : grid.items) {
 
                 if (obj == nullptr)
@@ -242,7 +243,7 @@ public:
                 }
 
                 pos = getPos;
-                z = transf.zIndex + 1;
+                z = transf.zIndex + idx++;
             }
         }
     }
