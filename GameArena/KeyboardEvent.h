@@ -1,15 +1,11 @@
 #pragma once
 struct KeyboardEvent : IEvent
 {
-    enum KeyboardAction
-    {
-        NONE,
-        PRESSED,
-        HOLD,
-        RELEASED
-    } action;
+    std::vector<int> pressedKeys;
+    std::vector<int> releasedKeys;
+    std::vector<int> heldKeys;
 
-    int key;
-
-    KeyboardEvent(KeyboardAction action, int key) : action(action), key(key) {}
+    KeyboardEvent(std::vector<int> pressedKeys, std::vector<int> releasedKeys, std::vector<int> heldKeys)
+        : pressedKeys(std::move(pressedKeys)), releasedKeys(std::move(releasedKeys)), heldKeys(std::move(heldKeys))
+    {}
 };

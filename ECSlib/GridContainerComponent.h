@@ -1,5 +1,7 @@
 #pragma once
+#include <vector>
 #include "Component.h"
+#include "Entity.h"
 
 struct GridContainerComponent : IComponent
 {

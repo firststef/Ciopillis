@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Event.h"
 struct SystemControlEvent : IEvent
 {
     enum ControlAction

@@ -133,6 +133,7 @@
     <ClInclude Include="ArenaSystem.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="KeyboardEvent.h" />
+    <ClInclude Include="KeyboardInputComponent.h" />
     <ClInclude Include="KeyboardInputSystem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

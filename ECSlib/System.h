@@ -28,6 +28,7 @@ public:
     }
     virtual void Initialize() {}
     virtual void Execute() {}
+    virtual void Destroy() {}
 
     void Receive(const SystemControlEvent& event)
     {
@@ -64,6 +65,14 @@ public:
         {
             if (ptr->enabled)
                 ptr->Execute();
+        }
+    }
+
+    void Destroy() override
+    {
+        for (const auto& ptr : systems)
+        {
+            ptr->Destroy();
         }
     }
 

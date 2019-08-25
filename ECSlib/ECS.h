@@ -1,6 +1,6 @@
 #pragma once
-#include "Event.h"
 #include "TextureManager.h"
+#include "EventManager.h"
 
 class ECSManager
 {
@@ -23,6 +23,11 @@ public:
     void Update()  
     {
         systemManager.Execute();
+    }
+
+    void Destroy()
+    {
+        systemManager.Destroy();
     }
 
     ~ECSManager()

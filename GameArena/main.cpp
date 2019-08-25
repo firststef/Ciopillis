@@ -1,13 +1,13 @@
 #include "raylib.h"
 #include "ECSlib.h"
 #include "Constants.h"
-#include "ArenaEvent.h"
-#include "KeyboardInputComponent.h"
-#include "KeyboardEvent.h"
-#include "KeyboardInputSystem.h"
-#include "ArenaEventSystem.h"
-#include "ArenaGameComponent.h"
 #include "ArenaSystem.h"
+#include "ArenaEventSystem.h"
+#include "KeyboardInputSystem.h"
+#include "ArenaGameComponent.h"
+#include "KeyboardEvent.h"
+#include "ArenaPlayerEvent.h"
+
 
 int main()
 {
@@ -17,26 +17,32 @@ int main()
 
     ECSManager manager;
 
-    
-
     auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem());
+    auto arenaEventSystem = std::make_shared<ArenaEventSystem>(ArenaEventSystem());
     auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
+    auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>(KeyboardInputSystem());
+    auto physicsSystem = std::make_shared <PhysicsSystem>(PhysicsSystem());
 
     manager.systemManager.AddSystem(drawSystem);
     manager.systemManager.AddSystem(arenaSystem);
+    manager.systemManager.AddSystem(arenaEventSystem);
+    manager.systemManager.AddSystem(keyboardInputSystem);
+    manager.systemManager.AddSystem(physicsSystem);
 
+    auto game(manager.pool.AddEntity());
     game->Add<ArenaGameComponent>();
+
+    manager.eventManager.Subscribe<KeyboardEvent>(arenaEventSystem);
+    manager.eventManager.Subscribe<ArenaPlayerEvent>(arenaSystem);
+
+    manager.Initialize();
 
     while (!WindowShouldClose())
     {
         manager.Update();
-        int ok = 0;
-        while(ok)
-        {
-            
-            ok = 0;
-        }
     }
+
+    manager.Destroy();
 
     return 1;
 }

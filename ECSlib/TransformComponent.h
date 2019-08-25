@@ -1,4 +1,5 @@
 #pragma once
+#include <raylib.h>
 #include "Component.h"
 
 struct TransformComponent : IComponent

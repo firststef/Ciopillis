@@ -41,5 +41,8 @@
     <ClInclude Include="ArenaGameComponent.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="KeyboardInputComponent.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

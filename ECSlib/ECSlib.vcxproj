@@ -89,6 +89,10 @@
       <AdditionalLibraryDirectories>../Debug;C:\raylib\raylib\projects\VS2017\raylib\Debug.DLL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>raylib.lib;GameServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -142,6 +146,10 @@
   <ItemGroup>
     <ClCompile Include="External.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PhyFunctions.cpp" />
+    <ClCompile Include="PhyFunctions2.cpp" />
+    <ClCompile Include="PhysicsComponent.cpp" />
+    <ClCompile Include="PhysicsSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component.h" />
@@ -151,6 +159,7 @@
     <ClInclude Include="ECSlib.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Event.h" />
+    <ClInclude Include="EventManager.h" />
     <ClInclude Include="Events.h" />
     <ClInclude Include="External.h" />
     <ClInclude Include="GridAddRemoveEvent.h" />
@@ -161,6 +170,10 @@
     <ClInclude Include="MouseEvent.h" />
     <ClInclude Include="MouseInputSystem.h" />
     <ClInclude Include="nvidia.h" />
+    <ClInclude Include="PhyFunctions.h" />
+    <ClInclude Include="PhyFunctions2.h" />
+    <ClInclude Include="PhysicsComponent.h" />
+    <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="Pool.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="System.h" />
