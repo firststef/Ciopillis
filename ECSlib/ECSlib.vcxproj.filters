@@ -137,5 +137,11 @@
     <ClInclude Include="PhyFunctions2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationEvent.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

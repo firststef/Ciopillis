@@ -127,7 +127,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AnimationSystem.h" />
     <ClInclude Include="ArenaEvent.h" />
     <ClInclude Include="ArenaEventSystem.h" />
     <ClInclude Include="ArenaGameComponent.h" />

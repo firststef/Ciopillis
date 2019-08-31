@@ -3,6 +3,7 @@
 #include "ArenaGameComponent.h"
 #include "ArenaPlayerEvent.h"
 #include "KeyboardInputComponent.h"
+#include "Constants.h"
 
 class ArenaSystem : public ISystem
 {
@@ -17,8 +18,8 @@ class ArenaSystem : public ISystem
 
         arena.player = pool->AddEntity();
         arena.player->Add<TransformComponent>(Rectangle{ 500,500,200,200 });
-        arena.player->Add<SpriteComponent>(std::string("Fighter"), Texture2D(), Color(ORANGE));
-        arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT);
+        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load("../sprites/basesprite.PNG"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
+        arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Y);
         arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE,  500,500 , 200, 200, 1);
         auto& playerBody = arena.player->Get<PhysicsComponent>().body;
         playerBody->staticFriction = 1.0f;
@@ -27,7 +28,7 @@ class ArenaSystem : public ISystem
 
         arena.enemy = pool->AddEntity();
         arena.enemy->Add<TransformComponent>(Rectangle{ 200,200,200,200 });
-        arena.enemy->Add<SpriteComponent>(std::string("Enemy"), Texture2D(), Color(BLUE));
+        arena.enemy->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load("../sprites/basesprite.PNG"), Color(BLUE), Rectangle{ 0, 0, 29, 24 });
         arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, 200,200 , 200, 200, 1);
         auto& enemyBody = arena.enemy->Get<PhysicsComponent>().body;
         enemyBody->staticFriction = 1.0f;
@@ -77,25 +78,64 @@ public:
 
     void Receive(const ArenaPlayerEvent& event)
     {
-        if (event.action == ArenaPlayerEvent::ATTACK_X)
+        for (auto& e : pool->GetEntities(1 << GetTypeID<ArenaGameComponent>()))
         {
-            
-        }
-        else if (event.action == ArenaPlayerEvent::ATTACK_Y)
-        {
-            
-        }
+            auto& arena = e->Get<ArenaGameComponent>();
 
-
-        if (event.action == ArenaPlayerEvent::MOVE) 
-        {
-            for (auto& e : pool->GetEntities(1 << GetTypeID<ArenaGameComponent>()))
+            if (event.action == ArenaPlayerEvent::ATTACK_X)
             {
-                auto& arena = e->Get<ArenaGameComponent>();
-
-                auto& comp = arena.player->Get<PhysicsComponent>();
-                comp.body->velocity = event.axes;
+                eventManager->Notify<AnimationEvent>(
+                    arena.player,
+                    std::string("Attack") + (event.axes.x > 0 ? std::string("Right") : std::string("Left")),
+                    AnimationEvent::SOLVE_THIS_FIRST,
+                    AnimationEvent::RESTART_SAME,
+                    textureManager->Load("../sprites/basesprite.PNG"),
+                    Rectangle{ (float)SPRITE_WIDTH * (event.axes.x > 0 ? 10 : 1),0,(float)SPRITE_WIDTH * (event.axes.x > 0 ? -1 : 1), (float)SPRITE_HEIGHT },
+                    3,
+                    1,
+                    1000
+                    );
             }
+            else if (event.action == ArenaPlayerEvent::ATTACK_Y)
+            {
+
+            }
+
+            if (event.action == ArenaPlayerEvent::MOVE)
+            {
+                auto& comp = arena.player->Get<PhysicsComponent>();
+                comp.body->velocity = { event.axes.x * VELOCITY , event.axes.y * VELOCITY };
+
+                if (event.axes == Vector2 {0, 0}) {
+                    eventManager->Notify<AnimationEvent>(
+                        arena.player,
+                        std::string("Idle"),
+                        AnimationEvent::OVERRIDE_OTHERS,
+                        AnimationEvent::CONTINUE_IF_EXISTENT_SAME,
+                        textureManager->Load("../sprites/basesprite.PNG"),
+                        Rectangle{ 0,0,(float)SPRITE_WIDTH * (arena.lastAxesPlayer.x > 0 ? -1 : 1), (float)SPRITE_HEIGHT },
+                        1,
+                        0,
+                        -1
+                        );
+                }
+                else {
+                    eventManager->Notify<AnimationEvent>(
+                        arena.player,
+                        std::string("Move") + (event.axes.x > 0 ? std::string("Right") : std::string("Left")),
+                        AnimationEvent::OVERRIDE_OTHERS,
+                        AnimationEvent::CONTINUE_IF_EXISTENT_SAME,
+                        textureManager->Load("../sprites/basesprite.PNG"),
+                        Rectangle{ (float)SPRITE_WIDTH * (event.axes.x > 0 ? 5 : 1),0,(float)SPRITE_WIDTH * (event.axes.x > 0 ? -1 : 1), (float)SPRITE_HEIGHT },
+                        4,
+                        0,
+                        135
+                        );
+                }
+
+            }
+
+            arena.lastAxesPlayer = { event.axes.x != 0 ? event.axes.x : arena.lastAxesPlayer.x, event.axes.y != 0 ? event.axes.y : arena.lastAxesPlayer.y };
         }
     }
 };

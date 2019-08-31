@@ -22,18 +22,21 @@ int main()
     auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
     auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>(KeyboardInputSystem());
     auto physicsSystem = std::make_shared <PhysicsSystem>(PhysicsSystem());
+    auto animationSystem = std::make_shared <AnimationSystem>(AnimationSystem());
 
     manager.systemManager.AddSystem(drawSystem);
     manager.systemManager.AddSystem(arenaSystem);
     manager.systemManager.AddSystem(arenaEventSystem);
     manager.systemManager.AddSystem(keyboardInputSystem);
     manager.systemManager.AddSystem(physicsSystem);
+    manager.systemManager.AddSystem(animationSystem);
 
     auto game(manager.pool.AddEntity());
     game->Add<ArenaGameComponent>();
 
     manager.eventManager.Subscribe<KeyboardEvent>(arenaEventSystem);
     manager.eventManager.Subscribe<ArenaPlayerEvent>(arenaSystem);
+    manager.eventManager.Subscribe<AnimationEvent>(animationSystem);
 
     manager.Initialize();
 

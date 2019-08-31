@@ -152,6 +152,8 @@
     <ClCompile Include="PhysicsSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimationEvent.h" />
+    <ClInclude Include="AnimationSystem.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Components.h" />
     <ClInclude Include="DrawSystem.h" />

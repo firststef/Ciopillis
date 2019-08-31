@@ -33,8 +33,8 @@ public:
                     heldKeys.push_back(k);
             }
 
-            if (pressedKeys.size() != 0 || releasedKeys.size() != 0 || heldKeys.size() != 0)
-                eventManager->Notify<KeyboardEvent>(pressedKeys, releasedKeys, heldKeys);
+            if (!pressedKeys.empty() || !releasedKeys.empty() || !heldKeys.empty())
+                eventManager->Notify<KeyboardEvent>(pressedKeys, releasedKeys, heldKeys);//TODO: de mutat keyb in lib
         }
     }
 };
