@@ -99,7 +99,7 @@ int main()
 
     while (!WindowShouldClose())
     {
-        manager.Update();//TODO: deck sharing fails
+        manager.Update();
     }
 
     return 0;

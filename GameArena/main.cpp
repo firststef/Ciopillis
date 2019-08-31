@@ -7,7 +7,7 @@
 #include "ArenaGameComponent.h"
 #include "KeyboardEvent.h"
 #include "ArenaPlayerEvent.h"
-
+#include "AnimationSystem.h"
 
 int main()
 {

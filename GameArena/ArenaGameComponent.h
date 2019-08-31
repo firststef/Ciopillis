@@ -12,6 +12,6 @@ struct ArenaGameComponent : IComponent
 
     std::vector<EntityPtr>          generatedEntities;
 
-    EntityPtr fighter;
+    EntityPtr player;
     EntityPtr enemy;
 };

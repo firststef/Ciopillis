@@ -30,10 +30,36 @@ public:
                 DrawRectangleRec(transform.position, e->Get<SpriteComponent>().color);
             else {
                 //TODO: Jittering is caused by unscaled resize
-                DrawTexturePro(sprite.texture, { 0,0,(float)sprite.texture.width, (float)sprite.texture.height }, transform.position,
+                DrawTexturePro(sprite.texture, sprite.sourceRec, transform.position,
                     Vector2{ 0, 0 }, 0.0f, RAYWHITE);
             }
         }
+
+#if defined(_DEBUG) && defined(ARENA)
+
+        int bodiesCount = GetPhysicsBodiesCount();
+        for (int i = 0; i < bodiesCount; i++)
+        {
+            PhysicsBody body = GetPhysicsBody(i);
+
+            if (body != NULL)
+            {
+                int vertexCount = GetPhysicsShapeVerticesCount(i);
+                for (int j = 0; j < vertexCount; j++)
+                {
+                    // Get physics bodies shape vertices to draw lines
+                    Vector2 vertexA = GetPhysicsShapeVertex(body, j);
+
+                    int jj = (((j + 1) < vertexCount) ? (j + 1) : 0);   // Get next vertex or first to close the shape
+                    Vector2 vertexB = GetPhysicsShapeVertex(body, jj);
+
+                    DrawLineV(vertexA, vertexB, GREEN);     // Draw a line between two vertex positions
+                }
+            }
+        }
+
+#endif
+
         EndDrawing();
     }
 };

@@ -15,17 +15,23 @@ class ArenaSystem : public ISystem
         fadedBackground->Add<SpriteComponent>(std::string("FadedBackground"), Texture2D(), Fade(BLACK, 0.6f));
         arena.generatedEntities.push_back(fadedBackground);
 
-        arena.fighter = pool->AddEntity();
-        arena.fighter->Add<TransformComponent>(Rectangle{ 500,500,200,200 });
-        arena.fighter->Add<SpriteComponent>(std::string("Fighter"), Texture2D(), Color(ORANGE));
-        arena.fighter->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT);
-        arena.fighter->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE,  500,500 , 200, 200, 1);
-        arena.generatedEntities.push_back(arena.fighter);
+        arena.player = pool->AddEntity();
+        arena.player->Add<TransformComponent>(Rectangle{ 500,500,200,200 });
+        arena.player->Add<SpriteComponent>(std::string("Fighter"), Texture2D(), Color(ORANGE));
+        arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT);
+        arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE,  500,500 , 200, 200, 1);
+        auto& playerBody = arena.player->Get<PhysicsComponent>().body;
+        playerBody->staticFriction = 1.0f;
+        playerBody->freezeOrient = true;
+        arena.generatedEntities.push_back(arena.player);
 
         arena.enemy = pool->AddEntity();
         arena.enemy->Add<TransformComponent>(Rectangle{ 200,200,200,200 });
         arena.enemy->Add<SpriteComponent>(std::string("Enemy"), Texture2D(), Color(BLUE));
         arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, 200,200 , 200, 200, 1);
+        auto& enemyBody = arena.enemy->Get<PhysicsComponent>().body;
+        enemyBody->staticFriction = 1.0f;
+        enemyBody->freezeOrient = true;
         arena.generatedEntities.push_back(arena.enemy);
 
         arena.state = ArenaGameComponent::RUNNING;
@@ -75,17 +81,19 @@ public:
         {
             
         }
-        else if (event.action == ArenaPlayerEvent::ATTACK_X)
+        else if (event.action == ArenaPlayerEvent::ATTACK_Y)
         {
             
         }
-        else if (event.action == ArenaPlayerEvent::MOVE) 
+
+
+        if (event.action == ArenaPlayerEvent::MOVE) 
         {
             for (auto& e : pool->GetEntities(1 << GetTypeID<ArenaGameComponent>()))
             {
                 auto& arena = e->Get<ArenaGameComponent>();
 
-                auto& comp = arena.fighter->Get<PhysicsComponent>();
+                auto& comp = arena.player->Get<PhysicsComponent>();
                 comp.body->velocity = event.axes;
             }
         }

@@ -44,5 +44,8 @@
     <ClInclude Include="KeyboardInputComponent.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationSystem.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
