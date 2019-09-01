@@ -8,6 +8,8 @@ struct AnimationEvent : IEvent
 
     Texture2D texture;
     Rectangle sourceRec;
+    bool mirrorSprite;
+    bool reverseOrder;
 
     unsigned numOfFrames;
     unsigned repeats;
@@ -35,6 +37,8 @@ struct AnimationEvent : IEvent
         CollideWithSameBehaviour sameType,
         Texture2D texture,
         Rectangle sourceRec,
+        bool mirror,
+        bool reverse,
         unsigned numOfFrames,
         unsigned repeats,
         unsigned timePerFrame
@@ -43,6 +47,8 @@ struct AnimationEvent : IEvent
         name(std::move(name)),
         texture(texture),
         sourceRec(sourceRec),
+        mirrorSprite(mirror), 
+        reverseOrder(reverse),
         numOfFrames(numOfFrames),
         repeats(repeats),
         timePerFrame(timePerFrame),

@@ -90,10 +90,12 @@ public:
                     AnimationEvent::SOLVE_THIS_FIRST,
                     AnimationEvent::RESTART_SAME,
                     textureManager->Load("../sprites/basesprite.PNG"),
-                    Rectangle{ (float)SPRITE_WIDTH * (event.axes.x > 0 ? 10 : 1),0,(float)SPRITE_WIDTH * (event.axes.x > 0 ? -1 : 1), (float)SPRITE_HEIGHT },
+                    Rectangle{ (float)SPRITE_WIDTH * 6,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+                    event.axes.x == 0 ? arena.lastAxesPlayer.x > 0 : event.axes.x > 0,
+                    event.axes.x > 0,
                     3,
                     1,
-                    1000
+                    100
                     );
             }
             else if (event.action == ArenaPlayerEvent::ATTACK_Y)
@@ -113,7 +115,9 @@ public:
                         AnimationEvent::OVERRIDE_OTHERS,
                         AnimationEvent::CONTINUE_IF_EXISTENT_SAME,
                         textureManager->Load("../sprites/basesprite.PNG"),
-                        Rectangle{ 0,0,(float)SPRITE_WIDTH * (arena.lastAxesPlayer.x > 0 ? -1 : 1), (float)SPRITE_HEIGHT },
+                        Rectangle{ 0,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+                        arena.lastAxesPlayer.x > 0,
+                        false,
                         1,
                         0,
                         -1
@@ -122,11 +126,13 @@ public:
                 else {
                     eventManager->Notify<AnimationEvent>(
                         arena.player,
-                        std::string("Move") + (event.axes.x > 0 ? std::string("Right") : std::string("Left")),
+                        std::string("Move") + ((event.axes.x == 0 ? arena.lastAxesPlayer.x > 0 : event.axes.x > 0) ? std::string("Right") : std::string("Left")),
                         AnimationEvent::OVERRIDE_OTHERS,
                         AnimationEvent::CONTINUE_IF_EXISTENT_SAME,
                         textureManager->Load("../sprites/basesprite.PNG"),
-                        Rectangle{ (float)SPRITE_WIDTH * (event.axes.x > 0 ? 5 : 1),0,(float)SPRITE_WIDTH * (event.axes.x > 0 ? -1 : 1), (float)SPRITE_HEIGHT },
+                        Rectangle{ (float)SPRITE_WIDTH,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+                        event.axes.x == 0 ? arena.lastAxesPlayer.x > 0 : event.axes.x > 0,
+                        event.axes.x > 0,
                         4,
                         0,
                         135

@@ -15,6 +15,8 @@ struct AnimationUnit
 
     Texture2D texture;
     Rectangle sourceRec;
+    bool mirrorSprite;
+    bool reverseOrder;
     unsigned repeats = 1;
 
     unsigned currentFrame = 0;
@@ -28,25 +30,28 @@ class AnimationSystem : public ISystem
 
     std::vector<AnimationUnit> priorityQueue;
 
-    void SolveAnimation(std::chrono::system_clock::time_point now, AnimationUnit& unit)
+    void SolveAnimation(AnimationUnit& unit)
     {
-        if (now - unit.lastIterationTime > unit.animationSpeed)
-        {
-            auto& sprite = unit.entity->Get<SpriteComponent>();
+        auto& sprite = unit.entity->Get<SpriteComponent>();
 
-            sprite.texture = unit.texture;
-            sprite.sourceRec = { unit.sourceRec.x + unit.currentFrame * unit.sourceRec.width, 0, unit.sourceRec.width, unit.sourceRec.height };
+        sprite.texture = unit.texture;
 
-            if (unit.repeats == 0)
-                unit.currentFrame = (unit.currentFrame + 1) % unit.numOfFrames;
-            else
-                unit.currentFrame = (unit.currentFrame + 1 == unit.numOfFrames) ? unit.numOfFrames : unit.currentFrame + 1;
+        unsigned frame = (unit.reverseOrder ? (unit.numOfFrames - 1 - unit.currentFrame) : unit.currentFrame);
+        unsigned nextFrame;
+        if (unit.repeats == 0)
+            nextFrame = (unit.currentFrame + 1) % unit.numOfFrames;
+        else
+            nextFrame = (unit.currentFrame + 1 == unit.numOfFrames) ? frame : unit.currentFrame + 1;
 
-            unit.lastIterationTime = now;
+        if (unit.mirrorSprite)
+            sprite.sourceRec = { unit.sourceRec.x + frame * unit.sourceRec.width, 0, - unit.sourceRec.width, unit.sourceRec.height };
+        else
+            sprite.sourceRec = { unit.sourceRec.x + frame * unit.sourceRec.width, 0, unit.sourceRec.width, unit.sourceRec.height };
 
-            if (unit.currentFrame == unit.numOfFrames)
-                unit.currentRepeat++;
-        }
+        unit.currentFrame = nextFrame;
+
+        if (unit.currentFrame + 1 == unit.numOfFrames)
+            unit.currentRepeat++;
     }
 
 public:
@@ -62,24 +67,37 @@ public:
         {
             auto now = std::chrono::system_clock::now();
 
-            SolveAnimation(now, priorityQueue.front());
-
-            priorityQueue.clear();
+            if (now - priorityQueue.front().lastIterationTime > priorityQueue.front().animationSpeed)
+            {
+                if (priorityQueue.front().repeats != 0 && priorityQueue.front().currentRepeat >= priorityQueue.front().repeats)
+                {
+                    priorityQueue.clear();
+                }
+                else {
+                    SolveAnimation(priorityQueue.front());
+                    priorityQueue.front().lastIterationTime = now;
+                }
+            }
         }
         else if (!animationQueue.empty())
         {
             auto now = std::chrono::system_clock::now();
             for (auto& unit : animationQueue)
             {
-                if (unit.repeats != 0 && unit.currentRepeat > unit.repeats)
+                if (now - unit.lastIterationTime > unit.animationSpeed)
                 {
-                    animationQueue.erase(std::remove_if(animationQueue.begin(), animationQueue.end(), [&](AnimationUnit& u) ->bool
+                    if (unit.repeats != 0 && unit.currentRepeat >= unit.repeats)
                     {
-                        return memcmp(&unit, &u, sizeof(unit)) == 0;
-                    }), animationQueue.end());
+                        animationQueue.erase(std::remove_if(animationQueue.begin(), animationQueue.end(), [&](AnimationUnit& u) ->bool
+                        {
+                            return memcmp(&unit, &u, sizeof(unit)) == 0;
+                        }), animationQueue.end());
+                    }
+                    else {
+                        SolveAnimation(unit);
+                        unit.lastIterationTime = now;
+                    }
                 }
-
-                SolveAnimation(now, unit);
             }
         }
     }
@@ -96,14 +114,18 @@ public:
         auto& sprite = unit.entity->Get<SpriteComponent>();
         unit.oldTexture = sprite.texture;
         unit.oldSourceRec = sprite.sourceRec;
+        unit.reverseOrder = event.reverseOrder;
 
         unit.texture = event.texture;
         unit.sourceRec = event.sourceRec;
 
         unit.numOfFrames = event.numOfFrames;
+        unit.mirrorSprite = event.mirrorSprite;
         unit.repeats = event.repeats;
 
         unit.animationSpeed = std::chrono::duration<int, std::ratio<1,1000>>(event.timePerFrame);
+
+        //TODO: aici ar trebui refacut si implementat un graf pentru arborele de animatii
 
         if (event.othersType == AnimationEvent::OVERRIDE_OTHERS)
         {
