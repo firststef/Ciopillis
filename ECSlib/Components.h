@@ -5,3 +5,4 @@
 #include "GridContainerComponent.h"
 #include "GridContainerChildComponent.h"
 #include "PhysicsComponent.h"
+#include "AnimationComponent.h"

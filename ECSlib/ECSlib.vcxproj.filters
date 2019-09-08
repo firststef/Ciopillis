@@ -143,5 +143,14 @@
     <ClInclude Include="AnimationEvent.h">
       <Filter>ECS\Events</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="DefferSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="DefferEvent.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

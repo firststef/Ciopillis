@@ -152,10 +152,13 @@
     <ClCompile Include="PhysicsSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimationComponent.h" />
     <ClInclude Include="AnimationEvent.h" />
     <ClInclude Include="AnimationSystem.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Components.h" />
+    <ClInclude Include="DefferEvent.h" />
+    <ClInclude Include="DefferSystem.h" />
     <ClInclude Include="DrawSystem.h" />
     <ClInclude Include="ECS.h" />
     <ClInclude Include="ECSlib.h" />

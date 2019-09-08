@@ -13,14 +13,15 @@ public:
     void Receive (const KeyboardEvent& event)
     {
         //Action
-        //TODO: aici trebuie verificat daca jucatorul tine apasat pe hold, daca a trecut timpul de cooldown
         if (std::find(event.pressedKeys.begin(), event.pressedKeys.end(), KEY_X) != event.pressedKeys.end())
         {
             eventManager->Notify<ArenaPlayerEvent>(ArenaPlayerEvent::ATTACK_X, Vector2{0,0});
+            return;//TODO: de scos return de aici si pus pe ocupat in arenasystem
         }
         else if (std::find(event.pressedKeys.begin(), event.pressedKeys.end(), KEY_Y) != event.pressedKeys.end())
         {
             eventManager->Notify<ArenaPlayerEvent>(ArenaPlayerEvent::ATTACK_Y, Vector2{ 0,0 });
+            return;
         }
 
         //Move
