@@ -18,6 +18,7 @@ struct AnimationUnit
 
     //utils
     unsigned currentFrame;
+    bool waitFrameFlag;
     unsigned currentRepeat;
 
     bool started;
@@ -46,6 +47,7 @@ struct AnimationUnit
         currentRepeat = 0;
         started = false;
         animationSpeed = std::chrono::duration<int, std::ratio<1, 1000>>(timePerFrame);
+        waitFrameFlag = false;
     }
 };
 
@@ -54,8 +56,6 @@ struct AnimationGraph;
 struct AnimationNode
 {
     std::shared_ptr<AnimationUnit> animationUnit;
-    std::function<void(AnimationGraph&, void*)> animationEventHandlerFunction;
-    void* context;
 
     struct NextAnimationNodeWrapper
     {
@@ -66,10 +66,8 @@ struct AnimationNode
 
     std::vector<NextAnimationNodeWrapper> nextNodes;
 
-    explicit AnimationNode(AnimationUnit anim, std::function<void(AnimationGraph&, void*)> animationEventHandlerFunction, void* context)
-    : animationUnit(std::make_shared<AnimationUnit>(anim)), 
-    animationEventHandlerFunction(std::move(animationEventHandlerFunction)),
-    context(context)
+    explicit AnimationNode(AnimationUnit anim)
+    : animationUnit(std::make_shared<AnimationUnit>(anim))
     {}
 
     std::shared_ptr<AnimationNode> Next(std::shared_ptr<AnimationNode> next, std::function<bool(const AnimationNode& node, void* context)> cond, void* context)

@@ -36,9 +36,7 @@ class ArenaSystem : public ISystem
                 1,
                 arena.playerOrientation,
                 std::make_shared<bool>(false),
-                0),
-            [](const AnimationGraph& unit, void* context) -> void {},
-            nullptr
+                0)
             );
 
         std::shared_ptr<AnimationNode> move = std::make_shared<AnimationNode>(
@@ -51,9 +49,7 @@ class ArenaSystem : public ISystem
                 arena.playerOrientation,
                 arena.playerOrientation,
                 0
-            ),
-            [](const AnimationGraph& unit, void* context) -> void {},
-            nullptr
+            )
             );
 
         std::shared_ptr<AnimationNode> attack_x = std::make_shared<AnimationNode>(
@@ -65,29 +61,7 @@ class ArenaSystem : public ISystem
                 ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
                 arena.playerOrientation,
                 std::make_shared<bool>(false),
-                1),
-            [&](AnimationGraph& graph, void* context) -> void
-            {
-                auto& node = *graph.currentNode;
-                auto& unit = *node.animationUnit;
-
-                if (unit.repeats == 1)
-                {
-
-                    //reinit
-                    unit.started = false;
-                    unit.currentFrame = 0;
-                    unit.currentRepeat = 0;
-
-                    //next
-                    graph.currentNode = idle;
-
-                    auto& arena = *static_cast<ArenaGameComponent*>(context);
-                    arena.blockPlayerInput = false;
-                    arena.currentActionPlayer = ArenaGameComponent::IDLE;
-                }
-            },
-            &arena
+                1)
             );
 
         //idle-move
@@ -120,7 +94,13 @@ class ArenaSystem : public ISystem
 
         attack_x->Next(idle, [](const AnimationNode& node, void* context) ->bool
         {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);  
+            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+
+            if (node.animationUnit->currentRepeat == 1)
+            {
+                arenaCtx.currentActionPlayer = ArenaGameComponent::IDLE;
+                arenaCtx.blockPlayerInput = false;
+            }
 
             return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
         }, &arena);

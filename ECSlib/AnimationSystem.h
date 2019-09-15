@@ -27,10 +27,25 @@ public:
         else
             sprite.sourceRec = { unit.sourceRec.x + frame * unit.sourceRec.width, 0, unit.sourceRec.width, unit.sourceRec.height };
 
-        unit.currentFrame = nextFrame;
+        if (unit.currentFrame + 1 >= unit.numOfFrames)
+        {
+            if (unit.waitFrameFlag)
+            {
+                unit.currentRepeat++;
+                unit.waitFrameFlag = false;
+            }
+            else
+                unit.waitFrameFlag = true;
+        }
 
-        if (unit.currentFrame + 1 == unit.numOfFrames)
-            unit.currentRepeat++;
+        unit.currentFrame = nextFrame;
+        
+        printf("%s==", unit.name.c_str());
+        printf("%d==", unit.currentFrame);
+        printf("%d\n", unit.currentRepeat);
+        
+
+        
     }
 
     bool static GoToNextNode(EntityPtr entity)
@@ -43,7 +58,7 @@ public:
         for (auto& next : node.nextNodes) {
             if ((unit.currentRepeat == unit.repeats == 0) || unit.currentRepeat >= unit.repeats)
             {
-                if (next.cond(*next.node, next.context))
+                if (next.cond(node, next.context))
                 {
                     //reinit
                     unit.started = false;
@@ -77,8 +92,6 @@ public:
             auto& graph = anim.graph;
             auto& node = *graph.currentNode;
             auto& unit = *node.animationUnit;
-
-            node.animationEventHandlerFunction(graph, node.context);
 
             if (GoToNextNode(entity))
                 continue;
