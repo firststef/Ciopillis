@@ -29,19 +29,13 @@
     <ClInclude Include="ArenaEvent.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="KeyboardInputSystem.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="KeyboardEvent.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="ArenaEventSystem.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="ArenaGameComponent.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="KeyboardInputComponent.h">
+    <ClInclude Include="ArenaPlayerEvent.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

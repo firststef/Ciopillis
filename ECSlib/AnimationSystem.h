@@ -4,12 +4,13 @@
 
 class AnimationSystem : public ISystem
 {
-    void StepAnimation(EntityPtr entity)
+public:
+    void static StepAnimation(EntityPtr entity)
     {
         auto& anim = entity->Get<AnimationComponent>();
         auto& graph = anim.graph;
-        auto& node = graph.currentNode;
-        auto& unit = *node->animationUnit;
+        auto& node = *graph.currentNode;
+        auto& unit = *node.animationUnit;
         auto& sprite = entity->Get<SpriteComponent>();
 
         sprite.texture = unit.texture;
@@ -32,7 +33,32 @@ class AnimationSystem : public ISystem
             unit.currentRepeat++;
     }
 
-public:
+    bool static GoToNextNode(EntityPtr entity)
+    {
+        auto& anim = entity->Get<AnimationComponent>();
+        auto& graph = anim.graph;
+        auto& node = *graph.currentNode;
+        auto& unit = *node.animationUnit;
+
+        for (auto& next : node.nextNodes) {
+            if ((unit.currentRepeat == unit.repeats == 0) || unit.currentRepeat >= unit.repeats)
+            {
+                if (next.cond(*next.node, next.context))
+                {
+                    //reinit
+                    unit.started = false;
+                    unit.currentFrame = 0;
+                    unit.currentRepeat = 0;
+
+                    //next
+                    graph.currentNode = next.node;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     AnimationSystem() : ISystem("AnimationSystem") {}
 
     void Initialize() override
@@ -49,31 +75,12 @@ public:
         {
             auto& anim = entity->Get<AnimationComponent>();
             auto& graph = anim.graph;
-            auto& node = graph.currentNode;
-            auto& unit = *node->animationUnit;
+            auto& node = *graph.currentNode;
+            auto& unit = *node.animationUnit;
 
-            auto nextAnimCheck = [&]() -> bool
-            {
-                for (auto& next : node->nextNodes) {
-                    if ((unit.currentRepeat == unit.repeats == 0) || unit.currentRepeat >= unit.repeats)
-                    {
-                        if (next.cond(*next.node, next.context))
-                        {
-                            //reinit
-                            unit.started = false;
-                            unit.currentFrame = 0;
-                            unit.currentRepeat = 0;
+            node.animationEventHandlerFunction(graph, node.context);
 
-                            //next
-                            graph.currentNode = next.node;
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            };
-
-            if (! nextAnimCheck())
+            if (GoToNextNode(entity))
                 continue;
 
             if (!unit.started)
@@ -85,12 +92,9 @@ public:
             if (now - anim.graph.lastIterationTime > unit.animationSpeed)
             {
                 StepAnimation(entity);
+                
                 anim.graph.lastIterationTime = now;
             }
         }
-    }
-
-    void Receive(const AnimationEvent& event)
-    {
     }
 };

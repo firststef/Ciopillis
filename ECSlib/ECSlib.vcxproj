@@ -172,6 +172,11 @@
     <ClInclude Include="GridContainerComponent.h" />
     <ClInclude Include="GridContainerSystem.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="HitBoxComponent.h" />
+    <ClInclude Include="HitBoxSystem.h" />
+    <ClInclude Include="KeyboardEvent.h" />
+    <ClInclude Include="KeyboardInputComponent.h" />
+    <ClInclude Include="KeyboardInputSystem.h" />
     <ClInclude Include="MouseEvent.h" />
     <ClInclude Include="MouseInputSystem.h" />
     <ClInclude Include="nvidia.h" />

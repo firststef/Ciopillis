@@ -3,9 +3,7 @@
 #include "Constants.h"
 #include "ArenaSystem.h"
 #include "ArenaEventSystem.h"
-#include "KeyboardInputSystem.h"
 #include "ArenaGameComponent.h"
-#include "KeyboardEvent.h"
 #include "ArenaPlayerEvent.h"
 #include "AnimationSystem.h"
 
@@ -17,7 +15,7 @@ int main()
 
     ECSManager manager;
 
-    auto defferSystem = std::make_shared<DefferSystem>(DefferSystem());
+    //auto defferSystem = std::make_shared<DefferSystem>(DefferSystem());
     auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem());
     auto arenaEventSystem = std::make_shared<ArenaEventSystem>(ArenaEventSystem());
     auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
@@ -25,7 +23,7 @@ int main()
     auto physicsSystem = std::make_shared <PhysicsSystem>(PhysicsSystem());
     auto animationSystem = std::make_shared <AnimationSystem>(AnimationSystem());
 
-    manager.systemManager.AddSystem(defferSystem);
+    //manager.systemManager.AddSystem(defferSystem);
     manager.systemManager.AddSystem(drawSystem);
     manager.systemManager.AddSystem(arenaSystem);
     manager.systemManager.AddSystem(arenaEventSystem);
@@ -36,10 +34,9 @@ int main()
     auto game(manager.pool.AddEntity());
     game->Add<ArenaGameComponent>();
 
-    manager.eventManager.Subscribe<DefferEvent>(defferSystem);
+    //manager.eventManager.Subscribe<DefferEvent>(defferSystem);
     manager.eventManager.Subscribe<KeyboardEvent>(arenaEventSystem);
     manager.eventManager.Subscribe<ArenaPlayerEvent>(arenaSystem);
-    manager.eventManager.Subscribe<AnimationEvent>(animationSystem);
 
     manager.Initialize();
 

@@ -49,9 +49,13 @@ struct AnimationUnit
     }
 };
 
+struct AnimationGraph;
+
 struct AnimationNode
 {
     std::shared_ptr<AnimationUnit> animationUnit;
+    std::function<void(AnimationGraph&, void*)> animationEventHandlerFunction;
+    void* context;
 
     struct NextAnimationNodeWrapper
     {
@@ -62,7 +66,11 @@ struct AnimationNode
 
     std::vector<NextAnimationNodeWrapper> nextNodes;
 
-    explicit AnimationNode(AnimationUnit anim) : animationUnit(std::make_shared<AnimationUnit>(anim)) {}
+    explicit AnimationNode(AnimationUnit anim, std::function<void(AnimationGraph&, void*)> animationEventHandlerFunction, void* context)
+    : animationUnit(std::make_shared<AnimationUnit>(anim)), 
+    animationEventHandlerFunction(std::move(animationEventHandlerFunction)),
+    context(context)
+    {}
 
     std::shared_ptr<AnimationNode> Next(std::shared_ptr<AnimationNode> next, std::function<bool(const AnimationNode& node, void* context)> cond, void* context)
     {

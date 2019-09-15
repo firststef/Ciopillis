@@ -2,9 +2,7 @@
 #include "System.h"
 #include "ArenaGameComponent.h"
 #include "ArenaPlayerEvent.h"
-#include "KeyboardInputComponent.h"
 #include "Constants.h"
-#include <iostream>
 
 class ArenaSystem : public ISystem
 {
@@ -38,7 +36,9 @@ class ArenaSystem : public ISystem
                 1,
                 arena.playerOrientation,
                 std::make_shared<bool>(false),
-                0)
+                0),
+            [](const AnimationGraph& unit, void* context) -> void {},
+            nullptr
             );
 
         std::shared_ptr<AnimationNode> move = std::make_shared<AnimationNode>(
@@ -51,7 +51,9 @@ class ArenaSystem : public ISystem
                 arena.playerOrientation,
                 arena.playerOrientation,
                 0
-            )
+            ),
+            [](const AnimationGraph& unit, void* context) -> void {},
+            nullptr
             );
 
         std::shared_ptr<AnimationNode> attack_x = std::make_shared<AnimationNode>(
@@ -63,7 +65,29 @@ class ArenaSystem : public ISystem
                 ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
                 arena.playerOrientation,
                 std::make_shared<bool>(false),
-                1)
+                1),
+            [&](AnimationGraph& graph, void* context) -> void
+            {
+                auto& node = *graph.currentNode;
+                auto& unit = *node.animationUnit;
+
+                if (unit.repeats == 1)
+                {
+
+                    //reinit
+                    unit.started = false;
+                    unit.currentFrame = 0;
+                    unit.currentRepeat = 0;
+
+                    //next
+                    graph.currentNode = idle;
+
+                    auto& arena = *static_cast<ArenaGameComponent*>(context);
+                    arena.blockPlayerInput = false;
+                    arena.currentActionPlayer = ArenaGameComponent::IDLE;
+                }
+            },
+            &arena
             );
 
         //idle-move
@@ -206,16 +230,6 @@ public:
                 arena.currentActionPlayer = ArenaGameComponent::ATTACK_X;
                 arena.blockPlayerInput = true;
                 comp.body->velocity = { 0,0 };
-
-                eventManager->Notify<DefferEvent>(
-                    ATTACK_X_ANIM_TIME,
-                    [](void* context) ->void
-                    {
-                        auto& arena = *static_cast<ArenaGameComponent*>(context);
-                        arena.blockPlayerInput = false;
-                        arena.currentActionPlayer = ArenaGameComponent::IDLE;
-                    },
-                    &arena);
             }
             else if (event.action == ArenaPlayerEvent::ATTACK_Y)
             {

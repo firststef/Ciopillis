@@ -152,5 +152,20 @@
     <ClInclude Include="DefferEvent.h">
       <Filter>ECS\Events</Filter>
     </ClInclude>
+    <ClInclude Include="KeyboardEvent.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyboardInputComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyboardInputSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="HitBoxComponent.h">
+      <Filter>ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="HitBoxSystem.h">
+      <Filter>ECS\Systems</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
