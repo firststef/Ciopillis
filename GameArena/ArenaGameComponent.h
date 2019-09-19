@@ -17,7 +17,7 @@ struct ArenaGameComponent : IComponent
         IDLE,
         MOVE,
         ATTACK_X,
-        ATTACK_Y
+        ATTACK_Z
     };
 
     EntityPtr player;

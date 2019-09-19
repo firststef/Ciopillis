@@ -266,4 +266,4 @@ RaylibGame/Debug
 RaylibGame/Release
 RaylibGame/x64
 /cards
-ECSlib/ECSlibDir/
+ECSlib/ECSlibDir/*

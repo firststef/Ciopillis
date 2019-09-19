@@ -20,10 +20,11 @@ class ArenaSystem : public ISystem
         arena.player = pool->AddEntity();
         arena.player->Add<TransformComponent>(Rectangle{ 500,500,200,200 });
         arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load("../sprites/basesprite.PNG"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
-        arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Y);
+        arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
         arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE,  200, 500 , 100, 200, 1);
         auto& playerBody = arena.player->Get<PhysicsComponent>().body;
-        playerBody->staticFriction = 1.0f;
+        playerBody->staticFriction = 0.2f;
+        playerBody->dynamicFriction = 0.2f;
         playerBody->freezeOrient = true;
 
         //Player Animation
@@ -59,6 +60,18 @@ class ArenaSystem : public ISystem
                 Rectangle{ (float)SPRITE_WIDTH * 5,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 ATTACK_X_ANIM_FRAMES,
                 ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
+                arena.playerOrientation,
+                std::make_shared<bool>(false),
+                1)
+            );
+
+        std::shared_ptr<AnimationNode> attack_z = std::make_shared<AnimationNode>(
+            AnimationUnit(
+                std::string("attack_y"),
+                textureManager->Load("../sprites/basesprite.PNG"),
+                Rectangle{ (float)SPRITE_WIDTH * 8,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+                ATTACK_Y_ANIM_FRAMES,
+                ATTACK_Y_ANIM_TIME / ATTACK_Y_ANIM_FRAMES,
                 arena.playerOrientation,
                 std::make_shared<bool>(false),
                 1)
@@ -113,6 +126,59 @@ class ArenaSystem : public ISystem
 
         arena.player->Add<AnimationComponent>(AnimationGraph(idle));
 
+        //idle, move, attack_x - attack_z
+        idle->Next(attack_z, [](const AnimationNode& node, void* context) ->bool
+        {
+            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+
+            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
+        }, &arena);
+        move->Next(attack_z, [](const AnimationNode& node, void* context) ->bool
+        {
+            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+
+            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
+        }, &arena);
+        attack_x->Next(attack_z, [](const AnimationNode& node, void* context) ->bool
+        {
+            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+
+            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
+        }, &arena);
+
+        attack_z->Next(idle, [](const AnimationNode& node, void* context) ->bool
+        {
+            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+
+            if (node.animationUnit->currentRepeat == 1)
+            {
+                arenaCtx.currentActionPlayer = ArenaGameComponent::IDLE;
+                arenaCtx.blockPlayerInput = false;
+            }
+
+            return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
+        }, &arena);
+        attack_z->Next(move, [](const AnimationNode& node, void* context) ->bool
+        {
+            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+
+            return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
+        }, &arena);
+        attack_z->Next(attack_x, [](const AnimationNode& node, void* context) ->bool
+        {
+            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+
+            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_X;
+        }, &arena);
+
+        arena.player->Add<AnimationComponent>(AnimationGraph(idle));
+
+        //Player HitBox
+        /*ShapeContainer* container = new ShapeContainer(playerBody->position, playerBody->orient, true);
+        Shape* shape = new Shape;
+        shape->SetRectangle(Rectangle{ 0,0,100,100 }, 0.0f, BLUE);
+        container->AddShape(Vector2{ 300,300 }, *shape, false);*/
+
         arena.generatedEntities.push_back(arena.player);
 
         //Enemy Setup
@@ -121,7 +187,8 @@ class ArenaSystem : public ISystem
         arena.enemy->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load("../sprites/basesprite.PNG"), Color(BLUE), Rectangle{ 0, 0, 29, 24 });
         arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, 200, 200 , 100, 200, 1);
         auto& enemyBody = arena.enemy->Get<PhysicsComponent>().body;
-        enemyBody->staticFriction = 1.0f;
+        enemyBody->staticFriction = 0.2f;
+        enemyBody->dynamicFriction = 0.2f;
         enemyBody->freezeOrient = true;
 
         arena.generatedEntities.push_back(arena.enemy);
@@ -150,8 +217,20 @@ class ArenaSystem : public ISystem
         for (auto& en : arena.generatedEntities)
         {
             if (en->Has(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<PhysicsComponent>()))
+            {
                 en->Get<TransformComponent>().zIndex = size - i;
+
+                auto& velocity = en->Get<PhysicsComponent>().body->velocity;
+                velocity = Vector2{ velocity.x * (1.0f - TOP_DOWN_VELOCITY_LOSS), velocity.y * (1.0f - TOP_DOWN_VELOCITY_LOSS) };
+
+                if (velocity <= Vector2({ TOP_DOWN_VELOCITY_LOW_LIMIT, TOP_DOWN_VELOCITY_LOW_LIMIT }) 
+                    && velocity >= Vector2({ -TOP_DOWN_VELOCITY_LOW_LIMIT, -TOP_DOWN_VELOCITY_LOW_LIMIT }))
+                    velocity = Vector2{ 0,0 };
+            }
+
             i++;
+
+            //INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
         }
     }
 
@@ -211,9 +290,11 @@ public:
                 arena.blockPlayerInput = true;
                 comp.body->velocity = { 0,0 };
             }
-            else if (event.action == ArenaPlayerEvent::ATTACK_Y)
+            else if (event.action == ArenaPlayerEvent::ATTACK_Z)
             {
-                //arena.currentActionPlayer = ArenaGameComponent::ATTACK_Y;
+                arena.currentActionPlayer = ArenaGameComponent::ATTACK_Z;
+                arena.blockPlayerInput = true;
+                comp.body->velocity = { 0,0 };
             }
             else if (event.action == ArenaPlayerEvent::MOVE)
             {

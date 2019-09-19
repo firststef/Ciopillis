@@ -5,7 +5,7 @@ struct ArenaPlayerEvent : IEvent
     {
         MOVE,
         ATTACK_X,
-        ATTACK_Y
+        ATTACK_Z
     } action;
 
     Vector2 axes;

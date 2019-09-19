@@ -5,3 +5,4 @@
 #include "AnimationEvent.h"
 #include "DefferEvent.h"
 #include "KeyboardEvent.h"
+#include "HitBoxEvent.h"

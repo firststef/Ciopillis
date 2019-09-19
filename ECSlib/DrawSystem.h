@@ -15,6 +15,7 @@ public:
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
+        //TODO: ar trebui sa existe o componenta draw component care sa contina o functie simpla care permite desenare custom
         auto entities = pool->GetEntities(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<SpriteComponent>());
         std::sort(entities.begin(), entities.end(), [](EntityPtr a, EntityPtr b)
         {
@@ -36,6 +37,8 @@ public:
         }
 
 #if defined(_DEBUG) && defined(ARENA)
+        //ShapeContainer::Draw(*((ShapeContainer*)0x0ea9f660));
+        //(*((ShapeContainer*)0x0ea9f660)).Update();
 
         int bodiesCount = GetPhysicsBodiesCount();
         for (int i = 0; i < bodiesCount; i++)

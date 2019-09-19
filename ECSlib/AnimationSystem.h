@@ -39,13 +39,6 @@ public:
         }
 
         unit.currentFrame = nextFrame;
-        
-        printf("%s==", unit.name.c_str());
-        printf("%d==", unit.currentFrame);
-        printf("%d\n", unit.currentRepeat);
-        
-
-        
     }
 
     bool static GoToNextNode(EntityPtr entity)

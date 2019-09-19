@@ -17,9 +17,9 @@ public:
         {
             eventManager->Notify<ArenaPlayerEvent>(ArenaPlayerEvent::ATTACK_X, Vector2{0,0});
         }
-        else if (std::find(event.pressedKeys.begin(), event.pressedKeys.end(), KEY_Y) != event.pressedKeys.end())
+        else if (std::find(event.pressedKeys.begin(), event.pressedKeys.end(), KEY_Z) != event.pressedKeys.end())
         {
-            eventManager->Notify<ArenaPlayerEvent>(ArenaPlayerEvent::ATTACK_Y, Vector2{ 0,0 });
+            eventManager->Notify<ArenaPlayerEvent>(ArenaPlayerEvent::ATTACK_Z, Vector2{ 0,0 });
         }
 
         //Move
