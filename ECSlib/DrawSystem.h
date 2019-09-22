@@ -37,8 +37,6 @@ public:
         }
 
 #if defined(_DEBUG) && defined(ARENA)
-        //ShapeContainer::Draw(*((ShapeContainer*)0x0ea9f660));
-        //(*((ShapeContainer*)0x0ea9f660)).Update();
 
         int bodiesCount = GetPhysicsBodiesCount();
         for (int i = 0; i < bodiesCount; i++)
@@ -61,8 +59,14 @@ public:
             }
         }
 
-#endif
+        auto hitBoxEntities = pool->GetEntities(1 << GetTypeID<HitBoxComponent>());
+        for (auto& e : hitBoxEntities)
+        {
+            auto box = e->Get<HitBoxComponent>();
+            box.cont.Draw();
+        }
 
+#endif
         EndDrawing();
     }
 };

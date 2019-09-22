@@ -18,14 +18,17 @@ class ArenaSystem : public ISystem
 
         //Player Setup
         arena.player = pool->AddEntity();
-        arena.player->Add<TransformComponent>(Rectangle{ 500,500,200,200 });
+
+        Rectangle player_rec{ 1000,500,200,200 };
+
+        auto& transform = arena.player->Add<TransformComponent>(player_rec);
         arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load("../sprites/basesprite.PNG"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
         arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
-        arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE,  200, 500 , 100, 200, 1);
-        auto& playerBody = arena.player->Get<PhysicsComponent>().body;
+        
+        auto& playerBody = arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, player_rec.x, player_rec.y, 100, player_rec.height, 1).body;
         playerBody->staticFriction = 0.2f;
         playerBody->dynamicFriction = 0.2f;
-        playerBody->freezeOrient = true;
+        playerBody->freezeOrient = false;
 
         //Player Animation
         std::shared_ptr<AnimationNode> idle = std::make_shared<AnimationNode>(
@@ -174,22 +177,71 @@ class ArenaSystem : public ISystem
         arena.player->Add<AnimationComponent>(AnimationGraph(idle));
 
         //Player HitBox
-        /*ShapeContainer* container = new ShapeContainer(playerBody->position, playerBody->orient, true);
-        Shape* shape = new Shape;
-        shape->SetRectangle(Rectangle{ 0,0,100,100 }, 0.0f, BLUE);
-        container->AddShape(Vector2{ 300,300 }, *shape, false);*/
+        ShapeContainer player_idle_cont(
+            [](void* context) -> Vector2 {
+                auto& arena = *static_cast<ArenaGameComponent*>(context);
+                auto pos = arena.player->Get<PhysicsComponent>().body->position;
+                return Vector2{ pos.x , pos.y  };
+            }, 
+            &arena,
+            [](void* context) -> float {
+                auto& arena = *static_cast<ArenaGameComponent*>(context);
+                return arena.player->Get<PhysicsComponent>().body->orient;
+            }, 
+            &arena, 
+            true);
+
+        Shape body("body", "player");
+        body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
+        player_idle_cont.AddShape(body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
+
+        Shape fist("fist", "player");
+        fist.SetRectangle(Rectangle{ 0,0,20,20 }, 0.0f, Fade(RED, 0.4f));
+        player_idle_cont.AddShape(fist, Vector2{ 0,0 }, Vector2{ 1, 1 }, false);
+
+        arena.player->Add<HitBoxComponent>(player_idle_cont);
+        player_idle_cont.Update();
 
         arena.generatedEntities.push_back(arena.player);
 
         //Enemy Setup
+
+        Rectangle enemy_rec{ 200,200,200,200 };
+
         arena.enemy = pool->AddEntity();
-        arena.enemy->Add<TransformComponent>(Rectangle{ 200,200,200,200 });
+        arena.enemy->Add<TransformComponent>(enemy_rec);
         arena.enemy->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load("../sprites/basesprite.PNG"), Color(BLUE), Rectangle{ 0, 0, 29, 24 });
-        arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, 200, 200 , 100, 200, 1);
-        auto& enemyBody = arena.enemy->Get<PhysicsComponent>().body;
+        
+        auto& enemyBody = arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, enemy_rec.x, enemy_rec.y, 100, enemy_rec.height, 1).body;
         enemyBody->staticFriction = 0.2f;
         enemyBody->dynamicFriction = 0.2f;
         enemyBody->freezeOrient = true;
+
+        //Enemy hitbox
+        ShapeContainer enemy_idle_cont(
+            [](void* context) -> Vector2 {
+            auto& arena = *static_cast<ArenaGameComponent*>(context);
+            auto pos = arena.enemy->Get<PhysicsComponent>().body->position;
+            return Vector2{ pos.x - 50, pos.y - 100 };
+        },
+            &arena,
+            [](void* context) -> float {
+            auto& arena = *static_cast<ArenaGameComponent*>(context);
+            return arena.enemy->Get<PhysicsComponent>().body->orient;
+        },
+            &arena,
+            true);
+
+        Shape enemy_body("body", "enemy");
+        enemy_body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
+        enemy_idle_cont.AddShape(enemy_body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
+
+        /*Shape enemy_fist("fist", "enemy");
+        enemy_fist.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(RED, 0.4f));
+        enemy_idle_cont.AddShape(Vector2{ 0,0 }, enemy_fist, false);*/
+
+        arena.enemy->Add<HitBoxComponent>(enemy_idle_cont);
+        enemy_idle_cont.Update();
 
         arena.generatedEntities.push_back(arena.enemy);
 
@@ -277,9 +329,13 @@ public:
         {
             auto& arena = e->Get<ArenaGameComponent>();
             auto& comp = arena.player->Get<PhysicsComponent>();
+            auto& box = arena.player->Get<HitBoxComponent>();
 
             arena.lastAxesPlayer = { event.axes.x != 0 ? event.axes.x : arena.lastAxesPlayer.x, event.axes.y != 0 ? event.axes.y : arena.lastAxesPlayer.y };
             *arena.playerOrientation = arena.lastAxesPlayer.x > 0;
+
+            box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
+            box.cont.Update(true);
 
             if (arena.blockPlayerInput)
                 continue;
@@ -308,5 +364,10 @@ public:
                 }
             }
         }
+    }
+
+    void Receive(const HitBoxEvent& event)
+    {
+        auto test = 3;
     }
 };

@@ -1,6 +1,8 @@
 #pragma once
 #include <raylib.h>
+#include <utility>
 #include <vector>
+#include <functional>
 
 inline Rectangle operator+(Rectangle &a, Rectangle b)
 {
@@ -20,6 +22,11 @@ inline Vector2 operator+(Vector2 &a, Vector2 b)
 inline Vector2 operator-(Vector2 &a, Vector2 b)
 {
     return Vector2{ a.x - b.x,a.y - b.y };
+}
+
+inline Vector2 operator* (Vector2 &a, Vector2 b)
+{
+    return Vector2{ a.x * b.x,a.y * b.y };
 }
 
 inline bool operator==(Texture2D& a, Texture2D& b)
@@ -67,8 +74,14 @@ inline bool operator>=(const Vector2& a, const Vector2& b)
     return a.x >= b.x && a.y >= b.y;
 }
 
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 struct Shape
 {
+    typedef std::string Identifier;
+
     enum ShapeType
     {
         NONE,
@@ -107,8 +120,15 @@ struct Shape
         } poly;
     };
 
+    Identifier id;
+    Identifier objectClass;
+
     Color color;
     float rotation;
+
+    Shape(Identifier id, Identifier objectClass) 
+    : id(std::move(id)), objectClass(objectClass) 
+    {}
 
     void SetCircle(int x, int y, float radius, Color color = RED)
     {
@@ -144,23 +164,23 @@ struct Shape
         this->color = color;
     }
 
-    void static Draw(Shape& shape)
+    void Draw()
     {
-        if (shape.type == CIRCLE)
+        if (type == CIRCLE)
         {
-            DrawCircle(shape.circle.x, shape.circle.y, shape.circle.radius, shape.color);
+            DrawCircle(circle.x, circle.y, circle.radius, color);
         }
-        else if (shape.type == RECTANGLE)
+        else if (type == RECTANGLE)
         {
-            DrawRectanglePro(shape.rectangle.rec, Vector2{ 0,0 }, shape.rotation, shape.color);
+            DrawRectanglePro(rectangle.rec, Vector2{ 0,0 }, rotation, color);
         }
-        else if (shape.type == TRIANGLE)
+        else if (type == TRIANGLE)
         {
             //DrawTriangle(shape.triangle.a, shape.triangle.b, shape.triangle.c, shape.color);
         }
-        else if (shape.type == POLYGON)
+        else if (type == POLYGON)
         {
-            DrawPoly(shape.poly.center, shape.poly.sides, shape.poly.radius, shape.rotation, shape.color);
+            DrawPoly(poly.center, poly.sides, poly.radius, rotation, color);
         }
     }
 };
@@ -174,11 +194,11 @@ public:
 
     struct ShapeHolder
     {
-        std::string identifier;
+        Shape shape;
 
         Vector2 offset;
         float initialRotation;
-        Shape shape;
+        Vector2 currentOrientation;
         
         bool radians;
     };
@@ -188,18 +208,45 @@ public:
     Vector2 lastPosition;
     float lastRotation;
 
-    Vector2& position;
-    float& rotation;
+    Vector2* position;
+    float* rotation;
+
+    std::function<Vector2(void*)> positionGetter;
+    void* posContext;
+
+    std::function<float(void*)> rotationGetter;
+    void* rotContext;
+
     bool radians;
     //INFO: la physac rotatia este in radiani, pe cand in raylib este in grade
 
-    ShapeContainer(Vector2& position, float& rotation, bool radians = true)
-        :lastPosition(position), lastRotation(rotation), position(position), rotation(rotation), radians(radians)
+    ShapeContainer(Vector2* position, float* rotation, bool radians = true)
+        :lastPosition(*position), lastRotation(*rotation), position(position), rotation(rotation), radians(radians)
     {}
 
-    void AddShape(std::string identifier, Vector2 offset, Shape& shape, bool radians = false)
+    ShapeContainer(std::function<Vector2(void*)> positionGetter, void* posContext,
+        std::function<float(void*)> rotationGetter, void* rotContext, bool radians = true)
+        :position(nullptr), rotation(nullptr),
+        positionGetter(positionGetter), posContext(posContext),
+        rotationGetter(rotationGetter), rotContext(rotContext),
+        radians(radians)
     {
-        Vector2 newPos = position + offset;
+        lastPosition = positionGetter(posContext);
+        lastRotation = rotationGetter(rotContext);
+    }
+
+    void AddShape(Shape& shape, Vector2 offset, Vector2 orientation, bool radians = false)
+    {
+        if (offset.x == 0)
+            offset.x = 0.0001f;
+        if (offset.y == 0)
+            offset.y = 0.0001f;
+
+        Vector2 newPos;
+        if (position)
+            newPos = *position + offset;
+        else
+            newPos = offset + positionGetter(posContext);
 
         if (shape.type == Shape::CIRCLE)
         {
@@ -221,27 +268,55 @@ public:
             shape.poly.center.y = newPos.y;
         }
 
-        holders.push_back(ShapeHolder{ std::move(identifier), offset, shape.rotation, shape, radians});
+        holders.push_back(ShapeHolder{ 
+            shape,
+            offset,
+            shape.rotation,
+            orientation,
+            radians });
     }
 
-    void Update() {
-        if (lastPosition == position && lastRotation == rotation)
+    void Update(bool force = false) {
+        Vector2 pos_x;
+        float rot_x;
+
+        if (!force) {
+            if (position && rotation) {
+
+                pos_x = *position;
+                rot_x = *rotation;
+
+                if ((lastPosition == pos_x && lastRotation == rot_x))
+                    return;
+            }
+            else
+            {
+                pos_x = positionGetter(posContext);
+                rot_x = rotationGetter(rotContext);
+
+                if (lastPosition == pos_x && lastRotation == rot_x)
+                    return;
+            }
+        }
+        else
             return;
 
         for (auto& holder : holders)
         {
             float radius = sqrt(pow(holder.offset.x, 2) + pow(holder.offset.y, 2));
-            float initialAngle = atan(holder.offset.x / holder.offset.y);
+            float initialAngle = atan(holder.offset.y / holder.offset.x);
+            if (holder.offset.x < 0)
+                initialAngle += radians ? PI : 180;
 
             if (holder.shape.type == Shape::CIRCLE)
             {
-                holder.shape.circle.x = position.x + cos(initialAngle + rotation) * radius;
-                holder.shape.circle.y = position.y + sin(initialAngle + rotation) * radius;
+                holder.shape.circle.x = pos_x.x + cos(initialAngle + rot_x) * radius;
+                holder.shape.circle.y = pos_x.y + sin(initialAngle + rot_x) * radius;
             } 
             else if (holder.shape.type == Shape::RECTANGLE)
             {
-                holder.shape.rectangle.rec.x = position.x + cos(initialAngle + rotation) * radius;
-                holder.shape.rectangle.rec.y = position.y + sin(initialAngle + rotation) * radius;
+                holder.shape.rectangle.rec.x = pos_x.x + cos(initialAngle + rot_x) * radius;
+                holder.shape.rectangle.rec.y = pos_x.y + sin(initialAngle + rot_x) * radius;
             }
             else if (holder.shape.type == Shape::TRIANGLE)
             {
@@ -249,27 +324,48 @@ public:
             }
             else if (holder.shape.type == Shape::POLYGON)
             {
-                holder.shape.poly.center.x = position.x + cos(initialAngle + rotation) * radius;
-                holder.shape.poly.center.y = position.y + sin(initialAngle + rotation) * radius;
+                holder.shape.poly.center.x = pos_x.x + cos(initialAngle + rot_x) * radius;
+                holder.shape.poly.center.y = pos_x.y + sin(initialAngle + rot_x) * radius;
             }
 
             if (radians && !holder.radians)
-                holder.shape.rotation = radiansToDegrees(rotation + holder.initialRotation);
+                holder.shape.rotation = radiansToDegrees(rot_x + holder.initialRotation);
             else if (!radians && holder.radians)
-                holder.shape.rotation = degreesToRadians(rotation) + holder.initialRotation;
+                holder.shape.rotation = degreesToRadians(rot_x) + holder.initialRotation;
             else
-                holder.shape.rotation = rotation + holder.initialRotation;
+                holder.shape.rotation = rot_x + holder.initialRotation;
         }
 
-        lastPosition = position;
-        lastRotation = rotation;
+        lastPosition = pos_x;
+        lastRotation = rot_x;
     }
 
-    void static Draw(ShapeContainer& cont)
+    void Draw()
     {
-        for (auto& holder : cont.holders)
+        for (auto& holder : holders)
         {
-            Shape::Draw(holder.shape);
+            holder.shape.Draw();
+        }
+    }
+
+    void Mirror(Vector2 orientation)
+    {
+        for (auto& holder : holders)
+        {
+            if (holder.currentOrientation != orientation)
+            {
+                printf("%s\n", "change");
+
+                holder.offset = holder.offset * Vector2{ float(sgn<float>(orientation.x)), float(sgn<float>(orientation.y)) };
+
+                if (holder.shape.type == Shape::RECTANGLE)
+                {
+                    holder.shape.rectangle.rec.x *= float(sgn<float>(orientation.x));
+                    holder.shape.rectangle.rec.y *= float(sgn<float>(orientation.y));
+                }
+
+                holder.currentOrientation = orientation;
+            }
         }
     }
 };

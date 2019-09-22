@@ -22,7 +22,7 @@ struct ArenaGameComponent : IComponent
 
     EntityPtr player;
     CurrentAction currentActionPlayer = IDLE;
-    Vector2 lastAxesPlayer {-1,-1};
+    Vector2 lastAxesPlayer {-1,1};
     std::shared_ptr<bool> playerOrientation = std::make_shared<bool>();
 
     bool blockPlayerInput = false;

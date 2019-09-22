@@ -167,5 +167,8 @@
     <ClInclude Include="HitBoxSystem.h">
       <Filter>ECS\Systems</Filter>
     </ClInclude>
+    <ClInclude Include="HitBoxEvent.h">
+      <Filter>ECS\Events</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

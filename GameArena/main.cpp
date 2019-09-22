@@ -22,6 +22,7 @@ int main()
     auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>(KeyboardInputSystem());
     auto physicsSystem = std::make_shared <PhysicsSystem>(PhysicsSystem());
     auto animationSystem = std::make_shared <AnimationSystem>(AnimationSystem());
+    auto hitBoxSystem = std::make_shared<HitBoxSystem>(HitBoxSystem());
 
     manager.systemManager.AddSystem(defferSystem);
     manager.systemManager.AddSystem(drawSystem);
@@ -30,6 +31,7 @@ int main()
     manager.systemManager.AddSystem(keyboardInputSystem);
     manager.systemManager.AddSystem(physicsSystem);
     manager.systemManager.AddSystem(animationSystem);
+    manager.systemManager.AddSystem(hitBoxSystem);
 
     auto game(manager.pool.AddEntity());
     game->Add<ArenaGameComponent>();
@@ -37,6 +39,7 @@ int main()
     manager.eventManager.Subscribe<DefferEvent>(defferSystem);
     manager.eventManager.Subscribe<KeyboardEvent>(arenaEventSystem);
     manager.eventManager.Subscribe<ArenaPlayerEvent>(arenaSystem);
+    manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
 
     manager.Initialize();
 
