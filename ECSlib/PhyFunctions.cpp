@@ -1,3 +1,4 @@
+#ifdef WIN32
 #include "PhyFunctions2.h"
 #define _STDBOOL_H
 #define PHYSAC_IMPLEMENTATION
@@ -56,3 +57,33 @@ void WIN_ClosePhysics()
 #undef _STDBOOL_H
 #undef PHYSAC_STANDALONE
 #undef PHYSAC_IMPLEMENTATION
+#else
+#include <raylib.h>
+#include <physac.h>
+#include "PhyFunctions.h"
+
+enum Type
+{
+    CIRCLE,
+    RECTANGLE,
+    POLYGON
+};
+
+PhysicsBody LNX_GetBody(int type, float x, float y, float first, float second, float third){
+    PhysicsBody body;
+    switch (type)
+    {
+        case CIRCLE:
+            body = CreatePhysicsBodyCircle(Vector2{ x,y }, first, second);
+            break;
+        case RECTANGLE:
+            body = CreatePhysicsBodyRectangle(Vector2{ x,y }, first, second, third);
+            break;
+        default:
+        case POLYGON:
+            body = CreatePhysicsBodyPolygon(Vector2{ x,y }, first, second, third);
+            break;
+    }
+    return body;
+}
+#endif

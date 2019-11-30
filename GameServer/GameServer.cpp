@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <locale>
 #include <random>
+#include <cstring>
 
 #define CMP(x,y) (strcmp(x,y) == 0)
 

@@ -4,13 +4,22 @@
 
 void PhysicsSystem::Initialize() 
 {
+#ifdef WIN32
     WIN_InitPhysics();
     WIN_SetPhysicsGravity(0, 0);
+#else
+    InitPhysics();
+    SetPhysicsGravity(0, 0);
+#endif
 }
 
 void PhysicsSystem::Execute() 
 {
+#ifdef WIN32
     WIN_RunPhysicsStep();
+#else
+    RunPhysicsStep();
+#endif
 
     for (auto& e : pool->GetEntities(1 << GetTypeID<PhysicsComponent>() | 1 << GetTypeID<TransformComponent>()))
     {
@@ -22,5 +31,9 @@ void PhysicsSystem::Execute()
 
 void PhysicsSystem::Destroy() 
 {
+#ifdef WIN32
     WIN_ClosePhysics();
+#else
+    ClosePhysics();
+#endif
 }

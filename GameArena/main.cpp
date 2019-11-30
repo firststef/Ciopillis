@@ -1,11 +1,10 @@
-#include "raylib.h"
-#include "ECSlib.h"
+#include <raylib.h>
+#include <ECSlib.h>
 #include "Constants.h"
 #include "ArenaSystem.h"
 #include "ArenaEventSystem.h"
 #include "ArenaGameComponent.h"
 #include "ArenaPlayerEvent.h"
-#include "AnimationSystem.h"
 
 int main()
 {

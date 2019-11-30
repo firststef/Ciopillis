@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 
 using CardID = unsigned int;
 

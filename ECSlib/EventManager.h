@@ -1,7 +1,8 @@
 #pragma once
+#include "System.h"
 #include <functional>
 #include <vector>
-#include "System.h"
+#include <exception>
 
 struct ReceiverCallbacksHolder
 {
@@ -27,7 +28,7 @@ public:
     {
         void (System::*Receive)(const Event &) = &System::Receive;
         if (Receive == nullptr)
-            throw std::exception("Function conversion failed");
+            throw std::bad_cast();
 
         auto converter = TFuncToVoidFuncConverter<Event>(std::bind(Receive, static_cast<System*>(system.get()), std::placeholders::_1));
 
