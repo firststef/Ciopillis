@@ -262,8 +262,10 @@ __pycache__/
 
 Debug/
 Release/
-RaylibGame/Debug
-RaylibGame/Release
-RaylibGame/x64
+CardGame/Debug
+CardGame/Release
+CardGame/x64
 /cards
 ECSlib/ECSlibDir/*
+*Debug/
+*Release/
