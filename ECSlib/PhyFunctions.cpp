@@ -1,9 +1,7 @@
-#include "PhyFunctions2.h"
 #define _STDBOOL_H
 #define PHYSAC_IMPLEMENTATION
 #define PHYSAC_STANDALONE
 #define PHYSAC_NO_THREADS
-#include <physac.h>
 
 enum Type
 {
@@ -11,6 +9,12 @@ enum Type
     RECTANGLE,
     POLYGON
 };
+
+#ifdef WIN32
+#include "PhyFunctions2.h"
+#include "win_physac.h"
+
+
 
 PhysicsBody WIN_GetBody(int type, float x, float y, float first, float second, float third)
 {
@@ -52,7 +56,28 @@ void WIN_ClosePhysics()
 {
     ClosePhysics();
 }
+#else
+#include <physac.h>
+#include "PhyFunctions.h"
 
+PhysicsBody LNX_GetBody(int type, float x, float y, float first, float second, float third){
+    PhysicsBody body;
+    switch (type)
+    {
+        case CIRCLE:
+            body = CreatePhysicsBodyCircle(Vector2{ x,y }, first, second);
+            break;
+        case RECTANGLE:
+            body = CreatePhysicsBodyRectangle(Vector2{ x,y }, first, second, third);
+            break;
+        default:
+        case POLYGON:
+            body = CreatePhysicsBodyPolygon(Vector2{ x,y }, first, second, third);
+            break;
+    }
+    return body;
+}
+#endif
 #undef _STDBOOL_H
 #undef PHYSAC_STANDALONE
 #undef PHYSAC_IMPLEMENTATION

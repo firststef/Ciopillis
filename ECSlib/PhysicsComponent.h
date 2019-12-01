@@ -1,7 +1,12 @@
 #pragma once
 #include "Component.h"
 #include <raylib.h>
+
+#ifdef WIN32
+#include "win_physac.h"
+#else
 #include <physac.h>
+#endif
 #include "PhyFunctions.h"
 
 struct PhysicsComponent : IComponent
@@ -17,6 +22,10 @@ struct PhysicsComponent : IComponent
 
     PhysicsComponent(Type type, float x, float y, float first, float second, float third) : type(type)
     {
+#ifdef WIN32
         body = WIN_GetBody((int) type, x, y, first, second, third);
+#else
+        body = LNX_GetBody((int) type, x, y, first, second, third);
+#endif
     }
 };

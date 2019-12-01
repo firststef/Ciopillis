@@ -269,3 +269,4 @@ CardGame/x64
 ECSlib/ECSlibDir/*
 *Debug/
 *Release/
+build/

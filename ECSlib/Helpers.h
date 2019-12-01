@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 #include <functional>
+#include <cmath>
 
 inline Rectangle operator+(Rectangle &a, Rectangle b)
 {

@@ -1,5 +1,6 @@
 #pragma once
 #include "Entity.h"
+#include <algorithm>
 
 class Pool
 {
@@ -17,7 +18,7 @@ public:
 
     void RemoveEntity(EntityPtr e)
     {
-        entities.erase(std::remove(entities.begin(), entities.end(), e), entities.end());
+        entities.erase(std::remove(entities.begin(), entities.end(), e), entities.end()); //TODO: check if this removes only one
     }
 
     std::vector<EntityPtr> GetEntities()

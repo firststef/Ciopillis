@@ -4,9 +4,13 @@
 
 int main()
 {
-    std::string log;
+	std::string log;
 
-    CardGenerator generator("card_database.json");
+#ifdef WIN32
+    CardGenerator generator("D:/GameDev/Ciopillis/GameServer/card_database.json");
+#else
+	CardGenerator generator("/home/first/Documents/Ciopillis/GameServer/card_database.json");
+#endif
 
     auto player = Player("Player", generator.container);
     auto computer = Player("Computer",generator.container);

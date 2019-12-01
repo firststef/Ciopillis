@@ -1,4 +1,4 @@
-﻿#include "ECSlib.h"
+﻿#include <ECSlib.h>
 #include "Constants.h"
 #include "GameServer.h"
 #include "CardGenerator.h"
@@ -16,7 +16,11 @@ int main()
 
     std::string gameLog;
 
-    CardGenerator generator("../GameServer/card_database.json");
+#ifdef WIN32
+    CardGenerator generator("D:/GameDev/Ciopillis/GameServer/card_database.json");
+#else
+	CardGenerator generator("/home/first/Documents/Ciopillis/GameServer/card_database.json");
+#endif
 
     Player player("Player", generator.container);
     Player computer("Computer", generator.container);
