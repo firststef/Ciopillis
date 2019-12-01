@@ -22,19 +22,32 @@ set(OUTPUT_RELEASE Release)
 
 project(${PROJECT_NAME} CXX)
 
-# Define Release by default.
+# Define Debug by default.
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release")
-  message(STATUS "Build type not specified: Use Release by default.")
+  set(CMAKE_BUILD_TYPE "Debug")
+  message(STATUS "Build type not specified: Use Debug by default.")
 endif(NOT CMAKE_BUILD_TYPE)
 
 ############## Artefacts Output ############################
 # Defines outputs , depending BUILD TYPE                   #
 ############################################################
-
+message(project dir:)
+message(${PROJECT_DIR})
+if(MSVC)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}")
+set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}")
+else()
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
+set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
 set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
+endif()
+endif()
 
 # Messages
 message("${PROJECT_NAME}: MAIN PROJECT: ${CMAKE_PROJECT_NAME}")
@@ -103,14 +116,14 @@ endif()
 ########### Link & Dependencies ############################
 # Add project dependencies and Link to project             #
 ############################################################
-
+    message(${CMAKE_CURRENT_SOURCE_DIR}/../x64/Debug/ECSlib.lib)
 if(MSVC)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      target_link_libraries(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../raylib/src/Debug/raylib_static.lib ECSlib.lib )
-    elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      target_link_libraries(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../raylib/src/Release/raylib_static.lib ECSlib.lib )
+      target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/raylib/src/Debug/raylib_static.lib ${PROJECT_DIR}/../ECSlib/Debug/ECSlib.lib winmm.lib)
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+      target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/raylib/src/Release/raylib_static.lib ${PROJECT_DIR}/../ECSlib/Release/ECSlib.lib winmm.lib)
     endif()
-else(MSVC)
+else()
     target_link_libraries(${PROJECT_NAME} raylib ECSlib )
-endif(MSVC)
+endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../raylib/src/ ${CMAKE_CURRENT_SOURCE_DIR}/../ECSlib)

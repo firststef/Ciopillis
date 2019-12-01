@@ -1,4 +1,4 @@
-# File generated at : 15:17:50, Sat 30 Nov 
+# File generated at : 15:17:50, Sat 30 Nov
 # Converted Project : GameServer/GameServer.vcxproj
 cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
@@ -22,19 +22,31 @@ set(OUTPUT_RELEASE Release)
 
 project(${PROJECT_NAME} CXX)
 
-# Define Release by default.
+# Define Debug by default.
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release")
-  message(STATUS "Build type not specified: Use Release by default.")
+  set(CMAKE_BUILD_TYPE "Debug")
+  message(STATUS "Build type not specified: Use Debug by default.")
 endif(NOT CMAKE_BUILD_TYPE)
 
 ############## Artefacts Output ############################
 # Defines outputs , depending BUILD TYPE                   #
 ############################################################
 
+if(MSVC)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}")
+set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}")
+else()
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
+set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
 set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
+endif()
+endif()
 
 # Messages
 message("${PROJECT_NAME}: MAIN PROJECT: ${CMAKE_PROJECT_NAME}")
@@ -68,7 +80,6 @@ source_group("Headers" FILES ${HEADERS_FILES})
 # Add library to build.
 add_library(${PROJECT_NAME} STATIC
    ${SRC_FILES} ${HEADERS_FILES}
-
 )
 
 ######################### Flags ############################
@@ -84,8 +95,8 @@ endif(NOT MSVC)
 
 # Preprocessor definitions
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE 
-   -D_CRT_SECURE_NO_WARNINGS 
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+   -D_CRT_SECURE_NO_WARNINGS
     )
     if(MSVC)
         target_compile_options(${PROJECT_NAME} PRIVATE  /W3 /MD /Od /EHsc)
@@ -93,7 +104,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE 
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
     )
     if(MSVC)
         target_compile_options(${PROJECT_NAME} PRIVATE  /W3 /GL /Oi /Gy /EHsc)
@@ -103,4 +114,3 @@ endif()
 ########### Link & Dependencies ############################
 # Add project dependencies and Link to project             #
 ############################################################
-
