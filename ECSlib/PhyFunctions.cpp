@@ -4,7 +4,7 @@
 #define PHYSAC_IMPLEMENTATION
 #define PHYSAC_STANDALONE
 #define PHYSAC_NO_THREADS
-#include <physac.h>
+#include "win_physac.h"
 
 enum Type
 {

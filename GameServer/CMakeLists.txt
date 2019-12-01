@@ -13,8 +13,8 @@ set(PROJECT_NAME GameServer)
 
 
 # Outputs
-set(OUTPUT_DEBUG /../GameServer/GameServerDir)
-set(OUTPUT_RELEASE ${PROJECT_DIR}/bin)
+set(OUTPUT_DEBUG Debug)
+set(OUTPUT_RELEASE Release)
 
 ################# CMake Project ############################
 # The main options of project                              #
@@ -32,15 +32,9 @@ endif(NOT CMAKE_BUILD_TYPE)
 # Defines outputs , depending BUILD TYPE                   #
 ############################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
-  set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_DEBUG}")
-else()
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
-  set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
-endif()
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
+set(CMAKE_EXECUTABLE_OUTPUT_DIRECTORY "${PROJECT_DIR}/${OUTPUT_RELEASE}")
 
 # Messages
 message("${PROJECT_NAME}: MAIN PROJECT: ${CMAKE_PROJECT_NAME}")
