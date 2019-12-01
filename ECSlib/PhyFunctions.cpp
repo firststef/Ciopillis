@@ -1,10 +1,7 @@
-#ifdef WIN32
-#include "PhyFunctions2.h"
 #define _STDBOOL_H
 #define PHYSAC_IMPLEMENTATION
 #define PHYSAC_STANDALONE
 #define PHYSAC_NO_THREADS
-#include "win_physac.h"
 
 enum Type
 {
@@ -12,6 +9,12 @@ enum Type
     RECTANGLE,
     POLYGON
 };
+
+#ifdef WIN32
+#include "PhyFunctions2.h"
+#include "win_physac.h"
+
+
 
 PhysicsBody WIN_GetBody(int type, float x, float y, float first, float second, float third)
 {
@@ -53,21 +56,9 @@ void WIN_ClosePhysics()
 {
     ClosePhysics();
 }
-
-#undef _STDBOOL_H
-#undef PHYSAC_STANDALONE
-#undef PHYSAC_IMPLEMENTATION
 #else
-#include <raylib.h>
 #include <physac.h>
 #include "PhyFunctions.h"
-
-enum Type
-{
-    CIRCLE,
-    RECTANGLE,
-    POLYGON
-};
 
 PhysicsBody LNX_GetBody(int type, float x, float y, float first, float second, float third){
     PhysicsBody body;
@@ -87,3 +78,6 @@ PhysicsBody LNX_GetBody(int type, float x, float y, float first, float second, f
     return body;
 }
 #endif
+#undef _STDBOOL_H
+#undef PHYSAC_STANDALONE
+#undef PHYSAC_IMPLEMENTATION

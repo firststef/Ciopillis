@@ -116,7 +116,7 @@ endif()
 ########### Link & Dependencies ############################
 # Add project dependencies and Link to project             #
 ############################################################
-    message(${CMAKE_CURRENT_SOURCE_DIR}/../x64/Debug/ECSlib.lib)
+
 if(MSVC)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
       target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/raylib/src/Debug/raylib_static.lib ${PROJECT_DIR}/../ECSlib/Debug/ECSlib.lib winmm.lib)
