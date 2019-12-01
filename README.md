@@ -4,7 +4,7 @@ Ciopillis is a game written in c/c++ with the help of the raylib engine. In this
 
 <h3>Building Ciopillis</h3>
 You can build the project with CMake both on Linux and Windows(with MSVC). Just run:
-```
+```bash
 git clone <repo_link_here> && cd ciopillis
 mkdir build && cd build
 cmake ..
