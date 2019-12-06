@@ -270,3 +270,4 @@ ECSlib/ECSlibDir/*
 *Debug/
 *Release/
 build/
+ECSlib/ECSlib.lib
