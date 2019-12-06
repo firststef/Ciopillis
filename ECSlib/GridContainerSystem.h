@@ -13,7 +13,7 @@ public:
 
     void Initialize() override
     {
-        for (auto& e : pool->GetEntities(1 << GetTypeID<GridContainerComponent>() | 1 << GetTypeID<TransformComponent>()))
+        for (auto& e : pool->GetEntities(1 << GetComponentTypeID<GridContainerComponent>() | 1 << GetComponentTypeID<TransformComponent>()))
         {
             auto& grid = e->Get<GridContainerComponent>();
             Update(e);
@@ -23,7 +23,7 @@ public:
 
     void Execute() override
     {
-        for (auto& e : pool->GetEntities(1 << GetTypeID<GridContainerComponent>() | 1 << GetTypeID<TransformComponent>()))
+        for (auto& e : pool->GetEntities(1 << GetComponentTypeID<GridContainerComponent>() | 1 << GetComponentTypeID<TransformComponent>()))
         {
             auto& grid = e->Get<GridContainerComponent>();
             if (grid.needsUpdate)

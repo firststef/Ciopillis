@@ -12,7 +12,7 @@ public:
     {
         std::vector<HitBoxComponent*> containers;
 
-        auto entities = pool->GetEntities(1 << GetTypeID<HitBoxComponent>());
+        auto entities = pool->GetEntities(1 << GetComponentTypeID<HitBoxComponent>());
 
         containers.reserve(entities.size());
         for (auto e : entities)

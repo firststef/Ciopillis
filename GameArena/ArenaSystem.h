@@ -22,7 +22,7 @@ class ArenaSystem : public ISystem
         Rectangle player_rec{ 1000,500,200,200 };
 
         auto& transform = arena.player->Add<TransformComponent>(player_rec);
-        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load("../sprites/basesprite.PNG"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
+        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
         arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
         
         auto& playerBody = arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, player_rec.x, player_rec.y, 100, player_rec.height, 1).body;
@@ -34,7 +34,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> idle = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("idle"),
-                textureManager->Load("../sprites/basesprite.PNG"),
+                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
                 Rectangle{ 0,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 1,
                 1,
@@ -46,7 +46,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> move = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("move"),
-                textureManager->Load("../sprites/basesprite.PNG"),
+                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
                 Rectangle{ (float)SPRITE_WIDTH,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 MOVE_ANIM_FRAMES,
                 MOVE_ANIM_TIME / MOVE_ANIM_FRAMES,
@@ -59,7 +59,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> attack_x = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("attack_x"),
-                textureManager->Load("../sprites/basesprite.PNG"),
+                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
                 Rectangle{ (float)SPRITE_WIDTH * 5,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 ATTACK_X_ANIM_FRAMES,
                 ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
@@ -71,7 +71,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> attack_z = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("attack_y"),
-                textureManager->Load("../sprites/basesprite.PNG"),
+                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
                 Rectangle{ (float)SPRITE_WIDTH * 8,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 ATTACK_Y_ANIM_FRAMES,
                 ATTACK_Y_ANIM_TIME / ATTACK_Y_ANIM_FRAMES,
@@ -255,8 +255,8 @@ class ArenaSystem : public ISystem
 
         std::sort(arena.generatedEntities.begin(), arena.generatedEntities.end(), [](EntityPtr a, EntityPtr b)
         {
-            if (a->Has(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<PhysicsComponent>())
-                && b->Has(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<PhysicsComponent>()))
+            if (a->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>())
+                && b->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>()))
             {
                 return (a->Get<TransformComponent>().position.y + a->Get<TransformComponent>().position.height)
                     > (b->Get<TransformComponent>().position.y + b->Get<TransformComponent>().position.height);
@@ -268,7 +268,7 @@ class ArenaSystem : public ISystem
         unsigned size = arena.generatedEntities.size();
         for (auto& en : arena.generatedEntities)
         {
-            if (en->Has(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<PhysicsComponent>()))
+            if (en->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>()))
             {
                 en->Get<TransformComponent>().zIndex = size - i;
 
@@ -302,7 +302,7 @@ public:
 
     void Execute() override
     {
-        for (auto& e : pool->GetEntities(1 << GetTypeID<ArenaGameComponent>()))
+        for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
         {
             auto arena = e->Get<ArenaGameComponent>();
 
@@ -325,7 +325,7 @@ public:
     void Receive(const ArenaPlayerEvent& event)
     {
         //TODO: aici trebuie verificat daca jucatorul tine apasat pe hold, daca a trecut timpul de cooldown
-        for (auto& e : pool->GetEntities(1 << GetTypeID<ArenaGameComponent>()))
+        for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
         {
             auto& arena = e->Get<ArenaGameComponent>();
             auto& comp = arena.player->Get<PhysicsComponent>();

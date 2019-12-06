@@ -42,38 +42,38 @@ public:
                     }
                 }
             }
-        } 
+        }
         else if(event.type == MouseEvent::MOUSE_BEGIN_DRAG)
         {
-            if (event.entity->Has(1 << GetTypeID<GridContainerChildComponent>())) {
+            if (event.entity->Has(1 << GetComponentTypeID<GridContainerChildComponent>())) {
                 auto& childC = event.entity->Get<GridContainerChildComponent>();
 
-                dragParentOrigin = childC.parent; 
+                dragParentOrigin = childC.parent;
                 indexInDragParentOrigin = childC.indexInParent;
 
                 eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::REMOVE, event.entity, dragParentOrigin);
                 event.entity->Get<TransformComponent>().zIndex = SELECTED_CARD_Z;
             }
         }
-        else if (event.type == MouseEvent::MOUSE_CONTINUE_DRAG) 
+        else if (event.type == MouseEvent::MOUSE_CONTINUE_DRAG)
         {
 
         }
-        else if (event.type == MouseEvent::MOUSE_END_DRAG) 
+        else if (event.type == MouseEvent::MOUSE_END_DRAG)
         {
             const auto coord = event.entity->Get<TransformComponent>().position;
             Vector2 center = { coord.x + coord.width / 2, coord.y + coord.height / 2 };
 ;
-            auto objects = pool->GetEntities(1 << GetTypeID<TransformComponent>());
+            auto objects = pool->GetEntities(1 << GetComponentTypeID<TransformComponent>());
             std::sort(objects.begin(), objects.end(), [](EntityPtr left, EntityPtr right)->bool
             {
-                return left->Get<TransformComponent>().zIndex > right->Get<TransformComponent>().zIndex;//aici nu stiu ce compara 
+                return left->Get<TransformComponent>().zIndex > right->Get<TransformComponent>().zIndex;//aici nu stiu ce compara
             });
 
             EntityPtr highestParentObject;
             for (auto& zObj : objects)
             {
-                if (zObj->Has(1 << GetTypeID<GridContainerComponent>()))
+                if (zObj->Has(1 << GetComponentTypeID<GridContainerComponent>()))
                 {
                     const auto parentCoord = zObj->Get<TransformComponent>().position;
 
@@ -122,7 +122,7 @@ public:
                     }
                 }
             }
-            
+
             eventManager->Notify<GridAddRemoveEvent>(GridAddRemoveEvent::ADD, event.entity, dragParentOrigin);
         }
     }

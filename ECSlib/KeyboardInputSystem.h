@@ -27,7 +27,7 @@ public:
                 heldKeys.push_back(k);
         }
 
-        for (auto& e : pool->GetEntities(1 << GetTypeID<KeyboardInputComponent>()))
+        for (auto& e : pool->GetEntities(1 << GetComponentTypeID<KeyboardInputComponent>()))
         {
             auto& comp = e->Get<KeyboardInputComponent>();
 

@@ -15,7 +15,7 @@ class MouseInputSystem : public ISystem
     {
         auto entities = pool->GetEntities([](EntityPtr ptr, void* context)->bool
         {
-            return ptr->Has(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<SpriteComponent>()) &&
+            return ptr->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<SpriteComponent>()) &&
                 CheckCollisionPointRec(*static_cast<Vector2*>(context), ptr->Get<TransformComponent>().position);
         }, &mouse);
 
@@ -24,7 +24,7 @@ class MouseInputSystem : public ISystem
             return a->Get<TransformComponent>().zIndex < b->Get<TransformComponent>().zIndex;
         });
 
-        if (entities.back()->Has(1 << GetTypeID<MouseInputComponent>()) && entities.back()->Get<MouseInputComponent>().gestures[MouseInputComponent::SELECT])
+        if (entities.back()->Has(1 << GetComponentTypeID<MouseInputComponent>()) && entities.back()->Get<MouseInputComponent>().gestures[MouseInputComponent::SELECT])
         {
             entity = entities.back();
         }

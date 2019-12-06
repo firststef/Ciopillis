@@ -21,7 +21,7 @@ void PhysicsSystem::Execute()
     RunPhysicsStep();
 #endif
 
-    for (auto& e : pool->GetEntities(1 << GetTypeID<PhysicsComponent>() | 1 << GetTypeID<TransformComponent>()))
+    for (auto& e : pool->GetEntities(1 << GetComponentTypeID<PhysicsComponent>() | 1 << GetComponentTypeID<TransformComponent>()))
     {
         auto& transComp = e->Get<TransformComponent>();
         auto& phyComp = e->Get<PhysicsComponent>();

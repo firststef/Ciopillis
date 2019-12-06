@@ -75,7 +75,7 @@ public:
 
     void Execute() override
     {
-        auto entities = pool->GetEntities(1 << GetTypeID<SpriteComponent>() | 1 << GetTypeID<AnimationComponent>());
+        auto entities = pool->GetEntities(1 << GetComponentTypeID<SpriteComponent>() | 1 << GetComponentTypeID<AnimationComponent>());
 
         auto now = std::chrono::system_clock::now();
             

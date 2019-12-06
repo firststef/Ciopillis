@@ -16,7 +16,7 @@ public:
         ClearBackground(RAYWHITE);
 
         //TODO: ar trebui sa existe o componenta draw component care sa contina o functie simpla care permite desenare custom
-        auto entities = pool->GetEntities(1 << GetTypeID<TransformComponent>() | 1 << GetTypeID<SpriteComponent>());
+        auto entities = pool->GetEntities(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<SpriteComponent>());
         std::sort(entities.begin(), entities.end(), [](EntityPtr a, EntityPtr b)
         {
             return a->Get<TransformComponent>().zIndex < b->Get<TransformComponent>().zIndex;
@@ -36,7 +36,7 @@ public:
             }
         }
 
-#if defined(_DEBUG) && defined(ARENA)
+#if defined(ARENA)
 
         int bodiesCount = GetPhysicsBodiesCount();
         for (int i = 0; i < bodiesCount; i++)
@@ -59,7 +59,7 @@ public:
             }
         }
 
-        auto hitBoxEntities = pool->GetEntities(1 << GetTypeID<HitBoxComponent>());
+        auto hitBoxEntities = pool->GetEntities(1 << GetComponentTypeID<HitBoxComponent>());
         for (auto& e : hitBoxEntities)
         {
             auto box = e->Get<HitBoxComponent>();

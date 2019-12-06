@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-class Entity
+class Entity : std::enable_shared_from_this<Entity>
 {
     bool active = true;
     std::vector<std::shared_ptr<IComponent>> components;
@@ -28,7 +28,7 @@ public:
     template<typename T>
     bool Has() const
     {
-        return componentBitset[GetTypeID<T>()];
+        return componentBitset[GetComponentTypeID<T>()];
     }
     bool Has(const ComponentBitset& bitset) const
     {
@@ -39,29 +39,29 @@ public:
     T& Add(TArgs&&... mArgs)
     {
         T* c(new T(std::forward<TArgs>(mArgs)...));
-        c->entity = this;
+        c->entity = shared_from_this();
         std::shared_ptr<IComponent> uPtr{ c };
         components.push_back(uPtr);
 
-        componentArray[GetTypeID<T>()] = c;
-        componentBitset[GetTypeID<T>()] = true;
+        componentArray[GetComponentTypeID<T>()] = c;
+        componentBitset[GetComponentTypeID<T>()] = true;
 
         c->Init();
         return *c;
     }
 
     template<typename T>
-    T& Get() const
+    [[nodiscard]] T& Get() const
     {
-        auto ptr = componentArray[GetTypeID<T>()];
+        auto ptr = componentArray[GetComponentTypeID<T>()];
         return *static_cast<T*>(ptr);
     }
 
     template <typename T, typename... TArgs>
     T& Replace(TArgs&&... mArgs)
     {
-        componentArray[GetTypeID<T>()] = { std::forward<TArgs>(mArgs)... };
-        return componentArray[GetTypeID<T>()];
+        componentArray[GetComponentTypeID<T>()] = { std::forward<TArgs>(mArgs)... };
+        return componentArray[GetComponentTypeID<T>()];
     }
 
     template <typename T>
@@ -70,15 +70,15 @@ public:
         int idx = 0;
         for (auto& ptr : components)
         {
-            if (ptr.get() == componentArray[GetTypeID<T>()])
+            if (ptr.get() == componentArray[GetComponentTypeID<T>()])
             {
                 components.erase(components.begin() + idx);
                 break;
             }
             ++idx;
         }
-        componentArray[GetTypeID<T>()] = nullptr;
-        componentBitset[GetTypeID<T>()] = 0;
+        componentArray[GetComponentTypeID<T>()] = nullptr;
+        componentBitset[GetComponentTypeID<T>()] = 0;
     }
 };
 

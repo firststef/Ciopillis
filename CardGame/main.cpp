@@ -4,8 +4,6 @@
 #include "CardGenerator.h"
 #include "CardGameSystems.h"
 
-using namespace std;
-
 int enabledGestures = 0b0000000000001111;
 
 int main()

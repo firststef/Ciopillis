@@ -13,7 +13,7 @@ inline ComponentID GetComponentID()
 }
 
 template <typename T>
-inline ComponentID GetTypeID() noexcept
+ComponentID GetComponentTypeID()
 {
     static_assert(std::is_base_of<IComponent, T>::value, "T is not derived from component");
 
@@ -25,7 +25,7 @@ class Entity;
 
 struct IComponent
 {
-    Entity* entity = nullptr;
+    std::weak_ptr<Entity> entity;
 
     virtual void Init() {}
 
