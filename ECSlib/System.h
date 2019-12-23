@@ -26,40 +26,56 @@ public:
         this->systemManager = systemManager;
         this->eventManager = eventManager;
     }
+
+	//Initialize works as a constructor before the game loop actually starts.
+	//It is useful to check for dependencies in here and throw any errors.
+	//There is no need, however, to check for systemManager dependency, as any
+	//system will always be injected with this dependency by the manager.
     virtual void Initialize() {}
     virtual void Execute() {}
     virtual void Destroy() {}
 
     void Receive(const SystemControlEvent& event)
     {
-        if (event.systemName == this->name && event.controlAction == SystemControlEvent::DISABLE)
+        if (event.systemName == this->name)
         {
-            enabled = false;
-        }
-        else if (event.systemName == this->name && event.controlAction == SystemControlEvent::ENABLE)
-        {
-            enabled = true;
+			if (event.controlAction == SystemControlEvent::DISABLE)
+			{
+				enabled = false;
+			}
+			else if (event.controlAction == SystemControlEvent::ENABLE)
+			{
+				enabled = true;
+			}
         }
     }
 };
 
-class SystemManager : public ISystem
+using SystemPtr = std::shared_ptr<ISystem>;
+
+class SystemManager
 {
+	Pool* pool = nullptr;
+	TextureManager* textureManager = nullptr;
+	EventManager* eventManager = nullptr;
 public:
-    SystemManager() :ISystem(std::string("SystemManager")) {}
+	SystemManager(Pool* pool, TextureManager* textureManager, EventManager* eventManager)
+		:pool(pool), textureManager(textureManager), eventManager(eventManager)
+	{
+	}
+	
+    std::vector<SystemPtr> systems;
 
-    std::vector<std::shared_ptr<ISystem>> systems;
-
-    void Initialize() override
+    void Initialize()
     {
         for (const auto& ptr : systems )
         {
-            if (ptr->enabled)
+            if (ptr->enabled)//TODO: systems might rather need Initialize(enabled) or Execute(Enabled) to run in "stealth" mode.
                 ptr->Initialize();
         }
     }
 
-    void Execute() override
+    void Execute()
     {
         for (const auto& ptr : systems)
         {
@@ -68,7 +84,7 @@ public:
         }
     }
 
-    void Destroy() override
+    void Destroy()
     {
         for (const auto& ptr : systems)
         {
@@ -76,7 +92,7 @@ public:
         }
     }
 
-    void AddSystem(std::shared_ptr<ISystem> ptr)
+    void AddSystem(const SystemPtr& ptr)
     {
         systems.push_back(std::dynamic_pointer_cast<ISystem>(ptr));
 

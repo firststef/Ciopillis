@@ -5,14 +5,15 @@
 class ECSManager
 {
 public:
-    TextureManager textureManager;
     Pool pool;
-    SystemManager systemManager;
+    TextureManager textureManager;
     EventManager eventManager;
 
+	SystemManager systemManager;
+
     ECSManager()
+		:systemManager(&pool, &textureManager, &eventManager)
     {
-        systemManager.SetDependencies(&pool, &textureManager, nullptr, &eventManager);
     }
 
     void Initialize() 

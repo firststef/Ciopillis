@@ -3,16 +3,14 @@
 #include <vector>
 #include <memory>
 
-class Entity : std::enable_shared_from_this<Entity>
+class Entity : public std::enable_shared_from_this<Entity>
 {
     bool active = true;
-    std::vector<std::shared_ptr<IComponent>> components;
+    std::vector<ComponentPtr> components;
 
-    ComponentArray componentArray;
+    ComponentArray componentArray = {};
     ComponentBitset componentBitset;
 public:
-
-    Entity() = default;
     
     bool IsActive() const { return active; };
     void RemoveAllComponents()
@@ -40,7 +38,7 @@ public:
     {
         T* c(new T(std::forward<TArgs>(mArgs)...));
         c->entity = shared_from_this();
-        std::shared_ptr<IComponent> uPtr{ c };
+        ComponentPtr uPtr{ c };
         components.push_back(uPtr);
 
         componentArray[GetComponentTypeID<T>()] = c;
@@ -51,7 +49,7 @@ public:
     }
 
     template<typename T>
-    [[nodiscard]] T& Get() const
+    T& Get() const
     {
         auto ptr = componentArray[GetComponentTypeID<T>()];
         return *static_cast<T*>(ptr);
@@ -82,4 +80,4 @@ public:
     }
 };
 
-typedef std::shared_ptr<Entity> EntityPtr;
+using EntityPtr = std::shared_ptr<Entity>;

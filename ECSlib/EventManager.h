@@ -2,7 +2,6 @@
 #include "System.h"
 #include <functional>
 #include <vector>
-#include <exception>
 
 struct ReceiverCallbacksHolder
 {
@@ -41,7 +40,7 @@ public:
     }
 
     template<typename Event, typename System>
-    void Unsubscribe(const std::shared_ptr<ISystem>& system)
+    void Unsubscribe(const SystemPtr& system)
     {
         void (System::*receive)(const Event &) = &System::receive;
         auto func = std::bind(receive, system.get(), std::placeholders::_1);

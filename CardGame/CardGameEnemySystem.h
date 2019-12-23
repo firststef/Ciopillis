@@ -1,8 +1,8 @@
 #pragma once
 #include "GameServer.h"
-#include "EnemyEvent.h"
+#include "CardGameEnemyEvent.h"
 
-class EnemySystem : public ISystem
+class CardGameEnemySystem : public ISystem
 {
 public:
 
@@ -14,20 +14,26 @@ public:
     
     EntityPtr& playZone;
 
-    EnemySystem(GameServer& server, EntityPtr& enemyHand, EntityPtr& enemyDraw, EntityPtr& enemyDiscard, EntityPtr& playZone) 
-    : server(server), enemyHand(enemyHand), enemyDraw(enemyDraw), enemyDiscard(enemyDiscard), playZone(playZone), ISystem(std::string("EnemySystem"))
+    CardGameEnemySystem(GameServer& server, EntityPtr& enemyHand, EntityPtr& enemyDraw, EntityPtr& enemyDiscard, EntityPtr& playZone) 
+    : ISystem(std::string("CardGameEnemySystem")), server(server), enemyHand(enemyHand), enemyDraw(enemyDraw), enemyDiscard(enemyDiscard), playZone(playZone)
     {
     }
 
     void Initialize() override
     {
+		if (pool == nullptr)
+			throw MissingDependencyException("Entity Pool");
+		if (textureManager == nullptr)
+			throw MissingDependencyException("Texture manager");
+		if (eventManager == nullptr)
+			throw MissingDependencyException("Event manager");
     }
 
     void Execute() override
     {
     }
 
-    void Receive(const EnemyEvent& enemy)
+    void Receive(const CardGameEnemyEvent& enemy)
     {
         eventManager->Notify<SystemControlEvent>(SystemControlEvent::DISABLE, std::string("MouseInputSystem"));
 
@@ -53,7 +59,7 @@ public:
     }
 
     void PlayTurn()
-    {
+    {    	
         while (true)
         {
             //SleepFunc(100);

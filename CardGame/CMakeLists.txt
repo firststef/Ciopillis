@@ -68,10 +68,10 @@ set(HEADERS_FILES
     CardComponent.h
     CardGameComponents.h
     Constants.h
-    EnemyEvent.h
-    EnemySystem.h
+    CardGameEnemyEvent.h
+    CardGameEnemySystem.h
     CardGameEvents.h
-    EventSystem.h
+    CardGameEventSystem.h
     CardGameSystems.h
 )
 source_group("Headers" FILES ${HEADERS_FILES})

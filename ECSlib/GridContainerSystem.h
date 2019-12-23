@@ -13,6 +13,9 @@ public:
 
     void Initialize() override
     {
+		if (pool == nullptr)
+			throw MissingDependencyException("Entity Pool");
+    	
         for (auto& e : pool->GetEntities(1 << GetComponentTypeID<GridContainerComponent>() | 1 << GetComponentTypeID<TransformComponent>()))
         {
             auto& grid = e->Get<GridContainerComponent>();

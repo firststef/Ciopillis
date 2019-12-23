@@ -22,7 +22,7 @@ class ArenaSystem : public ISystem
         Rectangle player_rec{ 1000,500,200,200 };
 
         auto& transform = arena.player->Add<TransformComponent>(player_rec);
-        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
+        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
         arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
         
         auto& playerBody = arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, player_rec.x, player_rec.y, 100, player_rec.height, 1).body;
@@ -34,7 +34,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> idle = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("idle"),
-                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
+                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
                 Rectangle{ 0,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 1,
                 1,
@@ -46,7 +46,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> move = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("move"),
-                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
+                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
                 Rectangle{ (float)SPRITE_WIDTH,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 MOVE_ANIM_FRAMES,
                 MOVE_ANIM_TIME / MOVE_ANIM_FRAMES,
@@ -59,7 +59,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> attack_x = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("attack_x"),
-                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
+                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
                 Rectangle{ (float)SPRITE_WIDTH * 5,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 ATTACK_X_ANIM_FRAMES,
                 ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
@@ -71,7 +71,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> attack_z = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("attack_y"),
-                textureManager->Load("D:\\GameDev\\Ciopillis\\sprites\\basesprite.png"),
+                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
                 Rectangle{ (float)SPRITE_WIDTH * 8,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 ATTACK_Y_ANIM_FRAMES,
                 ATTACK_Y_ANIM_TIME / ATTACK_Y_ANIM_FRAMES,
@@ -298,6 +298,10 @@ public:
 
     void Initialize() override
     {
+		if (pool == nullptr)
+			throw MissingDependencyException("Entity Pool");
+		if (textureManager == nullptr)
+			throw MissingDependencyException("Texture manager");
     }
 
     void Execute() override

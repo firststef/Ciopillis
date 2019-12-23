@@ -1,8 +1,8 @@
 #pragma once
 #include "CardGameComponents.h"
-#include "EnemyEvent.h"
+#include "CardGameEnemyEvent.h"
 
-class EventSystem : public ISystem
+class CardGameEventSystem : public ISystem
 {
 public:
 
@@ -11,10 +11,17 @@ public:
     EntityPtr dragParentOrigin;
     int indexInDragParentOrigin;
 
-    EventSystem(GameServer& server) : server(server), ISystem(std::string("EventSystem")) {}
+    CardGameEventSystem(GameServer& server) : ISystem(std::string("CardGameEventSystem")), server(server) {}
 
     void Initialize() override
     {
+		if (pool == nullptr)
+			throw MissingDependencyException("Entity Pool");
+		if (textureManager == nullptr)
+			throw MissingDependencyException("Texture manager");
+		if (eventManager == nullptr)
+			throw MissingDependencyException("Event manager");
+    	
         server.RunServer(START, -1,-1);
     }
 
@@ -34,7 +41,7 @@ public:
 
                     if ( turn == GameServer::PLAYER_TWO)
                     {
-                        eventManager->Notify<EnemyEvent>(EnemyEvent::ENEMY_TURN);
+                        eventManager->Notify<CardGameEnemyEvent>(CardGameEnemyEvent::ENEMY_TURN);
                     }
                     if ( turn == GameServer::CONFRONT)
                     {

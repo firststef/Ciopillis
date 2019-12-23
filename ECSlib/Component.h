@@ -36,3 +36,5 @@ constexpr std::size_t maxComponents = 32;
 
 using ComponentBitset = std::bitset<maxComponents>;
 using ComponentArray = std::array<IComponent*, maxComponents>;
+
+using ComponentPtr = std::shared_ptr<IComponent>;

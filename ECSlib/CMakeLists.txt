@@ -78,12 +78,13 @@ set(HEADERS_FILES
     DefferEvent.h
     DefferSystem.h
     DrawSystem.h
-    ECS.h
+    ECSManager.h
     ECSlib.h
     Entity.h
     Event.h
     EventManager.h
     Events.h
+    Exceptions.h
     External.h
     GridAddRemoveEvent.h
     GridContainerChildComponent.h

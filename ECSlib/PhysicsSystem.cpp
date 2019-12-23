@@ -1,9 +1,12 @@
+#include "Exceptions.h"
 #include "PhysicsSystem.h"
 #include "PhysicsComponent.h"
 #include "TransformComponent.h"
 
 void PhysicsSystem::Initialize() 
 {
+	if (pool == nullptr)
+		throw MissingDependencyException("Entity Pool");
 #ifdef WIN32
     WIN_InitPhysics();
     WIN_SetPhysicsGravity(0, 0);

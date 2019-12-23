@@ -8,7 +8,11 @@ class DrawSystem : public ISystem
 public:
     DrawSystem() : ISystem(std::string("DrawSystem")) {}
 
-    void Initialize() override {}
+    void Initialize() override
+    {
+		if (pool == nullptr)
+			throw MissingDependencyException("Entity Pool");
+    }
 
     void Execute() override
     {

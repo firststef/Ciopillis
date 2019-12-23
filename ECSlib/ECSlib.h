@@ -5,6 +5,7 @@
 
 #include "Helpers.h"
 #include "External.h"
-#include "ECS.h"
+#include "Exceptions.h"
+#include "ECSManager.h"
 #include "Components.h"
 #include "Systems.h"

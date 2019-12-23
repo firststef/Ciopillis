@@ -1,3 +1,3 @@
 #pragma once
-#include "EventSystem.h"
-#include "EnemySystem.h"
+#include "CardGameEventSystem.h"
+#include "CardGameEnemySystem.h"

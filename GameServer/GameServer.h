@@ -62,7 +62,7 @@ public:
     {
         VS_COMPUTER,
         PVP
-    }                                       gameMode = VS_COMPUTER;//TODO: la momentul actual alegerea PC este facuta in EventSystem, trebuie facuta in server
+    }                                       gameMode = VS_COMPUTER;//TODO: la momentul actual alegerea PC este facuta in CardGameEventSystem, trebuie facuta in server
 
     enum GameType
     {

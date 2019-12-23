@@ -1,19 +1,28 @@
 ﻿#include <ECSlib.h>
+#include <fstream>
 #include "Constants.h"
 #include "GameServer.h"
 #include "CardGenerator.h"
 #include "CardGameSystems.h"
+#include "json.hpp"
 
 int enabledGestures = 0b0000000000001111;
 
 int main()
 {
+	//Load configuration
+	std::ifstream i(CIOPILLIS_ROOT"game_config.json");
+	nlohmann::json j;
+	i >> j;
+
+	auto x = j["windows"];
+	
     //Initialization
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
     SetTargetFPS(60);
 
+	//Server init
     std::string gameLog;
-
 #ifdef WIN32
     CardGenerator generator("D:/GameDev/Ciopillis/GameServer/card_database.json");
 #else
@@ -22,9 +31,9 @@ int main()
 
     Player player("Player", generator.container);
     Player computer("Computer", generator.container);
-
     GameServer server(GameServer::Interface::SERVER, gameLog, generator.container, player, computer);
 
+	//ECS init
     ECSManager manager;
 
     //Pool
@@ -77,8 +86,8 @@ int main()
     //SystemManager
     auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
     auto mouseInputSystem = std::make_shared<MouseInputSystem>(MouseInputSystem());
-    auto eventSystem = std::make_shared<EventSystem>(EventSystem(server));
-    auto enemySystem = std::make_shared<EnemySystem>(EnemySystem(server, enemyHand, draw, discard, playZone));
+    auto eventSystem = std::make_shared<CardGameEventSystem>(CardGameEventSystem(server));
+    auto enemySystem = std::make_shared<CardGameEnemySystem>(CardGameEnemySystem(server, enemyHand, draw, discard, playZone));
     auto gridContainerSystem = std::make_shared<GridContainerSystem>(GridContainerSystem());
 
     manager.systemManager.AddSystem(drawSystem);
@@ -91,12 +100,12 @@ int main()
     manager.eventManager.Subscribe<MouseEvent>(eventSystem);
     manager.eventManager.Subscribe<SystemControlEvent>(mouseInputSystem);
     manager.eventManager.Subscribe<GridAddRemoveEvent>(gridContainerSystem);
-    manager.eventManager.Subscribe<EnemyEvent>(enemySystem);
+    manager.eventManager.Subscribe<CardGameEnemyEvent>(enemySystem);
 
     manager.Initialize();
 
     //Game actions
-    gridContainerSystem->AddItem(draw, drawCard);
+    gridContainerSystem->AddItem(draw, drawCard);//TODO: this might be the job for CardGameEventSystem on initialize
     gridContainerSystem->AddItem(draw, drawCard2);
 
     while (!WindowShouldClose())

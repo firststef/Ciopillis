@@ -7,7 +7,11 @@ class ArenaEventSystem : public ISystem
 public:
     ArenaEventSystem() : ISystem("ArenaEventSystem") {}
 
-    void Initialize() override {}
+    void Initialize() override
+    {
+		if (eventManager == nullptr)
+			throw MissingDependencyException("Event manager");
+    }
     void Execute() override {}
 
     void Receive (const KeyboardEvent& event)

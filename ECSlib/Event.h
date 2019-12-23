@@ -11,13 +11,14 @@ using EventID = std::size_t;
 
 struct BaseEvent {
 
-    inline static EventID totalEventTypes = 0;
+    static EventID totalEventTypes;
 
-    inline static EventID GetEventID()
+    static EventID GetEventID()
     {
         return totalEventTypes++;
     }
 };
+EventID BaseEvent::totalEventTypes = 0;
 
 template <typename T>
 inline EventID GetEventTypeID() noexcept
