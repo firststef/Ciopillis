@@ -18,10 +18,9 @@ struct BaseEvent {
         return totalEventTypes++;
     }
 };
-EventID BaseEvent::totalEventTypes = 0;
 
 template <typename T>
-inline EventID GetEventTypeID() noexcept
+EventID GetEventTypeID() noexcept
 {
     static_assert(std::is_base_of<IEvent, T>::value, "T is not derived from event");
 

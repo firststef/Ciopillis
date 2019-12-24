@@ -6,13 +6,12 @@ class TextureManager
 {
     std::map<std::string, std::pair<Texture2D, unsigned>> textures;
 public:
-    Texture2D Load(const char* path)
+    Texture2D Load(std::string path)
     {
-        const std::string p(path);
-        auto it = textures.find(p);
+        auto it = textures.find(path);
         if (it == textures.end()) {
-            Texture2D texture = LoadTexture(path);
-            textures.insert(std::pair<std::string, std::pair<Texture2D, unsigned>>(p, std::pair<Texture2D, unsigned>(texture, 1)));
+            Texture2D texture = LoadTexture(path.c_str());
+            textures.insert(std::pair<std::string, std::pair<Texture2D, unsigned>>(path, std::pair<Texture2D, unsigned>(texture, 1)));
             return texture;
         }
         else

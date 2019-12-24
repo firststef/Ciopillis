@@ -2,6 +2,7 @@
 #include "PhysicsSystem.h"
 #include "PhysicsComponent.h"
 #include "TransformComponent.h"
+#include "Helpers.h"
 
 void PhysicsSystem::Initialize() 
 {
@@ -29,6 +30,7 @@ void PhysicsSystem::Execute()
         auto& transComp = e->Get<TransformComponent>();
         auto& phyComp = e->Get<PhysicsComponent>();
         transComp.position = Rectangle{ phyComp.body->position.x - transComp.position.width/2, phyComp.body->position.y - transComp.position.height / 2, transComp.position.width, transComp.position.height };
+		transComp.rotation = radiansToDegrees(phyComp.body->orient);
     }
 }
 

@@ -626,7 +626,7 @@ int GameServer::Confront()
     log += std::string("\n");
         
     int result;
-    if (true)//aici se verifica care carte e mai bun
+    if (true)//aici se verifica care carte e mai buna
         result = vm_run_card_functionality(playerOne.hand->cards[playerOne.selectedCardIndex]);
     else
         result = vm_run_card_functionality(playerTwo.hand->cards[playerTwo.selectedCardIndex]);

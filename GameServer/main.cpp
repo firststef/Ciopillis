@@ -1,16 +1,22 @@
+#include <iostream>
+#include <filesystem>
 #include "GameServer.h"
 #include "CardGenerator.h"
-#include <iostream>
 
 int main()
 {
 	std::string log;
 
-#ifdef WIN32
-    CardGenerator generator("D:/GameDev/Ciopillis/GameServer/card_database.json");
-#else
-	CardGenerator generator("/home/first/Documents/Ciopillis/GameServer/card_database.json");
+#ifndef CIOPILLIS_ROOT
+	return 0;
 #endif
+
+	std::filesystem::path root(CIOPILLIS_ROOT);
+	auto db_path = root / "Resources" / "card_database.json";
+	if (! exists(db_path))
+		return 0;
+
+	CardGenerator generator(db_path.string());
 
     auto player = Player("Player", generator.container);
     auto computer = Player("Computer",generator.container);

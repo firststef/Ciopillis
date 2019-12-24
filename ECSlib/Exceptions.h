@@ -2,7 +2,7 @@
 #include <exception>
 #include <string>
 
-struct MissingDependencyException : public std::exception {
+struct MissingDependencyException : public std::exception {//TODO: de scos exceptiile
 	std::string msg;
 	
 	MissingDependencyException(std::string target)

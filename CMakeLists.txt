@@ -13,7 +13,7 @@ endif()
 add_compile_options(-DSHARED=ON -DSTATIC=ON)
 add_subdirectory(raylib)
 
-add_definitions(CIOPILLIS_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
+add_definitions(-DCIOPILLIS_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 add_subdirectory(ECSlib)
 add_subdirectory(CardGame)
 add_subdirectory(GameArena)

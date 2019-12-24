@@ -72,7 +72,7 @@ public:
             Vector2 center = { coord.x + coord.width / 2, coord.y + coord.height / 2 };
 ;
             auto objects = pool->GetEntities(1 << GetComponentTypeID<TransformComponent>());
-            std::sort(objects.begin(), objects.end(), [](EntityPtr left, EntityPtr right)->bool
+            std::sort(objects.begin(), objects.end(), [](EntityPtr& left, EntityPtr& right)->bool
             {
                 return left->Get<TransformComponent>().zIndex > right->Get<TransformComponent>().zIndex;//aici nu stiu ce compara
             });
@@ -104,7 +104,7 @@ public:
                         auto newCard = pool->AddEntity();
                         newCard->Add<TransformComponent>();
                         newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
-                        newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load(server.dataBase.cards[idx - 1].path.c_str()), Color(WHITE));
+                        newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load(server.dataBase.cards[idx - 1].path), Color(WHITE));
                         newCard->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::DRAG) | (1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
                         newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
 

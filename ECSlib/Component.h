@@ -27,8 +27,6 @@ struct IComponent
 {
     std::weak_ptr<Entity> entity;
 
-    virtual void Init() {}
-
     virtual ~IComponent() {}
 };
 

@@ -2,6 +2,9 @@
 #include "Component.h"
 #include <vector>
 #include <memory>
+#include <chrono>
+
+using time_point = std::chrono::system_clock::time_point;
 
 class Entity : public std::enable_shared_from_this<Entity>
 {
@@ -10,6 +13,7 @@ class Entity : public std::enable_shared_from_this<Entity>
 
     ComponentArray componentArray = {};
     ComponentBitset componentBitset;
+	std::array<time_point, maxComponents> componentTimestamps;
 public:
     
     bool IsActive() const { return active; };
@@ -41,10 +45,13 @@ public:
         ComponentPtr uPtr{ c };
         components.push_back(uPtr);
 
-        componentArray[GetComponentTypeID<T>()] = c;
-        componentBitset[GetComponentTypeID<T>()] = true;
+		const auto comp_id = GetComponentTypeID<T>();
 
-        c->Init();
+        componentArray[comp_id] = c;
+        componentBitset[comp_id] = true;
+
+		componentTimestamps[comp_id] = std::chrono::system_clock::now();
+
         return *c;
     }
 

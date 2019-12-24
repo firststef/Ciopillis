@@ -69,7 +69,7 @@ public:
                 auto newCard = pool->AddEntity();
                 newCard->Add<TransformComponent>();
                 newCard->Get<TransformComponent>().position = { -500,-500, CARD_WIDTH, CARD_HEIGHT };
-                newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load("../cards/backface.png"), Color(WHITE));
+                newCard->Add<SpriteComponent>(server.dataBase.cards[idx - 1].name, textureManager->Load((std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "cards" / "backface.png").string()), Color(WHITE));
                 newCard->Add<MouseInputComponent>(std::bitset<32>(0));
                 newCard->Add<CardComponent>(server.dataBase.cards[idx - 1]);
 

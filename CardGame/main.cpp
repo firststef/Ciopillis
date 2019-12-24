@@ -1,5 +1,5 @@
 ﻿#include <ECSlib.h>
-#include <fstream>
+#include <filesystem>
 #include "Constants.h"
 #include "GameServer.h"
 #include "CardGenerator.h"
@@ -10,12 +10,6 @@ int enabledGestures = 0b0000000000001111;
 
 int main()
 {
-	//Load configuration
-	std::ifstream i(CIOPILLIS_ROOT"game_config.json");
-	nlohmann::json j;
-	i >> j;
-
-	auto x = j["windows"];
 	
     //Initialization
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
@@ -23,11 +17,17 @@ int main()
 
 	//Server init
     std::string gameLog;
-#ifdef WIN32
-    CardGenerator generator("D:/GameDev/Ciopillis/GameServer/card_database.json");
-#else
-	CardGenerator generator("/home/first/Documents/Ciopillis/GameServer/card_database.json");
+
+#ifndef CIOPILLIS_ROOT
+	return 0;
 #endif
+
+	std::filesystem::path root(CIOPILLIS_ROOT);
+	auto db_path = root / "Resources" / "card_database.json";
+	if (not exists(db_path))
+		return 0;
+	
+    CardGenerator generator(db_path.string());
 
     Player player("Player", generator.container);
     Player computer("Computer", generator.container);
@@ -72,11 +72,12 @@ int main()
     endturnButton->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
 
     drawCard->Add<TransformComponent>(Rectangle{ -500,-500, CARD_WIDTH, CARD_HEIGHT }, DRAW_CARD_Z);
-    drawCard->Add<SpriteComponent>(std::string("Draw Card"), manager.textureManager.Load("../cards/backface.png"), Color(WHITE));
+    drawCard->Add<SpriteComponent>(std::string("Draw Card"), manager.textureManager.Load((root / "Resources" / "cards" / "backface.png").string()), Color(WHITE));
     drawCard->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::DRAG) | (1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
 
     drawCard2->Add<TransformComponent>(Rectangle{ -500,-500, CARD_WIDTH, CARD_HEIGHT }, DRAW_CARD_Z);
-    drawCard2->Add<SpriteComponent>(std::string("Draw Card 2"), manager.textureManager.Load("../cards/backface.png"), Color(WHITE));
+    drawCard2->Add<SpriteComponent>(std::string("Draw Card 2"), manager.textureManager.Load((root / "Resources" / "cards" / "backface.png").string()), Color(WHITE));
+	//TODO: system init should be done in the CardGameEventSystem
     drawCard2->Add<MouseInputComponent>(std::bitset<32>((1 << MouseInputComponent::DRAG) | (1 << MouseInputComponent::PRESS) | (1 << MouseInputComponent::SELECT)));
 
     enemyHand->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH / 2 - HAND_BOARD_WIDTH / 2, 0, HAND_BOARD_WIDTH, 120 }, STATIC_CONTAINERS_Z);
@@ -87,6 +88,7 @@ int main()
     auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
     auto mouseInputSystem = std::make_shared<MouseInputSystem>(MouseInputSystem());
     auto eventSystem = std::make_shared<CardGameEventSystem>(CardGameEventSystem(server));
+	//TODO: Enemy system is quite useless, it should be a continuation of EventSystem or an event
     auto enemySystem = std::make_shared<CardGameEnemySystem>(CardGameEnemySystem(server, enemyHand, draw, discard, playZone));
     auto gridContainerSystem = std::make_shared<GridContainerSystem>(GridContainerSystem());
 
@@ -98,7 +100,7 @@ int main()
 
     //EventManager
     manager.eventManager.Subscribe<MouseEvent>(eventSystem);
-    manager.eventManager.Subscribe<SystemControlEvent>(mouseInputSystem);
+    manager.eventManager.Subscribe<SystemControlEvent>(mouseInputSystem);//TODO: check if this system is valid
     manager.eventManager.Subscribe<GridAddRemoveEvent>(gridContainerSystem);
     manager.eventManager.Subscribe<CardGameEnemyEvent>(enemySystem);
 

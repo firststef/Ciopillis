@@ -19,7 +19,7 @@ public:
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        //TODO: ar trebui sa existe o componenta draw component care sa contina o functie simpla care permite desenare custom
+        //TODO: ar trebui sa existe o componenta draw component care sa contina o functie simpla care permite desenare custom - not recommended
         auto entities = pool->GetEntities(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<SpriteComponent>());
         std::sort(entities.begin(), entities.end(), [](EntityPtr a, EntityPtr b)
         {

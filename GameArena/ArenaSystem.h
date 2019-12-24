@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include "System.h"
 #include "ArenaGameComponent.h"
 #include "ArenaPlayerEvent.h"
@@ -6,6 +7,8 @@
 
 class ArenaSystem : public ISystem
 {
+	void* body_ptr = nullptr;
+	
     void OnInit(EntityPtr e)
     {
         auto& arena = e->Get<ArenaGameComponent>();
@@ -21,8 +24,10 @@ class ArenaSystem : public ISystem
 
         Rectangle player_rec{ 1000,500,200,200 };
 
+		auto sprite_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "basesprite.png").string();
+
         auto& transform = arena.player->Add<TransformComponent>(player_rec);
-        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
+        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(sprite_path), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
         arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
         
         auto& playerBody = arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, player_rec.x, player_rec.y, 100, player_rec.height, 1).body;
@@ -34,7 +39,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> idle = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("idle"),
-                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
+                textureManager->Load(sprite_path),
                 Rectangle{ 0,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 1,
                 1,
@@ -46,7 +51,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> move = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("move"),
-                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
+                textureManager->Load(sprite_path),
                 Rectangle{ (float)SPRITE_WIDTH,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 MOVE_ANIM_FRAMES,
                 MOVE_ANIM_TIME / MOVE_ANIM_FRAMES,
@@ -59,7 +64,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> attack_x = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("attack_x"),
-                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
+                textureManager->Load(sprite_path),
                 Rectangle{ (float)SPRITE_WIDTH * 5,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 ATTACK_X_ANIM_FRAMES,
                 ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
@@ -71,7 +76,7 @@ class ArenaSystem : public ISystem
         std::shared_ptr<AnimationNode> attack_z = std::make_shared<AnimationNode>(
             AnimationUnit(
                 std::string("attack_y"),
-                textureManager->Load(R"(D:\GameDev\Ciopillis\sprites\basesprite.png)"),
+                textureManager->Load(sprite_path),
                 Rectangle{ (float)SPRITE_WIDTH * 8,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
                 ATTACK_Y_ANIM_FRAMES,
                 ATTACK_Y_ANIM_TIME / ATTACK_Y_ANIM_FRAMES,
@@ -178,22 +183,14 @@ class ArenaSystem : public ISystem
 
         //Player HitBox
         ShapeContainer player_idle_cont(
-            [](void* context) -> Vector2 {
-                auto& arena = *static_cast<ArenaGameComponent*>(context);
-                auto pos = arena.player->Get<PhysicsComponent>().body->position;
-                return Vector2{ pos.x , pos.y  };
-            }, 
-            &arena,
-            [](void* context) -> float {
-                auto& arena = *static_cast<ArenaGameComponent*>(context);
-                return arena.player->Get<PhysicsComponent>().body->orient;
-            }, 
-            &arena, 
-            true);
+            arena.player->Get<TransformComponent>().position,
+            arena.player->Get<TransformComponent>().rotation
+		);
 
         Shape body("body", "player");
         body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
-        player_idle_cont.AddShape(body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
+        auto& b = player_idle_cont.AddShape(body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
+		body_ptr = &b;
 
         Shape fist("fist", "player");
         fist.SetRectangle(Rectangle{ 0,0,20,20 }, 0.0f, Fade(RED, 0.4f));
@@ -210,27 +207,18 @@ class ArenaSystem : public ISystem
 
         arena.enemy = pool->AddEntity();
         arena.enemy->Add<TransformComponent>(enemy_rec);
-        arena.enemy->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load("../sprites/basesprite.PNG"), Color(BLUE), Rectangle{ 0, 0, 29, 24 });
+        arena.enemy->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load(sprite_path), Color(BLUE), Rectangle{ 0, 0, 29, 24 });
         
         auto& enemyBody = arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, enemy_rec.x, enemy_rec.y, 100, enemy_rec.height, 1).body;
         enemyBody->staticFriction = 0.2f;
         enemyBody->dynamicFriction = 0.2f;
         enemyBody->freezeOrient = true;
 
-        //Enemy hitbox
-        ShapeContainer enemy_idle_cont(
-            [](void* context) -> Vector2 {
-            auto& arena = *static_cast<ArenaGameComponent*>(context);
-            auto pos = arena.enemy->Get<PhysicsComponent>().body->position;
-            return Vector2{ pos.x - 50, pos.y - 100 };
-        },
-            &arena,
-            [](void* context) -> float {
-            auto& arena = *static_cast<ArenaGameComponent*>(context);
-            return arena.enemy->Get<PhysicsComponent>().body->orient;
-        },
-            &arena,
-            true);
+        //Enemy hitboxlayer_idle
+		ShapeContainer enemy_idle_cont(
+			arena.enemy->Get<TransformComponent>().position,
+			arena.enemy->Get<PhysicsComponent>().body->orient
+		);
 
         Shape enemy_body("body", "enemy");
         enemy_body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
@@ -251,6 +239,7 @@ class ArenaSystem : public ISystem
     void OnRunning(EntityPtr e)
     {
         //Height sorting
+    	//TODO: this might be the job for another system
         auto& arena = e->Get<ArenaGameComponent>();
 
         std::sort(arena.generatedEntities.begin(), arena.generatedEntities.end(), [](EntityPtr a, EntityPtr b)
@@ -284,6 +273,18 @@ class ArenaSystem : public ISystem
 
             //INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
         }
+
+		if (! body_ptr)
+			return;
+    	
+		auto body = *(ShapeContainer::ShapeHolder*)(body_ptr);
+		printf("Player position %f %f\n", arena.player->Get<TransformComponent>().position.x, arena.player->Get<TransformComponent>().position.y);
+		printf("Player rotation %f rad %f\n", arena.player->Get<TransformComponent>().rotation, arena.player->Get<PhysicsComponent>().body->orient);
+		printf("Shape position %f %f\n", body.shape.rectangle.rec.x, body.shape.rectangle.rec.y);
+		printf("Shape rotation %f\n", body.shape.rotation);
+		printf("Shape offset %f", sqrt(pow(arena.player->Get<TransformComponent>().position.x - body.shape.rectangle.rec.x, 2)
+			+ pow(arena.player->Get<TransformComponent>().position.y - body.shape.rectangle.rec.y, 2)));
+		system("CLS");
     }
 
     void OnEnd(EntityPtr e)
@@ -338,7 +339,7 @@ public:
             arena.lastAxesPlayer = { event.axes.x != 0 ? event.axes.x : arena.lastAxesPlayer.x, event.axes.y != 0 ? event.axes.y : arena.lastAxesPlayer.y };
             *arena.playerOrientation = arena.lastAxesPlayer.x > 0;
 
-            box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
+            //box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
             box.cont.Update(true);
 
             if (arena.blockPlayerInput)
