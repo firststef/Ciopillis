@@ -3,6 +3,8 @@
 #include "GameServer.h"
 #include "CardGenerator.h"
 
+using path = std::filesystem::path;
+
 int main()
 {
 	std::string log;
@@ -11,7 +13,7 @@ int main()
 	return 0;
 #endif
 
-	std::filesystem::path root(CIOPILLIS_ROOT);
+	path root(CIOPILLIS_ROOT);
 	auto db_path = root / "Resources" / "card_database.json";
 	if (! exists(db_path))
 		return 0;

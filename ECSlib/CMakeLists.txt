@@ -65,6 +65,7 @@ set(SRC_FILES
     ./PhyFunctions2.cpp
     ./PhysicsComponent.cpp
     ./PhysicsSystem.cpp
+    ./Event.cpp
 )
 source_group("Sources" FILES ${SRC_FILES})
 
@@ -84,7 +85,6 @@ set(HEADERS_FILES
     Event.h
     EventManager.h
     Events.h
-    Exceptions.h
     External.h
     GridAddRemoveEvent.h
     GridContainerChildComponent.h
@@ -99,6 +99,7 @@ set(HEADERS_FILES
     KeyboardInputSystem.h
     MouseEvent.h
     MouseInputSystem.h
+    NetworkSystem.h
     nvidia.h
     PhyFunctions.h
     PhyFunctions2.h
@@ -124,9 +125,9 @@ add_library(${PROJECT_NAME} STATIC
 ############################################################
 
 if(NOT MSVC)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++17")
    endif()
 endif(NOT MSVC)
 

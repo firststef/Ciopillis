@@ -5,6 +5,7 @@
 #include <filesystem>
 
 using json = nlohmann::json;
+using path = std::filesystem::path;
 
 CardGenerator::CardGenerator(std::string path)
 {
@@ -34,7 +35,7 @@ void from_json(const json& j, CardContainer& cont) {
     for (auto& card : cont.cards)
     {
         card.id = idx++;
-        card.path = std::string((std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "cards" / "Card").string() + std::string(std::to_string(idx)) + std::string(".png"));
+        card.path = std::string((path(CIOPILLIS_ROOT) / "Resources" / "cards" / "Card").string() + std::string(std::to_string(idx)) + std::string(".png"));
     }
 }
 

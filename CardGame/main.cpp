@@ -6,6 +6,8 @@
 #include "CardGameSystems.h"
 #include "json.hpp"
 
+using path = std::filesystem::path;
+
 int enabledGestures = 0b0000000000001111;
 
 int main()
@@ -22,7 +24,7 @@ int main()
 	return 0;
 #endif
 
-	std::filesystem::path root(CIOPILLIS_ROOT);
+	path root(CIOPILLIS_ROOT);
 	auto db_path = root / "Resources" / "card_database.json";
 	if (not exists(db_path))
 		return 0;

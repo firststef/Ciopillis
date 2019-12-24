@@ -1,6 +1,7 @@
 #pragma once
 #include <bitset>
 #include <array>
+#include <memory>
 
 struct IComponent;
 
