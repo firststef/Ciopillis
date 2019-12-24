@@ -23,13 +23,13 @@ class EventManager
 public:
 
     template<typename Event, typename System>
-    void Subscribe(const std::shared_ptr<System>& system)
+    void Subscribe(System* system)
     {
         void (System::*Receive)(const Event &) = &System::Receive;
         if (Receive == nullptr)
             throw std::bad_cast();
 
-        auto converter = TFuncToVoidFuncConverter<Event>(std::bind(Receive, static_cast<System*>(system.get()), std::placeholders::_1));
+        auto converter = TFuncToVoidFuncConverter<Event>(std::bind(Receive, system, std::placeholders::_1));
 
         if (holders[GetEventTypeID<Event>()] == nullptr)
         {
@@ -42,8 +42,8 @@ public:
     template<typename Event, typename System>
     void Unsubscribe(const SystemPtr& system)
     {
-        void (System::*receive)(const Event &) = &System::receive;
-        auto func = std::bind(receive, system.get(), std::placeholders::_1);
+        void (System::*Receive)(const Event &) = &System::receive;
+        auto func = std::bind(Receive, system.get(), std::placeholders::_1);
 
         int i = 0;
         for (auto& f : holders[GetEventTypeID<Event>()]->typeSubscribers)

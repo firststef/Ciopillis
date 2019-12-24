@@ -13,7 +13,7 @@ class Entity : public std::enable_shared_from_this<Entity>
 
     ComponentArray componentArray = {};
     ComponentBitset componentBitset;
-	std::array<time_point, maxComponents> componentTimestamps;
+	std::array<time_point, maxComponents> componentTimeStamps;
 public:
     
     bool IsActive() const { return active; };
@@ -50,7 +50,7 @@ public:
         componentArray[comp_id] = c;
         componentBitset[comp_id] = true;
 
-		componentTimestamps[comp_id] = std::chrono::system_clock::now();
+		componentTimeStamps[comp_id] = std::chrono::system_clock::now();
 
         return *c;
     }

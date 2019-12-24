@@ -65,13 +65,8 @@ public:
 
     MouseInputSystem() : ISystem(std::string("MouseInputSystem")) {}
 
-    void Initialize() override
-    {
-		if (pool == nullptr)
-			throw MissingDependencyException("Entity Pool");
-		if (eventManager == nullptr)
-			throw MissingDependencyException("Event manager");
-    }
+    void Initialize() override {}
+	
     void Execute() override
     {
         const int lastGesture = GetGestureDetected();

@@ -186,7 +186,7 @@ struct Shape
     }
 };
 
-inline float radiansToDegrees(float rad) { printf("rad %f to -> %f\n", rad, (rad / (2 * PI)) * 360);  return rad / (2 * PI) * 360; }
+constexpr float radiansToDegrees(float rad) { return rad / (2 * PI) * 360; }
 constexpr float degreesToRadians(float deg) { return deg / 360 * (2 * PI); }
 
 //class ShapeContainer

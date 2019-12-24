@@ -5,10 +5,12 @@
 struct IComponent;
 
 using ComponentID = std::size_t;
+constexpr std::size_t maxComponents = 32;
 
 inline ComponentID GetComponentID()
 {
     static ComponentID lastID = 0;
+	
     return lastID++;
 }
 
@@ -18,7 +20,8 @@ ComponentID GetComponentTypeID()
     static_assert(std::is_base_of<IComponent, T>::value, "T is not derived from component");
 
     static ComponentID typeID = GetComponentID();
-    return typeID;
+
+	return typeID;
 }
 
 class Entity;
@@ -29,8 +32,6 @@ struct IComponent
 
     virtual ~IComponent() {}
 };
-
-constexpr std::size_t maxComponents = 32;
 
 using ComponentBitset = std::bitset<maxComponents>;
 using ComponentArray = std::array<IComponent*, maxComponents>;

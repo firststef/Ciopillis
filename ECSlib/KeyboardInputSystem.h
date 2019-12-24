@@ -9,13 +9,7 @@ class KeyboardInputSystem : public ISystem
 public:
     KeyboardInputSystem() : ISystem("KeyboardInputSystem") {}
 
-    void Initialize() override
-    {
-		if (pool == nullptr)
-			throw MissingDependencyException("Entity Pool");
-		if (eventManager == nullptr)
-			throw MissingDependencyException("Event manager");
-    }
+    void Initialize() override {}
      
     void Execute() override
     {

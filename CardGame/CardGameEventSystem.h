@@ -14,14 +14,7 @@ public:
     CardGameEventSystem(GameServer& server) : ISystem(std::string("CardGameEventSystem")), server(server) {}
 
     void Initialize() override
-    {
-		if (pool == nullptr)
-			throw MissingDependencyException("Entity Pool");
-		if (textureManager == nullptr)
-			throw MissingDependencyException("Texture manager");
-		if (eventManager == nullptr)
-			throw MissingDependencyException("Event manager");
-    	
+    {  	
         server.RunServer(START, -1,-1);
     }
 

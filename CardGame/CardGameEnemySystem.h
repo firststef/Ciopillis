@@ -19,15 +19,7 @@ public:
     {
     }
 
-    void Initialize() override
-    {
-		if (pool == nullptr)
-			throw MissingDependencyException("Entity Pool");
-		if (textureManager == nullptr)
-			throw MissingDependencyException("Texture manager");
-		if (eventManager == nullptr)
-			throw MissingDependencyException("Event manager");
-    }
+    void Initialize() override {}
 
     void Execute() override
     {

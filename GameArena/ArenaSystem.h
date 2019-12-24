@@ -7,7 +7,7 @@
 
 class ArenaSystem : public ISystem
 {
-	void* body_ptr = nullptr;
+	//void* body_ptr = nullptr;
 	
     void OnInit(EntityPtr e)
     {
@@ -190,7 +190,7 @@ class ArenaSystem : public ISystem
         Shape body("body", "player");
         body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
         auto& b = player_idle_cont.AddShape(body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
-		body_ptr = &b;
+		//body_ptr = &b;
 
         Shape fist("fist", "player");
         fist.SetRectangle(Rectangle{ 0,0,20,20 }, 0.0f, Fade(RED, 0.4f));
@@ -274,17 +274,17 @@ class ArenaSystem : public ISystem
             //INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
         }
 
-		if (! body_ptr)
-			return;
+		//if (! body_ptr)
+		//	return;
     	
-		auto body = *(ShapeContainer::ShapeHolder*)(body_ptr);
-		printf("Player position %f %f\n", arena.player->Get<TransformComponent>().position.x, arena.player->Get<TransformComponent>().position.y);
-		printf("Player rotation %f rad %f\n", arena.player->Get<TransformComponent>().rotation, arena.player->Get<PhysicsComponent>().body->orient);
-		printf("Shape position %f %f\n", body.shape.rectangle.rec.x, body.shape.rectangle.rec.y);
-		printf("Shape rotation %f\n", body.shape.rotation);
-		printf("Shape offset %f", sqrt(pow(arena.player->Get<TransformComponent>().position.x - body.shape.rectangle.rec.x, 2)
-			+ pow(arena.player->Get<TransformComponent>().position.y - body.shape.rectangle.rec.y, 2)));
-		system("CLS");
+		//auto body = *(ShapeContainer::ShapeHolder*)(body_ptr);
+		//printf("Player position %f %f\n", arena.player->Get<TransformComponent>().position.x, arena.player->Get<TransformComponent>().position.y);
+		//printf("Player rotation %f rad %f\n", arena.player->Get<TransformComponent>().rotation, arena.player->Get<PhysicsComponent>().body->orient);
+		//printf("Shape position %f %f\n", body.shape.rectangle.rec.x, body.shape.rectangle.rec.y);
+		//printf("Shape rotation %f\n", body.shape.rotation);
+		//printf("Shape offset %f", sqrt(pow(arena.player->Get<TransformComponent>().position.x - body.shape.rectangle.rec.x, 2)
+		//	+ pow(arena.player->Get<TransformComponent>().position.y - body.shape.rectangle.rec.y, 2)));
+		//system("CLS");
     }
 
     void OnEnd(EntityPtr e)
@@ -297,13 +297,7 @@ class ArenaSystem : public ISystem
 public:
     ArenaSystem() : ISystem(std::string("ArenaSystem")) {}
 
-    void Initialize() override
-    {
-		if (pool == nullptr)
-			throw MissingDependencyException("Entity Pool");
-		if (textureManager == nullptr)
-			throw MissingDependencyException("Texture manager");
-    }
+    void Initialize() override {}
 
     void Execute() override
     {

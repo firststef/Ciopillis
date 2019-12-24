@@ -69,11 +69,7 @@ public:
 
     AnimationSystem() : ISystem("AnimationSystem") {}
 
-    void Initialize() override
-    {
-		if (pool == nullptr)
-			throw MissingDependencyException("Entity Pool");
-    }
+    void Initialize() override {}
 
     void Execute() override
     {

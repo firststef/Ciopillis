@@ -2,6 +2,28 @@
 #include "Pool.h"
 #include "SystemControlEvent.h"
 
+class ISystem;
+
+using SystemID = std::size_t;
+constexpr std::size_t maxSystems = 32;
+
+inline SystemID GetSystemID()
+{
+	static SystemID lastID = 0;
+
+	return lastID++;
+}
+
+template <typename T>
+SystemID GetSystemTypeID()
+{
+	static_assert(std::is_base_of<ISystem, T>::value, "T is not derived from system");
+
+	static SystemID typeID = GetSystemID();
+
+	return typeID;
+}
+
 class TextureManager;
 class EventManager;
 class SystemManager;
@@ -27,10 +49,6 @@ public:
         this->eventManager = eventManager;
     }
 
-	//Initialize works as a constructor before the game loop actually starts.
-	//It is useful to check for dependencies in here and throw any errors.
-	//There is no need, however, to check for systemManager dependency, as any
-	//system will always be injected with this dependency by the manager.
     virtual void Initialize() {}
     virtual void Execute() {}
     virtual void Destroy() {}
@@ -64,13 +82,13 @@ public:
 	{
 	}
 	
-    std::vector<SystemPtr> systems;
+    std::array<SystemPtr, maxSystems> systems {nullptr};
 
     void Initialize()
     {
         for (const auto& ptr : systems )
         {
-            if (ptr->enabled)//TODO: systems might rather need Initialize(enabled) or Execute(Enabled) to run in "stealth" mode.
+            if (ptr.get() && ptr->enabled)//TODO: systems might rather need Initialize(enabled) or Execute(Enabled) to run in "stealth" mode.
                 ptr->Initialize();
         }
     }
@@ -79,7 +97,7 @@ public:
     {
         for (const auto& ptr : systems)
         {
-            if (ptr->enabled)
+            if (ptr.get() && ptr->enabled)
                 ptr->Execute();
         }
     }
@@ -88,25 +106,31 @@ public:
     {
         for (const auto& ptr : systems)
         {
-            ptr->Destroy();
+			if (ptr.get())
+				ptr->Destroy();
         }
     }
 
-    void AddSystem(const SystemPtr& ptr)
+	template<typename T, typename... TArgs>
+    T& AddSystem(TArgs&&... mArgs)
     {
-        systems.push_back(std::dynamic_pointer_cast<ISystem>(ptr));
+		T* ptr(new T(std::forward<TArgs>(mArgs)...));
+		SystemPtr sPtr{ ptr };
+        systems[GetSystemTypeID<T>()] = sPtr;
 
         ptr->SetDependencies(pool, textureManager,this, eventManager);
+
+		return *ptr;
     }
 
     template<typename T>
     T* Get() const
     {
-        for (const auto& ptr : systems)
-        {
-            if (std::dynamic_pointer_cast<T, ISystem>(std::make_shared<ISystem>(*(ptr.get())))!= nullptr)
-                return std::dynamic_pointer_cast<T, ISystem>(std::make_shared<ISystem>(*(ptr.get()))).get();
-        }
+		auto ptr = std::dynamic_pointer_cast<T, ISystem>(std::make_shared<ISystem>(*(systems[GetSystemTypeID<T>()].get())));
+    	
+		if (ptr != nullptr)
+			return ptr;
+        
         return nullptr;
     }
 };
