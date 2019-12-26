@@ -87,24 +87,29 @@ int main()
     enemyHand->Add<GridContainerComponent>(5, 1, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES,true);
 
     //SystemManager
-	auto& drawSystem = manager.systemManager.AddSystem<DrawSystem>();
-	auto& mouseInputSystem = manager.systemManager.AddSystem<MouseInputSystem>();
-	auto& eventSystem = manager.systemManager.AddSystem<CardGameEventSystem>(server);
-	//TODO: Enemy system is quite useless, it should be a continuation of EventSystem or an event
-	auto& enemySystem = manager.systemManager.AddSystem<CardGameEnemySystem>(server, enemyHand, draw, discard, playZone);
-	auto& gridContainerSystem = manager.systemManager.AddSystem<GridContainerSystem>();
+	auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
+	auto mouseInputSystem = std::make_shared<MouseInputSystem>(MouseInputSystem());
+	auto eventSystem = std::make_shared<CardGameEventSystem>(CardGameEventSystem(server)); //TODO: Enemy system is quite useless, it should be a continuation of EventSystem or an event
+	auto enemySystem = std::make_shared<CardGameEnemySystem>(CardGameEnemySystem(server, enemyHand, draw, discard, playZone));
+	auto gridContainerSystem = std::make_shared<GridContainerSystem>(GridContainerSystem());
+
+	manager.systemManager.AddSystem(drawSystem);
+	manager.systemManager.AddSystem(mouseInputSystem);
+	manager.systemManager.AddSystem(eventSystem);
+	manager.systemManager.AddSystem(enemySystem);
+	manager.systemManager.AddSystem(gridContainerSystem);
 
     //EventManager
-    manager.eventManager.Subscribe<MouseEvent>(&eventSystem);
-    manager.eventManager.Subscribe<SystemControlEvent>(&mouseInputSystem);
-    manager.eventManager.Subscribe<GridAddRemoveEvent>(&gridContainerSystem);
-    manager.eventManager.Subscribe<CardGameEnemyEvent>(&enemySystem);
+	manager.eventManager.Subscribe<MouseEvent>(eventSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(mouseInputSystem);//TODO: check if this system is valid
+	manager.eventManager.Subscribe<GridAddRemoveEvent>(gridContainerSystem);
+	manager.eventManager.Subscribe<CardGameEnemyEvent>(enemySystem);
 
     manager.Initialize();
 
     //Game actions
-    gridContainerSystem.AddItem(draw, drawCard);//TODO: this might be the job for CardGameEventSystem on initialize
-    gridContainerSystem.AddItem(draw, drawCard2);
+    gridContainerSystem->AddItem(draw, drawCard);//TODO: this might be the job for CardGameEventSystem on initialize
+    gridContainerSystem->AddItem(draw, drawCard2);
 
     while (!WindowShouldClose())
     {

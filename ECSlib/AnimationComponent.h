@@ -70,8 +70,8 @@ struct AnimationNode
     : animationUnit(std::make_shared<AnimationUnit>(anim))
     {}
 
-    //DOCS: Next() reprezinta defapt o functie care se apeleaza la fiecare final de frame al unei animatii, 
-    //DOCS: intoarce true sau false daca trebuie sau nu trecut la urmatoarea animatie
+    //DOCS: Next() is a function called at the end of each animation (node), 
+    //Returns true if the animation must pass to the next node
     std::shared_ptr<AnimationNode> Next(std::shared_ptr<AnimationNode> next, std::function<bool(const AnimationNode& node, void* context)> cond, void* context)
     {
         nextNodes.push_back(NextAnimationNodeWrapper{ next, cond, context });
