@@ -2,6 +2,11 @@
 #include <iostream>
 #ifdef WIN32
 #include <WS2tcpip.h>
+#elif __linux__
+#include <cstring>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #endif
 
 void NetworkSystem::buffer_access(int type, char* data)
@@ -26,9 +31,9 @@ void NetworkSystem::buffer_access(int type, char* data)
 			changed = false;
 		}
 	}
-	
+
 #ifdef __linux__
-	pthread_mutex_unlock(&nt);
+	pthread_mutex_unlock(&buffer_mutex);
 #endif
 }
 
@@ -47,23 +52,23 @@ bool NetworkSystem::signal_access(int type, bool value)
 	}
 
 	return stop_thread;
-	
+
 #ifdef __linux__
-	pthread_mutex_unlock(&nt);
+	pthread_mutex_unlock(&signal_mutex);
 #endif
 }
 
 void NetworkSystem::terminate_socket()
 {
+#ifdef WIN32
+    closesocket(*(SOCKET*)socket_ptr);
 	if (socket_ptr)
 	{
-#ifdef WIN32
-		closesocket(*(SOCKET*)socket_ptr);
 		socket_ptr = nullptr;
-#elif __linux__
-		close(sd);
-#endif
 	}
+#elif __linux__
+	close(sd);
+#endif
 }
 
 void NetworkSystem::ThreadRun()
@@ -121,17 +126,43 @@ void NetworkSystem::ThreadRun()
 		std::cout << "Message recv from " << clientIp << " : " << buf << std::endl;
 	}
 
-	closesocket(in);
-
 	WSACleanup();
 #elif __linux__
-	
+    sockaddr_in server;
+    char msg[1024];
+    int msglen=0;
+    socklen_t length=0;
+
+    /* cream socketul */
+    if ((sd = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
+    {
+        perror ("Eroare la socket().\n");
+        return;
+    }
+
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_port = htons (54000);
+
+    while(true) {
+        bzero(msg, 100);
+        strcpy(msg, "test message\n");
+
+        length = sizeof(server);
+        if (sendto(sd, msg, 100, 0, (sockaddr *) &server, length) <= 0) {
+            //perror("[client]Eroare la sendto() spre server.\n");
+            break;
+        }
+
+        sleep(5);
+    }
 #endif
 }
 
-void function_wrapper(void* ptr)
+void* function_wrapper(void* ptr)
 {
 	std::bind(&NetworkSystem::ThreadRun, (NetworkSystem*)ptr)();
+    return nullptr;
 }
 
 void NetworkSystem::Initialize()
@@ -139,14 +170,14 @@ void NetworkSystem::Initialize()
 #ifdef WIN32
 	nt = std::make_shared<std::thread>(&NetworkSystem::ThreadRun, this);
 	std::cout << "Thread started" << std::endl;
-#elif __linxux
+#elif __linux__
 	if (pthread_mutex_init(&buffer_mutex, NULL) != 0 || pthread_mutex_init(&signal_mutex, NULL) != 0)
 	{
 		printf("\n mutex init failed\n");
 		return;
 	}
 	
-	int err = pthread_create(&tid, NULL, &function_wrapper, (void*)this, NULL);
+	int err = pthread_create(&nt, NULL, &function_wrapper, (void*)this);
 	if (err != 0)
 		printf("\ncan't create thread :[%s]", strerror(err));
 #endif
@@ -163,7 +194,7 @@ void NetworkSystem::Destroy()
 #ifdef WIN32
 	nt->join();
 #elif __linux__
-	pthread_join(tid, NULL);
+	pthread_join(nt, NULL);
 	pthread_mutex_destroy(&buffer_mutex);
 	pthread_mutex_destroy(&signal_mutex);
 #endif

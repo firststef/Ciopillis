@@ -61,6 +61,7 @@ message("${PROJECT_NAME}: CURR BIN DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 set(SRC_FILES
     ./External.cpp
     ./main.cpp
+    ./NetworkSystem.cpp
     ./PhyFunctions.cpp
     ./PhyFunctions2.cpp
     ./PhysicsComponent.cpp

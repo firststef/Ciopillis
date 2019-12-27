@@ -6,9 +6,9 @@
 #include <thread>
 #include <mutex>
 #elif __linux__
-#include<stdio.h>
+#include<cstdio>
 #include<pthread.h>
-#include<stdlib.h>
+#include<cstdlib>
 #include<unistd.h>
 #endif
 
