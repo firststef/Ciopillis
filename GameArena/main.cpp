@@ -22,6 +22,7 @@ int main()
 	auto physicsSystem = std::make_shared <PhysicsSystem>(PhysicsSystem());
 	auto animationSystem = std::make_shared <AnimationSystem>(AnimationSystem());
 	auto hitBoxSystem = std::make_shared<HitBoxSystem>(HitBoxSystem());
+	auto networkSystem = std::make_shared<NetworkSystem>(NetworkSystem());
 
 	manager.systemManager.AddSystem(defferSystem);
 	manager.systemManager.AddSystem(drawSystem);
@@ -31,6 +32,7 @@ int main()
 	manager.systemManager.AddSystem(physicsSystem);
 	manager.systemManager.AddSystem(animationSystem);
 	manager.systemManager.AddSystem(hitBoxSystem);
+	manager.systemManager.AddSystem(networkSystem);
 
 	auto game(manager.pool.AddEntity());
 	game->Add<ArenaGameComponent>();

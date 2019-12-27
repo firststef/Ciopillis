@@ -30,8 +30,4 @@ public:
     {
         systemManager.Destroy();
     }
-
-    ~ECSManager()
-    {
-    }
 };

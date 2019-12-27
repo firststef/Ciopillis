@@ -181,20 +181,37 @@ class ArenaSystem : public ISystem
 
         arena.player->Add<AnimationComponent>(AnimationGraph(idle));
 
-        //Player HitBox
-        ShapeContainer player_idle_cont(
-            arena.player->Get<TransformComponent>().position,
-            arena.player->Get<TransformComponent>().rotation
-		);
+		Shape mainBody;
+		mainBody.type = Shape::ShapeType::RECTANGLE;
+		mainBody.rectangle.center.x = arena.player->Get<TransformComponent>().position.x;
+		mainBody.rectangle.center.y = arena.player->Get<TransformComponent>().position.y;
+		mainBody.rectangle.width = 100;
+		mainBody.rectangle.height = 200;
+		mainBody.rotation = 0;
 
-        Shape body("body", "player");
-        body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
-        auto& b = player_idle_cont.AddShape(body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
+		ShapeContainer player_idle_cont(mainBody, 0.0f);
+    	
+        //Player HitBox
+
+        //Shape body("body", "player");
+        //body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
+        //auto& b = player_idle_cont.AddShape(body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
 		//body_ptr = &b;
 
-        Shape fist("fist", "player");
-        fist.SetRectangle(Rectangle{ 0,0,20,20 }, 0.0f, Fade(RED, 0.4f));
-        player_idle_cont.AddShape(fist, Vector2{ 0,0 }, Vector2{ 1, 1 }, false);
+		AttachedShape fist;
+		fist.type = Shape::ShapeType::RECTANGLE;
+		fist.rectangle.center.x = arena.player->Get<TransformComponent>().position.x + 30;
+		fist.rectangle.center.y = arena.player->Get<TransformComponent>().position.y;
+		fist.rectangle.width = 40;
+		fist.rectangle.height = 40;
+		fist.rotation = 0;
+
+        //Shape fist("fist", "player");
+        //fist.SetRectangle(Rectangle{ 0,0,20,20 }, 0.0f, Fade(RED, 0.4f));
+        //player_idle_cont.AddShape(fist, Vector2{ 0,0 }, Vector2{ 1, 1 }, false);
+
+		fist.SetMainBodyCenter(mainBody);
+		player_idle_cont.AddShape(fist);
 
         arena.player->Add<HitBoxComponent>(player_idle_cont);
         player_idle_cont.Update();
@@ -215,7 +232,7 @@ class ArenaSystem : public ISystem
         enemyBody->freezeOrient = true;
 
         //Enemy hitboxlayer_idle
-		ShapeContainer enemy_idle_cont(
+		/*ShapeContainer enemy_idle_cont(
 			arena.enemy->Get<TransformComponent>().position,
 			arena.enemy->Get<PhysicsComponent>().body->orient
 		);
@@ -226,10 +243,10 @@ class ArenaSystem : public ISystem
 
         /*Shape enemy_fist("fist", "enemy");
         enemy_fist.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(RED, 0.4f));
-        enemy_idle_cont.AddShape(Vector2{ 0,0 }, enemy_fist, false);*/
+        enemy_idle_cont.AddShape(Vector2{ 0,0 }, enemy_fist, false);
 
         arena.enemy->Add<HitBoxComponent>(enemy_idle_cont);
-        enemy_idle_cont.Update();
+        enemy_idle_cont.Update();*/
 
         arena.generatedEntities.push_back(arena.enemy);
 
@@ -334,7 +351,7 @@ public:
             *arena.playerOrientation = arena.lastAxesPlayer.x > 0;
 
             //box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
-            box.cont.Update(true);
+            //box.cont.Update();
 
             if (arena.blockPlayerInput)
                 continue;

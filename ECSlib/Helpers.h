@@ -79,219 +79,206 @@ template <typename T> int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
-struct Shape
-{
-    typedef std::string Identifier;
-
-    enum ShapeType
-    {
-        NONE,
-        CIRCLE,
-        RECTANGLE,
-        TRIANGLE,
-        POLYGON
-    } type = NONE;
-
-    union
-    {
-        struct
-        {
-            int x;
-            int y; 
-            float radius;
-        } circle;
-
-        struct
-        {
-            Rectangle rec;
-        } rectangle;
-
-        struct
-        {
-            Vector2 a;
-            Vector2 b;
-            Vector2 c;
-        } triangle;
-
-        struct
-        {
-            Vector2 center;
-            int sides;
-            float radius;
-        } poly;
-    };
-
-    Identifier id;
-    Identifier objectClass;
-
-    Color color;
-    float rotation;
-
-    Shape(Identifier id, Identifier objectClass) 
-    : id(id), objectClass(objectClass) 
-    {}
-
-    void SetCircle(int x, int y, float radius, Color color = RED)
-    {
-        type = CIRCLE;
-        circle.x = x;
-        circle.y = y;
-        circle.radius = radius;
-        this->color = color;
-    }
-    void SetRectangle(Rectangle rec, float rotation, Color color = RED)
-    {
-        type = RECTANGLE;
-        rectangle.rec = rec;
-        this->rotation = rotation;
-        this->color = color;
-    }
-    void SetTriangle(Vector2 a, Vector2 b, Vector2 c, float rotation, Color color = RED)
-    {
-        type = TRIANGLE;
-        triangle.a = a;
-        triangle.b = b;
-        triangle.c = c;
-        this->rotation = rotation;
-        this->color = color;
-    }
-    void SetPoly(Vector2 center, int sides, float radius, float rotation, Color color = RED)
-    {
-        type = POLYGON;
-        poly.center = center;
-        poly.sides = sides;
-        poly.radius = radius;
-        this->rotation = rotation;
-        this->color = color;
-    }
-
-    void Draw()
-    {
-        if (type == CIRCLE)
-        {
-            DrawCircle(circle.x, circle.y, circle.radius, color);
-        }
-        else if (type == RECTANGLE)
-        {
-            DrawRectanglePro(rectangle.rec, Vector2{ 0,0 }, rotation, color);
-        }
-        else if (type == TRIANGLE)
-        {
-            //DrawTriangle(shape.triangle.a, shape.triangle.b, shape.triangle.c, shape.color);
-        }
-        else if (type == POLYGON)
-        {
-            DrawPoly(poly.center, poly.sides, poly.radius, rotation, color);
-        }
-    }
-};
-
 constexpr float radiansToDegrees(float rad) { return rad / (2 * PI) * 360; }
 constexpr float degreesToRadians(float deg) { return deg / 360 * (2 * PI); }
 
+struct Shape
+{
+	enum ShapeType
+	{
+		NONE,
+		CIRCLE,
+		RECTANGLE,
+		TRIANGLE,
+		POLYGON
+	}
+	type = NONE;
+	
+	float rotation;
+
+	union
+	{
+		struct { Vector2 center; float radius; } circle;
+		struct { Vector2 center; float width, height; } rectangle;
+		struct { Vector2 a; Vector2 b; Vector2 c; } triangle;
+		struct { Vector2 center; int sides; float radius; } poly;
+	};
+
+	float GetCenterX()
+	{
+		switch (type)
+		{
+		case Shape::ShapeType::CIRCLE: return circle.center.x;
+		case Shape::ShapeType::RECTANGLE: return rectangle.center.x;
+		case Shape::ShapeType::TRIANGLE: return (triangle.a.x + triangle.b.x + triangle.c.x) / 3;
+		case Shape::ShapeType::POLYGON: return poly.center.x;
+		}
+	}
+
+	float GetCenterY()
+	{
+		switch (type)
+		{
+		case Shape::ShapeType::CIRCLE: return circle.center.y;
+		case Shape::ShapeType::RECTANGLE: return rectangle.center.y;
+		case Shape::ShapeType::TRIANGLE: return (triangle.a.y + triangle.b.y + triangle.c.y) / 3;
+		case Shape::ShapeType::POLYGON: return poly.center.y;
+		}
+	}
+
+	void SetCenterX(float newX)
+	{
+		//float change = newX - GetCenterX();
+		switch (type)
+		{
+		case Shape::ShapeType::CIRCLE:
+			circle.center.x = newX;
+			break;
+		case Shape::ShapeType::RECTANGLE:
+			rectangle.center.x = newX;
+			break;
+		case Shape::ShapeType::TRIANGLE:
+			//triangle.a.x += change;
+			//triangle.b.x += change;
+			//triangle.c.x += change;
+			break;
+		case Shape::ShapeType::POLYGON:
+			poly.center.x = newX;
+			break;
+		}
+	}
+
+	void SetCenterY(float newY)
+	{
+		//float change = newY - GetCenterY(); not useful
+		switch (type)
+		{
+		case Shape::ShapeType::CIRCLE:
+			circle.center.y = newY;
+			break;
+		case Shape::ShapeType::RECTANGLE:
+			rectangle.center.y = newY;
+			break;
+		case Shape::ShapeType::TRIANGLE:
+			//triangle.a.y += change;
+			//triangle.b.y += change;
+			//triangle.c.y += change;
+			break;
+		case Shape::ShapeType::POLYGON:
+			poly.center.y = newY;
+			break;
+		}
+	}
+
+	void Draw()
+	{
+		if (type == CIRCLE)
+		{
+			DrawCircle(circle.center.x, circle.center.y, circle.radius, Fade(BLUE, 0.3f));
+		}
+		else if (type == RECTANGLE)
+		{
+			DrawRectanglePro(Rectangle{ rectangle.center.x, rectangle.center.y, rectangle.width,rectangle.height }, Vector2{ 0,0 }, rotation, Fade(RED, 0.3f));
+		}
+		else if (type == TRIANGLE)
+		{
+			//DrawTriangle(shape.triangle.a, shape.triangle.b, shape.triangle.c, shape.color);
+		}
+		else if (type == POLYGON)
+		{
+			DrawPoly(poly.center, poly.sides, poly.radius, rotation, RED);
+		}
+	}
+};
+
+struct AttachedShape : Shape
+{
+	Vector2 mainBodyCenter;
+
+	void SetMainBodyCenter(Vector2 mainBodyCenter)
+	{
+		this->mainBodyCenter.x = mainBodyCenter.x;
+		this->mainBodyCenter.y = mainBodyCenter.y;
+	}
+
+	void SetMainBodyCenter(Shape mainBody)
+	{
+		mainBodyCenter.x = mainBody.GetCenterX();
+		mainBodyCenter.y = mainBody.GetCenterY();
+	}
+
+	float GetDistanceFromMainX()
+	{
+		return abs(GetCenterX() - mainBodyCenter.x);
+	}
+
+	float GetDistanceFromMainY()
+	{
+		return abs(GetCenterY() - mainBodyCenter.y);
+	}
+};
+
 struct ShapeContainer
 {
-	Rectangle& position;
-	float& rotation;
+	float last_x;
+	float last_y;
+	float origin_orientation;
 
-	const Rectangle original_position;
-	const float original_rotation;
+	Shape origin_position;
 
-	struct ShapeHolder
-    {
-        Shape shape;
+	std::vector<AttachedShape> shapes;
 
-        Vector2 offset;
-        float initialRotation;
-        Vector2 currentOrientation;
-        
-        bool radians;
-    };
-
-    std::vector<ShapeHolder> holders;
-
-	ShapeContainer(Rectangle& position, float& rotation)
-		:position(position), rotation(rotation), original_position(position), original_rotation(rotation)
+	ShapeContainer(Shape mainBody, float mainBodyOrientation) : origin_position(mainBody), origin_orientation(mainBodyOrientation)
 	{
 
 	}
 
-	ShapeHolder& AddShape(Shape& shape, Vector2 offset, Vector2 orientation, bool radians = false)
-    {
-        if (offset.x == 0)
-            offset.x = 0.0001f;
-        if (offset.y == 0)
-            offset.y = 0.0001f;
+	void AddShape(AttachedShape s)
+	{
+		shapes.push_back(s);
+		last_x = s.GetCenterX();
+		last_y = s.GetCenterY();
+	}
 
-        Vector2 newPos = offset + Vector2{position.x, position.y};
+	void Update()
+	{
+		for (std::vector<AttachedShape>::iterator it = shapes.begin(); it != shapes.end(); ++it) {
 
-        if (shape.type == Shape::CIRCLE)
-        {
-            shape.circle.x = int(newPos.x);
-            shape.circle.y = int(newPos.y);
-        }
-        else if (shape.type == Shape::RECTANGLE)
-        {
-            shape.rectangle.rec.x = newPos.x;
-            shape.rectangle.rec.y = newPos.y;
-        }
-        else if (shape.type == Shape::TRIANGLE)
-        {
-            //to be implemented
-        }
-        else if (shape.type == Shape::POLYGON)
-        {
-            shape.poly.center.x = newPos.x;
-            shape.poly.center.y = newPos.y;
-        }
+			Vector2 newCenter;
 
-        holders.push_back(ShapeHolder{ 
-            shape,
-            offset,
-            shape.rotation,
-            orientation,
-            radians });
+			newCenter.x = origin_position.GetCenterX() - it->mainBodyCenter.x;
+			newCenter.y = origin_position.GetCenterY() - it->mainBodyCenter.y;
 
-		return holders.back();
-    }
+			it->mainBodyCenter.x = origin_position.GetCenterX();
+			it->mainBodyCenter.y = origin_position.GetCenterY();
 
-	void Update(bool force = false) {
+			it->SetCenterX(it->GetCenterX() + newCenter.x);
+			it->SetCenterY(it->GetCenterY() + newCenter.y);
 
-        for (auto& holder : holders)
-        {
-            float radius = sqrt(pow(holder.offset.x, 2) + pow(holder.offset.y, 2));
-
-			auto new_rot = rotation - original_rotation;
-
-			holder.shape.rotation = holder.initialRotation + new_rot;
-
-            if (holder.shape.type == Shape::CIRCLE)
-            {
-                holder.shape.circle.x = position.x + cos(new_rot) * radius;
-                holder.shape.circle.y = position.y + sin(new_rot) * radius;
-            } 
-            else if (holder.shape.type == Shape::RECTANGLE)
-            {
-				holder.shape.rectangle.rec.x = position.x + cos(new_rot) * radius;
-				holder.shape.rectangle.rec.y = position.y + sin(new_rot) * radius;
-            }
-            else if (holder.shape.type == Shape::TRIANGLE)
-            {
-                //to be implemented
-            }
-			else if (holder.shape.type == Shape::POLYGON)
+			if (origin_position.rotation != 0.00f && origin_position.rotation != it->rotation)
 			{
-				holder.shape.poly.center.x = position.x + cos(new_rot) * radius;
-				holder.shape.poly.center.y = position.y + sin(new_rot) * radius;
+				float NX = it->mainBodyCenter.x + (it->GetCenterX() - it->mainBodyCenter.x) * cos(origin_position.rotation) - (it->GetCenterY() - it->mainBodyCenter.y) * sin(origin_position.rotation);
+				float NY = it->mainBodyCenter.y + (it->GetCenterX() - it->mainBodyCenter.x) * sin(origin_position.rotation) + (it->GetCenterY() - it->mainBodyCenter.y) * cos(origin_position.rotation);
+
+				it->SetCenterX(NX);
+				it->SetCenterY(NY);
+
+				it->rotation = origin_position.rotation;
 			}
-        }
-    }
+		}
+	}
+
+	void Mirror(Vector2 orientation)
+	{
+		// In this method the entire structure is mirrored 
+	}
 
 	void Draw()
     {
-        for (auto& holder : holders)
+		origin_position.Draw();
+        for (auto& shape : shapes)
         {
-            holder.shape.Draw();
+            shape.Draw();
         }
     }
 	

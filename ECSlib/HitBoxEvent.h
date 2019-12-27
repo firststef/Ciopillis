@@ -3,8 +3,8 @@
 
 struct HitBoxTriggerInfo
 {
-    Shape::Identifier identifier1;
-    Shape::Identifier identifier2;
+    //Shape::Identifier identifier1;
+    //Shape::Identifier identifier2;
 };
 
 struct HitBoxEvent : IEvent

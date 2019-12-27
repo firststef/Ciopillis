@@ -34,20 +34,21 @@ struct AnimationUnit
         std::shared_ptr<bool> mirrorSprite,
         std::shared_ptr<bool> reverseOrder,
         unsigned repeats)
-        :name(std::move(name)),
+        :
+		name(std::move(name)),
         texture(texture),
         sourceRec(sourceRec),
         numOfFrames(numOfFrames),
         timePerFrame(timePerFrame),
         mirrorSprite(mirrorSprite),
         reverseOrder(reverseOrder),
-        repeats(repeats)
+        repeats(repeats),
+		currentFrame(0),
+		waitFrameFlag(false),
+		currentRepeat(0),
+		started(false),
+		animationSpeed(std::chrono::duration<int, std::ratio<1, 1000>>(timePerFrame))
     {
-        currentFrame = 0;
-        currentRepeat = 0;
-        started = false;
-        animationSpeed = std::chrono::duration<int, std::ratio<1, 1000>>(timePerFrame);
-        waitFrameFlag = false;
     }
 };
 

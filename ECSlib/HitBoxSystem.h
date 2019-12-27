@@ -8,6 +8,9 @@ public:
 
     void Initialize() override {}
 
+	//DOCS:Ive decided that the dependencies between components should be
+	//(for now) solved by one of the system that works with the components
+	//heavily. Ex: Physics and Transform should be solved by Physics
     void Execute() override
     {
         std::vector<HitBoxComponent*> containers;
@@ -18,12 +21,22 @@ public:
         for (auto e : entities)
         {
             auto& box = e->Get<HitBoxComponent>();
+
+			if (e->Has<TransformComponent>()) {
+				auto& transf = e->Get<TransformComponent>();
+
+				box.cont.origin_position.SetCenterX(transf.position.x);
+				box.cont.origin_position.SetCenterY(transf.position.y);
+
+				box.cont.origin_position.rotation = transf.rotation;
+			}
+        	
             box.cont.Update();
 
             containers.push_back(&e->Get<HitBoxComponent>());
         }
 
-        std::vector<HitBoxTriggerInfo> allTriggerInfos;
+        /*std::vector<HitBoxTriggerInfo> allTriggerInfos;
 
         for (unsigned i = 0; i < containers.size() - 1; ++i) {
             for (unsigned j = 1; j < containers.size(); ++j)
@@ -74,6 +87,6 @@ public:
         }
 
         if (! allTriggerInfos.empty())
-            eventManager->Notify<HitBoxEvent>(allTriggerInfos);
+            eventManager->Notify<HitBoxEvent>(allTriggerInfos);*/
     }
 };

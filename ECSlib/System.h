@@ -27,10 +27,7 @@ public:
 		this->eventManager = eventManager;
 	}
 
-	//Initialize works as a constructor before the game loop actually starts.
-	//It is useful to check for dependencies in here and throw any errors.
-	//There is no need, however, to check for systemManager dependency, as any
-	//system will always be injected with this dependency by the manager.
+	//TODO: initialize might fail, must be changed to bool
 	virtual void Initialize() {}
 	virtual void Execute() {}
 	virtual void Destroy() {}
