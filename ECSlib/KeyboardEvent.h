@@ -1,13 +1,17 @@
 #pragma once
 struct KeyboardEvent : IEvent
 {
-    EntityPtr entity;
+	struct TriggeredEntity {
+		EntityPtr entity;
 
-    std::vector<int> pressedKeys;
-    std::vector<int> releasedKeys;
-    std::vector<int> heldKeys;
+		std::vector<int> pressedKeys;
+		std::vector<int> releasedKeys;
+		std::vector<int> heldKeys;
+	};
 
-    KeyboardEvent(EntityPtr entity, std::vector<int> pressedKeys, std::vector<int> releasedKeys, std::vector<int> heldKeys)
-        : entity(entity), pressedKeys(std::move(pressedKeys)), releasedKeys(std::move(releasedKeys)), heldKeys(std::move(heldKeys))
+	std::vector<TriggeredEntity> triggered_entities;
+
+    KeyboardEvent(std::vector<TriggeredEntity> triggered_entities)
+        : triggered_entities(std::move(triggered_entities))
     {}
 };

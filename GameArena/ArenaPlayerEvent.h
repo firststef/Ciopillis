@@ -1,6 +1,8 @@
 #pragma once
 struct ArenaPlayerEvent : IEvent
 {
+	EntityPtr arena;
+	
     enum Action
     {
         MOVE,
@@ -10,5 +12,5 @@ struct ArenaPlayerEvent : IEvent
 
     Vector2 axes;
 
-    ArenaPlayerEvent(Action action, Vector2 axes) : action(action), axes(axes) {}
+    ArenaPlayerEvent(EntityPtr arena, Action action, Vector2 axes) : arena(arena), action(action), axes(axes) {}
 };

@@ -27,6 +27,8 @@ public:
                 heldKeys.push_back(k);
         }
 
+		std::vector<KeyboardEvent::TriggeredEntity> triggered_entities;
+
         for (auto& e : pool->GetEntities(1 << GetComponentTypeID<KeyboardInputComponent>()))
         {
             auto& comp = e->Get<KeyboardInputComponent>();
@@ -53,8 +55,11 @@ public:
                     componentHeldKeys.push_back(hkey);
             }
 
-            if (!componentPressedKeys.empty() || !componentReleasedKeys.empty() || !componentHeldKeys.empty())
-                eventManager->Notify<KeyboardEvent>(e, componentPressedKeys, componentReleasedKeys, componentHeldKeys);
+			if (!componentPressedKeys.empty() || !componentReleasedKeys.empty() || !componentHeldKeys.empty())
+				triggered_entities.push_back(KeyboardEvent::TriggeredEntity{ e, componentPressedKeys, componentReleasedKeys, componentHeldKeys });
         }
+    	
+    	if (! triggered_entities.empty())
+			eventManager->Notify<KeyboardEvent>(triggered_entities);
     }
 };

@@ -4,6 +4,7 @@
 #include "ArenaSystem.h"
 #include "ArenaEventSystem.h"
 #include "ArenaGameComponent.h"
+#include "ArenaPlayerComponent.h"
 #include "ArenaPlayerEvent.h"
 
 int main()
@@ -22,7 +23,7 @@ int main()
 	auto physicsSystem = std::make_shared <PhysicsSystem>();
 	auto animationSystem = std::make_shared <AnimationSystem>();
 	auto hitBoxSystem = std::make_shared<HitBoxSystem>();
-	auto networkSystem = std::make_shared<NetworkSystem>(NetworkSystem::CLIENT);
+	//auto networkSystem = std::make_shared<NetworkSystem>(NetworkSystem::CLIENT);
 
 	manager.systemManager.AddSystem(defferSystem);
 	manager.systemManager.AddSystem(drawSystem);
@@ -32,7 +33,7 @@ int main()
 	manager.systemManager.AddSystem(physicsSystem);
 	manager.systemManager.AddSystem(animationSystem);
 	manager.systemManager.AddSystem(hitBoxSystem);
-	manager.systemManager.AddSystem(networkSystem);
+	//manager.systemManager.AddSystem(networkSystem);
 
 	auto game(manager.pool.AddEntity());
 	game->Add<ArenaGameComponent>();

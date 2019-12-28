@@ -3,6 +3,7 @@
 #include "System.h"
 #include "ArenaGameComponent.h"
 #include "ArenaPlayerEvent.h"
+#include "ArenaPlayerComponent.h"
 #include "Constants.h"
 
 class ArenaSystem : public ISystem
@@ -21,6 +22,7 @@ class ArenaSystem : public ISystem
 
         //Player Setup
         arena.player = pool->AddEntity();
+		arena.player->Add<ArenaPlayerComponent>(e);
 
         Rectangle player_rec{ 1000,500,200,200 };
 
@@ -131,8 +133,6 @@ class ArenaSystem : public ISystem
 
             return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
         }, &arena);
-
-        arena.player->Add<AnimationComponent>(AnimationGraph(idle));
 
         //idle, move, attack_x - attack_z
         idle->Next(attack_z, [](const AnimationNode& node, void* context) ->bool
@@ -338,49 +338,47 @@ public:
         }
     }
 
-    void Receive(const ArenaPlayerEvent& event)
-    {
-        //TODO: aici trebuie verificat daca jucatorul tine apasat pe hold, daca a trecut timpul de cooldown
-        for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
-        {
-            auto& arena = e->Get<ArenaGameComponent>();
-            auto& comp = arena.player->Get<PhysicsComponent>();
-            auto& box = arena.player->Get<HitBoxComponent>();
+	void Receive(const ArenaPlayerEvent& event)
+	{
+		//TODO: aici trebuie verificat daca jucatorul tine apasat pe hold, daca a trecut timpul de cooldown
 
-            arena.lastAxesPlayer = { event.axes.x != 0 ? event.axes.x : arena.lastAxesPlayer.x, event.axes.y != 0 ? event.axes.y : arena.lastAxesPlayer.y };
-            *arena.playerOrientation = arena.lastAxesPlayer.x > 0;
+		auto& arena = event.arena->Get<ArenaGameComponent>();
+		auto& comp = arena.player->Get<PhysicsComponent>();
+		auto& box = arena.player->Get<HitBoxComponent>();
 
-            //box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
-            //box.cont.Update();
+		arena.lastAxesPlayer = { event.axes.x != 0 ? event.axes.x : arena.lastAxesPlayer.x, event.axes.y != 0 ? event.axes.y : arena.lastAxesPlayer.y };
+		*arena.playerOrientation = arena.lastAxesPlayer.x > 0;
 
-            if (arena.blockPlayerInput)
-                continue;
+		//box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
+		//box.cont.Update();
 
-            if (event.action == ArenaPlayerEvent::ATTACK_X)
-            {
-                arena.currentActionPlayer = ArenaGameComponent::ATTACK_X;
-                arena.blockPlayerInput = true;
-                comp.body->velocity = { 0,0 };
-            }
-            else if (event.action == ArenaPlayerEvent::ATTACK_Z)
-            {
-                arena.currentActionPlayer = ArenaGameComponent::ATTACK_Z;
-                arena.blockPlayerInput = true;
-                comp.body->velocity = { 0,0 };
-            }
-            else if (event.action == ArenaPlayerEvent::MOVE)
-            {
-                comp.body->velocity = { event.axes.x * VELOCITY , event.axes.y * VELOCITY };
+		if (arena.blockPlayerInput)
+			return;
 
-                if (event.axes == Vector2 {0, 0}) {
-                    arena.currentActionPlayer = ArenaGameComponent::IDLE;
-                }
-                else {
-                    arena.currentActionPlayer = ArenaGameComponent::MOVE;
-                }
-            }
-        }
-    }
+		if (event.action == ArenaPlayerEvent::ATTACK_X)
+		{
+			arena.currentActionPlayer = ArenaGameComponent::ATTACK_X;
+			arena.blockPlayerInput = true;
+			comp.body->velocity = { 0,0 };
+		}
+		else if (event.action == ArenaPlayerEvent::ATTACK_Z)
+		{
+			arena.currentActionPlayer = ArenaGameComponent::ATTACK_Z;
+			arena.blockPlayerInput = true;
+			comp.body->velocity = { 0,0 };
+		}
+		else if (event.action == ArenaPlayerEvent::MOVE)
+		{
+			comp.body->velocity = { event.axes.x * VELOCITY , event.axes.y * VELOCITY };
+
+			if (event.axes == Vector2 {0, 0}) {
+				arena.currentActionPlayer = ArenaGameComponent::IDLE;
+			}
+			else {
+				arena.currentActionPlayer = ArenaGameComponent::MOVE;
+			}
+		}
+	}
 
     void Receive(const HitBoxEvent& event)
     {
