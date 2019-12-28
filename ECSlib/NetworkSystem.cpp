@@ -50,11 +50,11 @@ bool NetworkSystem::signal_access(int type, bool value)
 		stop_thread = value;
 	}
 
-	return stop_thread;
-
 #ifdef __linux__
 	pthread_mutex_unlock(&signal_mutex);
 #endif
+
+    return stop_thread;
 }
 
 void NetworkSystem::terminate_socket()
@@ -67,7 +67,12 @@ void NetworkSystem::terminate_socket()
 		socket_ptr = nullptr;
 	}
 #elif __linux__
-	close(sd);
+    if (type == SERVER)
+    {
+        shutdown(sd, 2);
+	    close(sd);
+	    sd = -1;
+    }
 #endif
 }
 
@@ -134,7 +139,66 @@ void NetworkSystem::ThreadRun()
 
 		WSACleanup();
 #elif __linux__
-		
+        struct sockaddr_in server;
+        struct sockaddr_in client;
+        char msg[100];
+        char msgrasp[100]=" ";
+        int sd;
+
+        if ((sd = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
+        {
+            perror ("[server]Eroare la socket().\n");//TODO:error messages
+            return;
+        }
+
+        bzero (&server, sizeof (server));
+        bzero (&client, sizeof (client));
+
+        server.sin_family = AF_INET;
+        server.sin_addr.s_addr = htonl (INADDR_ANY);
+        server.sin_port = htons (54000);
+
+        if (bind (sd, (struct sockaddr *) &server, sizeof (struct sockaddr)) == -1)
+        {
+            perror ("[server]Eroare la bind().\n");
+            return;
+        }
+
+        while (1)
+        {
+            int msglen;
+            socklen_t length = sizeof (client);
+
+            fflush (stdout);
+
+            bzero (msg, 100);
+
+            if ((msglen = recvfrom(sd, msg, 100, 0,(sockaddr*) &client, &length)) <= 0)
+            {
+                perror ("[server]Eroare la recvfrom() de la client.\n");
+                return;
+            }
+
+            printf ("[server]Mesajul a fost receptionat...%s\n", msg);
+
+//            bzero(msgrasp, 100);
+//            strcat(msgrasp, "Hello ");
+//            strcat(msgrasp, msg);
+//
+//            printf("[server]Trimitem mesajul inapoi...%s\n",msgrasp);
+//
+//            if (sendto(sd, msgrasp, 100, 0, (struct sockaddr*) &client, length) <= 0)
+//            {
+//                perror ("[server]Eroare la sendto() catre client.\n");
+//                break;
+//            }
+//            else
+//                printf ("[server]Mesajul a fost trasmis cu succes.\n");
+
+            if (signal_access(READ_TYPE, false))
+                break;
+
+        }
 #endif
 	}
 	else
@@ -176,6 +240,8 @@ void NetworkSystem::ThreadRun()
 			Sleep(5000);
 		}
 
+		closesocket(out);
+
 		WSACleanup();
 #elif __linux__
 		sockaddr_in server;
@@ -209,6 +275,8 @@ void NetworkSystem::ThreadRun()
 
 			sleep(5);
 		}
+
+        close(sd);
 #endif
 	}
 }
