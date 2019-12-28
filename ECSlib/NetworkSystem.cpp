@@ -48,7 +48,6 @@ bool NetworkSystem::signal_access(int type, bool value)
 	if (type == WRITE_TYPE)
 	{
 		stop_thread = value;
-		return false;
 	}
 
 	return stop_thread;
@@ -60,10 +59,11 @@ bool NetworkSystem::signal_access(int type, bool value)
 
 void NetworkSystem::terminate_socket()
 {
+	signal_access(WRITE_TYPE, true);
 #ifdef WIN32
-    closesocket(*(SOCKET*)socket_ptr);
-	if (socket_ptr)
+	if (socket_ptr && type == SERVER)
 	{
+		closesocket(*((SOCKET*)socket_ptr));
 		socket_ptr = nullptr;
 	}
 #elif __linux__
@@ -73,90 +73,144 @@ void NetworkSystem::terminate_socket()
 
 void NetworkSystem::ThreadRun()
 {
+	if (type == SERVER) {
 #ifdef WIN32
-	WSADATA data;
+		WSADATA data;
 
-	WORD version = MAKEWORD(2, 2);
+		WORD version = MAKEWORD(2, 2);
 
-	int wsOk = WSAStartup(version, &data);
-	if (wsOk != 0)
-	{
-		std::cout << "Can't start Winsock! " << wsOk;
-		return;
-	}
-
-	SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
-	socket_ptr = &in;
-
-	sockaddr_in serverHint;
-	serverHint.sin_addr.S_un.S_addr = ADDR_ANY; // Us any IP address available on the machine
-	serverHint.sin_family = AF_INET; // Address format is IPv4
-	serverHint.sin_port = htons(54000); // Convert from little to big endian
-
-	if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
-	{
-		std::cout << "Can't bind socket! " << WSAGetLastError() << std::endl;
-		return;
-	}
-
-	sockaddr_in client;
-	int clientLength = sizeof(client);
-
-	char buf[1024];
-
-	while (true)
-	{
-		ZeroMemory(&client, clientLength); // Clear the client structure
-		ZeroMemory(buf, 1024); // Clear the receive buffer
-
-		// Wait for message
-		int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
-		if (bytesIn == SOCKET_ERROR)
+		int wsOk = WSAStartup(version, &data);
+		if (wsOk != 0)
 		{
-			std::cout << "Error receiving from client " << WSAGetLastError() << std::endl;
-			break;
+			std::cout << "Can't start Winsock! " << wsOk;
+			return;
 		}
 
-		char clientIp[256];
-		ZeroMemory(clientIp, 256);
+		SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
 
-		// Convert from byte array to chars
-		inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
+		//This is for closing from the main branch
+		socket_ptr = &in;
 
-		std::cout << "Message recv from " << clientIp << " : " << buf << std::endl;
-	}
+		sockaddr_in serverHint;
+		serverHint.sin_addr.S_un.S_addr = ADDR_ANY; // Us any IP address available on the machine
+		serverHint.sin_family = AF_INET; // Address format is IPv4
+		serverHint.sin_port = htons(54000); // Convert from little to big endian
 
-	WSACleanup();
+		if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
+		{
+			std::cout << "Can't bind socket! " << WSAGetLastError() << std::endl;
+			return;
+		}
+
+		sockaddr_in client;
+		int clientLength = sizeof(client);
+
+		char buf[1024];
+
+		while (true)
+		{
+			ZeroMemory(&client, clientLength); // Clear the client structure
+			ZeroMemory(buf, 1024); // Clear the receive buffer
+
+			// Wait for message
+			int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
+			if (bytesIn == SOCKET_ERROR)
+			{
+				std::cout << "Error receiving from client " << WSAGetLastError() << std::endl;
+				break;
+			}
+
+			char clientIp[256];
+			ZeroMemory(clientIp, 256);
+
+			// Convert from byte array to chars
+			inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
+
+			std::cout << "Message recv from " << clientIp << " : " << buf << std::endl;
+
+			if (signal_access(READ_TYPE, false))
+				break;
+		}
+
+		WSACleanup();
 #elif __linux__
-    sockaddr_in server;
-    char msg[1024];
-    int msglen=0;
-    socklen_t length=0;
-
-    /* cream socketul */
-    if ((sd = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
-    {
-        perror ("Eroare la socket().\n");
-        return;
-    }
-
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server.sin_port = htons (54000);
-
-    while(true) {
-        bzero(msg, 100);
-        strcpy(msg, "test message\n");
-
-        length = sizeof(server);
-        if (sendto(sd, msg, 100, 0, (sockaddr *) &server, length) <= 0) {
-            //perror("[client]Eroare la sendto() spre server.\n");
-            break;
-        }
-
-        sleep(5);
-    }
+		
 #endif
+	}
+	else
+	{
+#ifdef WIN32
+		WSADATA data;
+
+		WORD version = MAKEWORD(2, 2);
+
+		int wsOk = WSAStartup(version, &data);
+		if (wsOk != 0)
+		{
+			std::cout << "Can't start Winsock! " << wsOk;
+			return;
+		}
+
+		sockaddr_in server;
+		server.sin_family = AF_INET; // AF_INET = IPv4 addresses
+		server.sin_port = htons(54000); // Little to big endian conversion
+		inet_pton(AF_INET, "127.0.0.1", &server.sin_addr); // Convert from string to byte array
+
+		SOCKET out = socket(AF_INET, SOCK_DGRAM, 0);
+
+		while (true) {
+			std::string s("Test message");
+			int sendOk = sendto(out, s.c_str(), s.size() + 1, 0, (sockaddr*)&server, sizeof(server));
+
+			if (sendOk == SOCKET_ERROR)
+			{
+				std::cout << "Err: " << WSAGetLastError() << std::endl;
+				break;
+			}
+
+			std::cout << "Message sent from " << std::endl;
+
+			if (signal_access(READ_TYPE, false))
+				break;
+
+			Sleep(5000);
+		}
+
+		WSACleanup();
+#elif __linux__
+		sockaddr_in server;
+		char msg[1024];
+		int msglen = 0;
+		socklen_t length = 0;
+
+		/* cream socketul */
+		if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		{
+			perror("Eroare la socket().\n");
+			return;
+		}
+
+		server.sin_family = AF_INET;
+		server.sin_addr.s_addr = inet_addr("127.0.0.1");
+		server.sin_port = htons(54000);
+
+		while (true) {
+			bzero(msg, 100);
+			strcpy(msg, "test message\n");
+
+			length = sizeof(server);
+			if (sendto(sd, msg, 100, 0, (sockaddr *)&server, length) <= 0) {
+				//perror("[client]Eroare la sendto() spre server.\n");
+				break;
+			}
+
+			if (signal_access(READ_TYPE, false))
+				break;
+
+			sleep(5);
+		}
+#endif
+	}
 }
 
 void* function_wrapper(void* ptr)

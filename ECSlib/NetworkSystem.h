@@ -18,8 +18,14 @@
 class NetworkSystem : public ISystem
 {
 public:
-	NetworkSystem() : ISystem("NetworkSystem") {}
-	NetworkSystem(const NetworkSystem& ref) : ISystem("NetworkSystem") {};
+
+	enum Type
+	{
+		SERVER,
+		CLIENT
+	} type;
+	
+	NetworkSystem(Type type) : ISystem("NetworkSystem"), type(type) {}
 
 #ifdef WIN32
 	std::shared_ptr<std::thread> nt = nullptr;

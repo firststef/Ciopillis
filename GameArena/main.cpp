@@ -14,15 +14,15 @@ int main()
 
     ECSManager manager;
 
-	auto defferSystem = std::make_shared<DefferSystem>(DefferSystem());
-	auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem());
-	auto arenaEventSystem = std::make_shared<ArenaEventSystem>(ArenaEventSystem());
-	auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
-	auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>(KeyboardInputSystem());
-	auto physicsSystem = std::make_shared <PhysicsSystem>(PhysicsSystem());
-	auto animationSystem = std::make_shared <AnimationSystem>(AnimationSystem());
-	auto hitBoxSystem = std::make_shared<HitBoxSystem>(HitBoxSystem());
-	auto networkSystem = std::make_shared<NetworkSystem>(NetworkSystem());
+	auto defferSystem = std::make_shared<DefferSystem>();
+	auto arenaSystem = std::make_shared<ArenaSystem>();
+	auto arenaEventSystem = std::make_shared<ArenaEventSystem>();
+	auto drawSystem = std::make_shared<DrawSystem>();
+	auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>();
+	auto physicsSystem = std::make_shared <PhysicsSystem>();
+	auto animationSystem = std::make_shared <AnimationSystem>();
+	auto hitBoxSystem = std::make_shared<HitBoxSystem>();
+	auto networkSystem = std::make_shared<NetworkSystem>(NetworkSystem::CLIENT);
 
 	manager.systemManager.AddSystem(defferSystem);
 	manager.systemManager.AddSystem(drawSystem);

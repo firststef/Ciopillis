@@ -87,11 +87,11 @@ int main()
     enemyHand->Add<GridContainerComponent>(5, 1, 10, 10, 10, 10, 0, false, GridContainerComponent::DYNAMIC_ERASE_SPACES,true);
 
     //SystemManager
-	auto drawSystem = std::make_shared<DrawSystem>(DrawSystem());
-	auto mouseInputSystem = std::make_shared<MouseInputSystem>(MouseInputSystem());
-	auto eventSystem = std::make_shared<CardGameEventSystem>(CardGameEventSystem(server)); //TODO: Enemy system is quite useless, it should be a continuation of EventSystem or an event
-	auto enemySystem = std::make_shared<CardGameEnemySystem>(CardGameEnemySystem(server, enemyHand, draw, discard, playZone));
-	auto gridContainerSystem = std::make_shared<GridContainerSystem>(GridContainerSystem());
+	auto drawSystem = std::make_shared<DrawSystem>();
+	auto mouseInputSystem = std::make_shared<MouseInputSystem>();
+	auto eventSystem = std::make_shared<CardGameEventSystem>(server); //TODO: Enemy system is quite useless, it should be a continuation of EventSystem or an event
+	auto enemySystem = std::make_shared<CardGameEnemySystem>(server, enemyHand, draw, discard, playZone);
+	auto gridContainerSystem = std::make_shared<GridContainerSystem>();
 
 	manager.systemManager.AddSystem(drawSystem);
 	manager.systemManager.AddSystem(mouseInputSystem);
