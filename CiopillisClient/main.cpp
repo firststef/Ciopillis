@@ -7,11 +7,11 @@
 
 int main()
 {
-    //Initialization
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
-    SetTargetFPS(60);
+	//Initialization
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
+	SetTargetFPS(60);
 
-    ECSManager manager;
+	ECSManager manager;
 
 	auto defferSystem = std::make_shared<DefferSystem>();
 	auto arenaSystem = std::make_shared<ArenaSystem>();
@@ -41,14 +41,14 @@ int main()
 	manager.eventManager.Subscribe<ArenaPlayerEvent>(arenaSystem);
 	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
 
-    manager.Initialize();
+	manager.Initialize();
 
-    while (!WindowShouldClose())
-    {
-        manager.Update();
-    }
+	while (!WindowShouldClose())
+	{
+		manager.Update();
+	}
 
-    manager.Destroy();
+	manager.Destroy();
 
-    return 1;
+	return 1;
 }

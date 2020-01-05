@@ -18,3 +18,6 @@ add_subdirectory(ECSlib)
 add_subdirectory(CardGame)
 add_subdirectory(GameArena)
 add_subdirectory(GameServer)
+add_subdirectory(CiopillisServer)
+add_subdirectory(CiopillisClient)
+

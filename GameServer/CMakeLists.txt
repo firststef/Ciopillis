@@ -1,5 +1,3 @@
-# File generated at : 15:17:50, Sat 30 Nov
-# Converted Project : GameServer/GameServer.vcxproj
 cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
 ##################### Variables ############################

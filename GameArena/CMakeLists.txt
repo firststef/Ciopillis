@@ -1,5 +1,3 @@
-# File generated at : 15:17:50, Sat 30 Nov
-# Converted Project : GameArena/GameArena.vcxproj
 cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
 ##################### Variables ############################
@@ -71,6 +69,9 @@ set(HEADERS_FILES
     ArenaGameComponent.h
     ArenaPlayerEvent.h
     ArenaSystem.h
+    ArenaEvents.h
+    ArenaComponents.h
+    ArenaSystems.h
     Constants.h
 )
 source_group("Headers" FILES ${HEADERS_FILES})
@@ -119,9 +120,9 @@ endif()
 
 if(MSVC)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/raylib/src/Debug/raylib_static.lib ${PROJECT_DIR}/../ECSlib/Debug/ECSlib.lib winmm.lib)
+      target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/raylib/src/Debug/raylib_static.lib ${PROJECT_DIR}/../ECSlib/Debug/ECSlib.lib winmm.lib ws2_32.lib)
     elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-      target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/raylib/src/Release/raylib_static.lib ${PROJECT_DIR}/../ECSlib/Release/ECSlib.lib winmm.lib)
+      target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/raylib/src/Release/raylib_static.lib ${PROJECT_DIR}/../ECSlib/Release/ECSlib.lib winmm.lib ws2_32.lib)
     endif()
 else()
     target_link_libraries(${PROJECT_NAME} raylib ECSlib )
