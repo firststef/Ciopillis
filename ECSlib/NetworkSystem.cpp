@@ -14,6 +14,8 @@ struct ClientSocket
 	sockaddr_in address;
 	int clientSize;
 	SOCKET clientSocket;
+#elif __linux__
+    int cl;
 #endif
 };
 
@@ -37,6 +39,30 @@ bool INetworkSystem::signal_access(int type, bool value)
 	return stop_thread;
 }
 
+void* main_thread_f_wrapper(void* ptr)
+{
+    std::bind(&INetworkSystem::RunMainThread, (INetworkSystem*)ptr)();
+    return nullptr;
+}
+
+void INetworkSystem::Initialize()
+{
+#ifdef WIN32
+    nt = std::make_shared<std::thread>(&INetworkSystem::RunMainThread, this);
+#elif __linux__
+    if (pthread_mutex_init(&buffer_mutex, NULL) != 0 || pthread_mutex_init(&signal_mutex, NULL) != 0)
+    {
+        printf("\n mutex init failed\n");
+        return;
+    }
+
+    int err = pthread_create(&nt, NULL, &main_thread_f_wrapper, (void*)this);
+    if (err != 0)
+        printf("\ncan't create thread :[%s]", strerror(err));
+#endif
+    std::cout << "Thread started" << std::endl;
+}
+
 //NOTE: this must be closed after the listening socket is closed
 void INetworkSystem::Destroy()
 {
@@ -49,6 +75,11 @@ void INetworkSystem::Destroy()
 
 	nt->join();
 #elif __linux__
+    for (auto& t : threads)
+    {
+        pthread_join(t, NULL);
+    }
+
 	pthread_join(nt, NULL);
 	pthread_mutex_destroy(&buffer_mutex);
 	pthread_mutex_destroy(&signal_mutex);
@@ -62,11 +93,13 @@ std::vector<Packet> INetworkSystem::gather_packets()
 	for (auto& client : client_sockets)
 	{
 		char buffer[4096];
+
+		int bytesReceived;
 #ifdef WIN32
 		ZeroMemory(buffer, 4096);
 
 		// Wait for client to send data
-		int bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
+		bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
 		if (bytesReceived == SOCKET_ERROR)
 		{
 			std::cerr << "Error1 in recv(). Quitting" << std::endl;//validari
@@ -107,16 +140,13 @@ void INetworkSystem::send_packets(std::vector<Packet> packets)
 	}
 
 	printf("sent all packets\n");
-	std::cout << WSAGetLastError() << std::endl;
 }
 
 void NetworkSystem::RunMainThread()
 {
 	if (type == SERVER) {
+	    std::cout << "Running" << std::endl;
 #ifdef WIN32
-
-		std::cout << "Running" << std::endl;
-		
 		while(true)
 		{
 			if (signal_access(READ_TYPE, false))
@@ -145,61 +175,12 @@ void NetworkSystem::RunMainThread()
 			send_packets(new_packets);
 		}
 #elif __linux__
-        struct sockaddr_in server;
-        struct sockaddr_in client;
-        char msg[100];
-        char msgrasp[100]=" ";
-        int sd;
 
-        if ((sd = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
-        {
-            perror ("[server]Eroare la socket().\n");//TODO:error messages
-            return;
-        }
 
-        bzero (&server, sizeof (server));
-        bzero (&client, sizeof (client));
-
-        server.sin_family = AF_INET;
-        server.sin_addr.s_addr = htonl (INADDR_ANY);
-        server.sin_port = htons (54000);
-
-        if (bind (sd, (struct sockaddr *) &server, sizeof (struct sockaddr)) == -1)
-        {
-            perror ("[server]Eroare la bind().\n");
-            return;
-        }
 
         while (1)
         {
-            int msglen;
-            socklen_t length = sizeof (client);
 
-            fflush (stdout);
-
-            bzero (msg, 100);
-
-            if ((msglen = recvfrom(sd, msg, 100, 0,(sockaddr*) &client, &length)) <= 0)
-            {
-                perror ("[server]Eroare la recvfrom() de la client.\n");
-                return;
-            }
-
-            printf ("[server]Mesajul a fost receptionat...%s\n", msg);
-
-//            bzero(msgrasp, 100);
-//            strcat(msgrasp, "Hello ");
-//            strcat(msgrasp, msg);
-//
-//            printf("[server]Trimitem mesajul inapoi...%s\n",msgrasp);
-//
-//            if (sendto(sd, msgrasp, 100, 0, (struct sockaddr*) &client, length) <= 0)
-//            {
-//                perror ("[server]Eroare la sendto() catre client.\n");
-//                break;
-//            }
-//            else
-//                printf ("[server]Mesajul a fost trasmis cu succes.\n");
 
             if (signal_access(READ_TYPE, false))
                 break;
@@ -212,65 +193,41 @@ void NetworkSystem::RunMainThread()
 #ifdef WIN32
 		
 #elif __linux__
-		sockaddr_in server;
-		char msg[1024];
-		int msglen = 0;
-		socklen_t length = 0;
-
-		/* cream socketul */
-		if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		{
-			perror("Eroare la socket().\n");
-			return;
-		}
-
-		server.sin_family = AF_INET;
-		server.sin_addr.s_addr = inet_addr("127.0.0.1");
-		server.sin_port = htons(54000);
-
-		while (true) {
-			bzero(msg, 100);
-			strcpy(msg, "test message\n");
-
-			length = sizeof(server);
-			if (sendto(sd, msg, 100, 0, (sockaddr *)&server, length) <= 0) {
-				//perror("[client]Eroare la sendto() spre server.\n");
-				break;
-			}
-
-			if (signal_access(READ_TYPE, false))
-				break;
-
-			sleep(5);
-		}
-
-        close(sd);
+//		sockaddr_in server;
+//		char msg[1024];
+//		int msglen = 0;
+//		socklen_t length = 0;
+//
+//		/* cream socketul */
+//		if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+//		{
+//			perror("Eroare la socket().\n");
+//			return;
+//		}
+//
+//		server.sin_family = AF_INET;
+//		server.sin_addr.s_addr = inet_addr("127.0.0.1");
+//		server.sin_port = htons(54000);
+//
+//		while (true) {
+//			bzero(msg, 100);
+//			strcpy(msg, "test message\n");
+//
+//			length = sizeof(server);
+//			if (sendto(sd, msg, 100, 0, (sockaddr *)&server, length) <= 0) {
+//				//perror("[client]Eroare la sendto() spre server.\n");
+//				break;
+//			}
+//
+//			if (signal_access(READ_TYPE, false))
+//				break;
+//
+//			sleep(5);
+//		}
+//
+//        close(sd);
 #endif
 	}
-}
-
-void* main_thread_f_wrapper(void* ptr)
-{
-	std::bind(&INetworkSystem::RunMainThread, (INetworkSystem*)ptr)();
-    return nullptr;
-}
-
-void INetworkSystem::Initialize()
-{
-#ifdef WIN32
-	nt = std::make_shared<std::thread>(&INetworkSystem::RunMainThread, this);
-	std::cout << "Thread started" << std::endl;
-#elif __linux__
-	if (pthread_mutex_init(&buffer_mutex, NULL) != 0 || pthread_mutex_init(&signal_mutex, NULL) != 0)
-	{
-		printf("\n mutex init failed\n");
-		return;
-	}
-	
-	int err = pthread_create(&nt, NULL, &main_thread_f_wrapper, (void*)this);
-	if (err != 0)
-		printf("\ncan't create thread :[%s]", strerror(err));
-#endif
 }
 
 void NetworkSystem::Execute()

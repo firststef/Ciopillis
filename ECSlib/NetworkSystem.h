@@ -59,12 +59,13 @@ public:
 
 	void* socket_ptr = nullptr;
 	std::vector<std::shared_ptr<std::thread>> threads;
-#elif __linux__ 
+#elif __linux__
 	pthread_t nt;
 	pthread_mutex_t buffer_mutex;
 	pthread_mutex_t signal_mutex;
 
 	int sd;
+	std::vector<pthread_t> threads;
 #endif
 
 	bool stop_thread = false;

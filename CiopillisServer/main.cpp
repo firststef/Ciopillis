@@ -1,4 +1,4 @@
-#include "GameRoomServer.h"
+#include    "GameRoomServer.h"
 #include <raylib.h>
 #include <ECSlib.h>
 #include "Constants.h"
@@ -8,8 +8,15 @@
 
 GameRoomManager g;
 
+#ifdef WIN32
 void RunGame(std::vector<std::shared_ptr<ClientSocket>> clients)
 {
+#elif __linux__
+void* RunGame(void* param)
+{
+    auto clients = *(std::vector < std::shared_ptr<ClientSocket>>*)param;
+    delete param;
+#endif
 	//Initialization
 	SetTargetFPS(60);
 
@@ -53,14 +60,14 @@ void RunGame(std::vector<std::shared_ptr<ClientSocket>> clients)
 	manager.Destroy();
 }
 
-void listening_thread()
+void* listening_thread(void* param)
 {
 	g.Initialize();
 	
 #ifdef WIN32
 	std::vector<std::shared_ptr<std::thread>> rooms;
 #elif __linux__
-
+    std::vector<pthread_t> rooms;
 #endif
 	
 	while(! g.close_server)
@@ -69,12 +76,15 @@ void listening_thread()
 
 		if (g.close_server)
 			break;
-		
-#ifdef WIN32		
-		auto clients = std::vector < std::shared_ptr<ClientSocket>>{ pair.first, pair.second };
+
+        auto clients = std::vector < std::shared_ptr<ClientSocket>>{ pair.first, pair.second };
+#ifdef WIN32
 		rooms.push_back(std::make_shared<std::thread>(&RunGame, clients));
 #elif __linux__
-
+		pthread_t t;
+		auto send_param = new decltype(clients)(clients);
+        pthread_create(&t, NULL, &RunGame, send_param);
+        rooms.push_back(t);
 #endif	
 	}
 
@@ -84,10 +94,13 @@ void listening_thread()
 		t->join();
 	}
 #elif __linux__
-	pthread_join(nt, NULL);
-	pthread_mutex_destroy(&buffer_mutex);
-	pthread_mutex_destroy(&signal_mutex);
+    for (auto& t : rooms)
+    {
+        pthread_join(t, NULL);
+    }
 #endif
+
+    return nullptr;
 }
 
 int main()
@@ -97,6 +110,8 @@ int main()
 #ifdef WIN32
 	std::thread listening(listening_thread);
 #elif __linux__
+	pthread_t listening;
+	pthread_create(&listening, NULL, &listening_thread, nullptr);
 #endif
 
 	while(! WindowShouldClose())
@@ -108,5 +123,9 @@ int main()
 
 	g.Destroy();
 
-	listening.join();
+#ifdef WIN32
+    listening.join();
+#elif __linux__
+    pthread_join(listening, NULL);
+#endif
 }

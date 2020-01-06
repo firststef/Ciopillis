@@ -59,12 +59,14 @@ message("${PROJECT_NAME}: CURR BIN DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 # Source Files
 set(SRC_FILES
     ./main.cpp
+    ./GameRoomServer.cpp
 )
 source_group("Sources" FILES ${SRC_FILES})
 
 # Header Files
 set(HEADERS_FILES
-)
+    ./GameRoomServer.h
+        Constants.h)
 source_group("Headers" FILES ${HEADERS_FILES})
 
 # Add executable to build.

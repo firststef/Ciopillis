@@ -1,4 +1,5 @@
 #include "GameRoomServer.h"
+#include "Constants.h"
 #include <iostream>
 #ifdef WIN32
 #include <WS2tcpip.h>
@@ -6,6 +7,7 @@
 #include <cstring>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #endif
 
 struct ClientSocket
@@ -15,6 +17,7 @@ struct ClientSocket
 	int clientSize;
 	SOCKET clientSocket;
 #elif __linux__
+	int cl;
 #endif
 };
 
@@ -45,7 +48,7 @@ void GameRoomManager::Initialize()
 	// Bind the ip address and port to a socket
 	sockaddr_in hint;
 	hint.sin_family = AF_INET;
-	hint.sin_port = htons(54000);
+	hint.sin_port = htons(PORT);
 	hint.sin_addr.S_un.S_addr = INADDR_ANY; // Could also use inet_pton .... 
 
 	bind(listening, (sockaddr*)&hint, sizeof(hint));
@@ -53,7 +56,36 @@ void GameRoomManager::Initialize()
 	// Tell Winsock the socket is for listening 
 	listen(listening, SOMAXCONN);
 #elif __linux__
-	
+    sockaddr_in server;
+
+    if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        perror ("Error creating socket.\n");
+        return;
+    }
+
+    int on=1;
+    setsockopt(sd,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on));
+
+    bzero (&server, sizeof (server));
+
+    server.sin_family = AF_INET;
+
+    server.sin_addr.s_addr = htonl (INADDR_ANY);
+
+    server.sin_port = htons (PORT);
+
+    if (bind (sd, (struct sockaddr *) &server, sizeof (struct sockaddr)) == -1)
+    {
+        perror ("Error binding socket.\n");
+        return;
+    }
+
+    if (listen (sd, 2) == -1)
+    {
+        perror ("Error on listen.\n");
+        return;
+    }
 #endif
 }
 
@@ -110,6 +142,35 @@ std::pair<std::shared_ptr<ClientSocket>, std::shared_ptr<ClientSocket>> GameRoom
 	return std::pair<std::shared_ptr<ClientSocket>, std::shared_ptr<ClientSocket>>(client1, client2);
 	
 #elif __linux__
+
+    sockaddr_in from1;
+    bzero (&from1, sizeof (from1));
+    socklen_t length1 = sizeof (from1);
+    auto client1 = std::make_shared<ClientSocket>();
+
+    printf ("[server]Asteptam la portul %d...\n",54000);
+    fflush (stdout);
+
+    if ( (client1->cl = accept (sd, (struct sockaddr *) &from1, &length1)) < 0)
+    {
+        perror ("[server]Eroare la accept().\n");
+    }
+
+    sockaddr_in from2;
+    bzero (&from2, sizeof (from2));
+    socklen_t length2 = sizeof (from2);
+    auto client2 = std::make_shared<ClientSocket>();
+
+    printf ("[server]Asteptam la portul %d...\n",54000);
+    fflush (stdout);
+
+    if ( (client1->cl = accept (sd, (struct sockaddr *) &from2, &length2)) < 0)
+    {
+        perror ("[server]Eroare la accept().\n");
+    }
+
+    return std::pair<std::shared_ptr<ClientSocket>, std::shared_ptr<ClientSocket>>(client1, client2);
+
 #endif
 }
 
