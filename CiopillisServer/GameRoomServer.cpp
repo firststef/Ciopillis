@@ -61,6 +61,7 @@ void GameRoomManager::Initialize()
     if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
     {
         perror ("Error creating socket.\n");
+        close_server = true;
         return;
     }
 
@@ -78,12 +79,14 @@ void GameRoomManager::Initialize()
     if (bind (sd, (struct sockaddr *) &server, sizeof (struct sockaddr)) == -1)
     {
         perror ("Error binding socket.\n");
+        close_server = true;
         return;
     }
 
     if (listen (sd, 2) == -1)
     {
         perror ("Error on listen.\n");
+        close_server = true;
         return;
     }
 #endif
@@ -148,12 +151,13 @@ std::pair<std::shared_ptr<ClientSocket>, std::shared_ptr<ClientSocket>> GameRoom
     socklen_t length1 = sizeof (from1);
     auto client1 = std::make_shared<ClientSocket>();
 
-    printf ("[server]Asteptam la portul %d...\n",54000);
+    printf ("[server]Waiting on port %d...\n",54000);
     fflush (stdout);
 
     if ( (client1->cl = accept (sd, (struct sockaddr *) &from1, &length1)) < 0)
     {
         perror ("[server]Eroare la accept().\n");
+        close_server = true;
     }
 
     sockaddr_in from2;
@@ -161,12 +165,13 @@ std::pair<std::shared_ptr<ClientSocket>, std::shared_ptr<ClientSocket>> GameRoom
     socklen_t length2 = sizeof (from2);
     auto client2 = std::make_shared<ClientSocket>();
 
-    printf ("[server]Asteptam la portul %d...\n",54000);
+    printf ("[server]Waiting on port %d...\n",54000);
     fflush (stdout);
 
-    if ( (client1->cl = accept (sd, (struct sockaddr *) &from2, &length2)) < 0)
+    if ( (client2->cl = accept (sd, (struct sockaddr *) &from2, &length2)) < 0)
     {
         perror ("[server]Eroare la accept().\n");
+        close_server = true;
     }
 
     return std::pair<std::shared_ptr<ClientSocket>, std::shared_ptr<ClientSocket>>(client1, client2);

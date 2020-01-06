@@ -53,7 +53,30 @@ void INetworkSystem::Initialize()
     if (pthread_mutex_init(&buffer_mutex, NULL) != 0 || pthread_mutex_init(&signal_mutex, NULL) != 0)
     {
         printf("\n mutex init failed\n");
+        signal_access(WRITE_TYPE, true);
         return;
+    }
+
+    if (type == CLIENT){
+        sockaddr_in server;
+
+        if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        {
+            perror("Error on socket().\n");
+            signal_access(WRITE_TYPE, true);
+            return;
+        }
+
+        server.sin_family = AF_INET;
+        server.sin_addr.s_addr = inet_addr(server_address.c_str());
+        server.sin_port = htons(port);
+
+        if (connect(sd, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1)
+        {
+            perror("Error on connect().\n");
+            signal_access(WRITE_TYPE, true);
+            return;
+        }
     }
 
     int err = pthread_create(&nt, NULL, &main_thread_f_wrapper, (void*)this);
@@ -67,86 +90,137 @@ void INetworkSystem::Initialize()
 void INetworkSystem::Destroy()
 {
 	signal_access(WRITE_TYPE, true);
+    if (type == SERVER) {
 #ifdef WIN32
-	for (auto& t : threads)
-	{
-		t->join();
-	}
-
-	nt->join();
+        for (auto &c : client_sockets) {
+            closesocke(c->clientSocket);
+        }
 #elif __linux__
-    for (auto& t : threads)
-    {
-        pthread_join(t, NULL);
+        for (auto &c : client_sockets) {
+            shutdown(c->cl, 2);
+            close(c->cl);
+            c->cl = -1;
+        }
+#endif
+    }
+    else {
+#ifdef WIN32
+
+#elif __linux__
+        close(sd);
+#endif
     }
 
+#ifdef WIN32
+	nt->join();
+#elif __linux__
 	pthread_join(nt, NULL);
-	pthread_mutex_destroy(&buffer_mutex);
-	pthread_mutex_destroy(&signal_mutex);
+    pthread_mutex_destroy(&buffer_mutex);
+    pthread_mutex_destroy(&signal_mutex);
 #endif
 }
 
 std::vector<Packet> INetworkSystem::gather_packets()
 {
-	std::vector<Packet> packets;
+    std::vector<Packet> packets;
+    if (type == SERVER) {
 
-	for (auto& client : client_sockets)
-	{
-		char buffer[4096];
+        for (auto &client : client_sockets) {
+            char buffer[4096];
 
-		int bytesReceived;
+            int bytesReceived;
 #ifdef WIN32
-		ZeroMemory(buffer, 4096);
+            ZeroMemory(buffer, 4096);
 
-		// Wait for client to send data
-		bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
-		if (bytesReceived == SOCKET_ERROR)
-		{
-			std::cerr << "Error1 in recv(). Quitting" << std::endl;//validari
-			break;
-		}
+            // Wait for client to send data
+            bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
+            if (bytesReceived == SOCKET_ERROR)
+            {
+                std::cerr << "Error1 in recv(). Quitting" << std::endl;//validari
+                break;
+            }
 
-		if (bytesReceived == 0)
-		{
-			std::cout << "Client1 disconnected " << std::endl;//aici trebuie facut event
-			break;
-		}
+            if (bytesReceived == 0)
+            {
+                std::cout << "Client1 disconnected " << std::endl;//aici trebuie facut event
+                break;
+            }
 
 #elif __linux__
+            bytesReceived = read(client->cl, buffer, 4096);
 
+            if (bytesReceived <= 0) {
+                perror("Error in read(). Quitting.\n");
+                signal_access(WRITE_TYPE, true);
+            }
 #endif
-		std::vector<char> packet;
-		packet.insert(packet.begin(), buffer, buffer + bytesReceived);
-		packets.push_back(packet);
-	}
+            if (signal_access(READ_TYPE, false))
+                break;
+
+            std::vector<char> packet;
+            packet.insert(packet.begin(), buffer, buffer + bytesReceived);
+            packets.push_back(packet);
+        }
+    }
+    else {
+        char buffer[4096];
+
+        int bytesReceived;
+#ifdef WIN32
+
+#elif __linux__
+        bytesReceived = read(sd, buffer, 4096);
+
+        if (bytesReceived <= 0) {
+            perror("Error in read(). Quitting.\n");
+            signal_access(WRITE_TYPE, true);
+        }
+
+        std::vector<char> packet;
+        packet.insert(packet.begin(), buffer, buffer + bytesReceived);
+        packets.push_back(packet);
+#endif
+    }
 
 	return packets;
 }
 
 void INetworkSystem::send_packets(std::vector<Packet> packets)
 {
-	if (client_sockets.size() != packets.size())
-	{
-		packets.resize(client_sockets.size());
-	}
+    if (type == SERVER) {
+        if (client_sockets.size() != packets.size()) {
+            packets.resize(client_sockets.size());
+        }
 
-	for (unsigned int i = 0; i < client_sockets.size(); ++i)
-	{
+        for (unsigned int i = 0; i < client_sockets.size(); ++i) {
 #ifdef WIN32
-		send(client_sockets[i]->clientSocket, &packets[i][0], packets[i].size() + 1, 0);
+            send(client_sockets[i]->clientSocket, &packets[i][0], packets[i].size() + 1, 0);
+            validari windows
 #elif __linux__
-
+            if (write(client_sockets[i]->cl, &packets[i][0], packets[i].size() + 1) <= 0) {
+                perror("Error in write(). Quitting.\n");
+                signal_access(WRITE_TYPE, true);
+            } else
+                printf("Message sent.\n");
 #endif
-	}
-
-	printf("sent all packets\n");
+        }
+    }
+    else {
+#ifdef WIN32
+#elif __linux__
+        if (write(sd, &packets[0][0], packets[0].size() + 1) <= 0) {
+            perror("Error in write(). Quitting.\n");
+            signal_access(WRITE_TYPE, true);
+        } else
+            printf("Message sent.\n");
+#endif
+    }
 }
 
 void NetworkSystem::RunMainThread()
 {
+    std::cout << "Running Main Thread" << std::endl;
 	if (type == SERVER) {
-	    std::cout << "Running" << std::endl;
-#ifdef WIN32
 		while(true)
 		{
 			if (signal_access(READ_TYPE, false))
@@ -154,13 +228,16 @@ void NetworkSystem::RunMainThread()
 
 			auto packets = gather_packets();
 
-			char buffer[4096];
-			memset(buffer, '\0', 4096);
+            if (signal_access(READ_TYPE, false))
+                break;
+
+			char buff[4096];
+			memset(buff, '\0', 4096);
 			for (auto& p : packets)
 			{
-				strcpy(buffer + strlen(buffer), &p[0]);
+				strcpy(buff + strlen(buff), &p[0]);
 			}
-			queue_access(WRITE_TYPE, buffer);
+			queue_access(WRITE_TYPE, buff);
 
 			std::vector<Packet> new_packets;
 			for (auto& client : client_sockets) {
@@ -174,59 +251,40 @@ void NetworkSystem::RunMainThread()
 
 			send_packets(new_packets);
 		}
-#elif __linux__
-
-
-
-        while (1)
-        {
-
+	}
+	else
+	{
+	    while(true) {
 
             if (signal_access(READ_TYPE, false))
                 break;
 
-        }
-#endif
-	}
-	else
-	{
+            char buff[4096];
+
+            std::vector<Packet> new_packets;
+            Packet pack;
+            memcpy(buff, "test", strlen("test"));
+            buff[strlen("test")] = '\0';
+            pack.insert(pack.begin(), buff, buff + strlen(buff) + 1);
+            new_packets.push_back(pack);
+
+            send_packets(new_packets);
+
 #ifdef WIN32
-		
+            Sleep(1);
 #elif __linux__
-//		sockaddr_in server;
-//		char msg[1024];
-//		int msglen = 0;
-//		socklen_t length = 0;
-//
-//		/* cream socketul */
-//		if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-//		{
-//			perror("Eroare la socket().\n");
-//			return;
-//		}
-//
-//		server.sin_family = AF_INET;
-//		server.sin_addr.s_addr = inet_addr("127.0.0.1");
-//		server.sin_port = htons(54000);
-//
-//		while (true) {
-//			bzero(msg, 100);
-//			strcpy(msg, "test message\n");
-//
-//			length = sizeof(server);
-//			if (sendto(sd, msg, 100, 0, (sockaddr *)&server, length) <= 0) {
-//				//perror("[client]Eroare la sendto() spre server.\n");
-//				break;
-//			}
-//
-//			if (signal_access(READ_TYPE, false))
-//				break;
-//
-//			sleep(5);
-//		}
-//
-//        close(sd);
+            sleep(1);
 #endif
+
+            auto p = gather_packets();
+
+            if (signal_access(READ_TYPE, false))
+                break;
+
+            memset(buff, '\0', 4096);
+            strcpy(buff + strlen(buff), &p[0][0]);
+            queue_access(WRITE_TYPE, buff);
+        }
 	}
 }
 

@@ -40,16 +40,19 @@ public:
 		CLIENT
 	} type;
 
+	//SERVER
 	std::vector < std::shared_ptr<ClientSocket> > client_sockets;
 
+	//CLIENT
 	std::string server_address;
+	int port;
 	
 	INetworkSystem(std::string system_name, std::vector<std::shared_ptr<ClientSocket>> client_sockets = {})
 		: ISystem(std::move(system_name)), type(SERVER), client_sockets(std::move(client_sockets))
 	{}
 
-	INetworkSystem(std::string system_name, std::string server_address)
-		: ISystem(std::move(system_name)), type(CLIENT), server_address(server_address)
+	INetworkSystem(std::string system_name, std::string server_address, int port)
+		: ISystem(std::move(system_name)), type(CLIENT), port(port), server_address(server_address)
 	{}
 
 #ifdef WIN32
@@ -58,14 +61,12 @@ public:
 	std::mutex signal_mutex;
 
 	void* socket_ptr = nullptr;
-	std::vector<std::shared_ptr<std::thread>> threads;
 #elif __linux__
 	pthread_t nt;
 	pthread_mutex_t buffer_mutex;
 	pthread_mutex_t signal_mutex;
 
 	int sd;
-	std::vector<pthread_t> threads;
 #endif
 
 	bool stop_thread = false;
@@ -94,8 +95,8 @@ public:
 		: INetworkSystem("NetworkSystem",client_sockets)
 	{}
 
-	NetworkSystem(std::string server_address)
-		: INetworkSystem("NetworkSystem", server_address)
+	NetworkSystem(std::string server_address, int port)
+		: INetworkSystem("NetworkSystem", server_address, port)
 	{}
 
 	char buffer[4096];
