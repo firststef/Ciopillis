@@ -1,7 +1,9 @@
 #pragma once
 #include "System.h"
-#include <memory>
 #include "Utils.h"
+#include "NetworkEvent.h"
+
+#include <memory>
 
 #ifdef WIN32
 #include <thread>
@@ -14,22 +16,11 @@
 #include<unistd.h>
 #endif
 
-#define WRITE_TYPE 0
-#define READ_TYPE 1
-
 struct ClientSocket;
 
 
 using Packet = std::vector<char>;
 
-
-//The Network system,
-//	as a SERVER: receives client sockets and serves them continuously
-//	as a CLIENT: connects to a server continuously
-//NOTE: this system does not contain a socket from a server, it only receives its
-//connections from somewhere else
-//THEREFORE: the closing of the server socket must be done BEFORE this system
-//calls Destroy()
 class INetworkSystem : public ISystem
 {
 public:
@@ -39,6 +30,12 @@ public:
 		SERVER,
 		CLIENT
 	} type;
+
+	enum AccessType
+	{
+		WRITE_TYPE,
+		READ_TYPE
+	};
 
 	//SERVER
 	std::vector < std::shared_ptr<ClientSocket> > client_sockets;
@@ -52,7 +49,7 @@ public:
 	{}
 
 	INetworkSystem(std::string system_name, std::string server_address, int port)
-		: ISystem(std::move(system_name)), type(CLIENT), port(port), server_address(server_address)
+		: ISystem(std::move(system_name)), type(CLIENT), server_address(server_address), port(port)
 	{}
 
 #ifdef WIN32
@@ -60,18 +57,18 @@ public:
 	std::mutex buffer_mutex;
 	std::mutex signal_mutex;
 
-	void* socket_ptr = nullptr;
+	unsigned socket_ptr = 0;
 #elif __linux__
 	pthread_t nt;
 	pthread_mutex_t buffer_mutex;
 	pthread_mutex_t signal_mutex;
 
-	int sd;
+	int sd = 0;
 #endif
 
 	bool stop_thread = false;
 
-	bool signal_access(int type, bool value);
+	bool signal_access(AccessType type, bool value);
 
 	std::vector<Packet> gather_packets();
 	void send_packets(std::vector<Packet> packets);
@@ -83,13 +80,16 @@ public:
 	void Destroy() override;
 };
 
+//The Network system, an EXAMPLE system for use as a model. Instantiated:
+//	as a SERVER: receives client sockets and serves them continuously
+//	as a CLIENT: connects to a server continuously
+//NOTE: this system does not contain a socket from a server, it only receives its
+//connections from somewhere else
+//THEREFORE: the closing of the server socket must be done BEFORE this system
+//calls Destroy()
 class NetworkSystem : public INetworkSystem
 {
 public:
-	/*std::vector<std::array<char, 1024>> write_queue;
-	std::vector<std::array<char, 1024>> read_queue;*/
-
-	//FixedQueue<Packet, 40> queue;
 
 	NetworkSystem(std::vector<std::shared_ptr<ClientSocket>> client_sockets = {})
 		: INetworkSystem("NetworkSystem",client_sockets)
@@ -99,12 +99,16 @@ public:
 		: INetworkSystem("NetworkSystem", server_address, port)
 	{}
 
-	char buffer[4096];
+	FixedQueue<Packet, 40> receive_queue;
+	FixedQueue<Packet, 40> send_queue;
 	bool changed = false;
 
 	void RunMainThread() override;
 
 	void Execute() override;
 	
-	void queue_access(int type, char* data);
+	std::vector<Packet> send_queue_access(AccessType type, const Packet* packet);
+	std::vector<Packet> receive_queue_access(AccessType type, const Packet* packet);
+
+	void Receive(const NetworkEvent& event);
 };

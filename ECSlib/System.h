@@ -89,11 +89,12 @@ public:
 		}
 	}
 
-	void AddSystem(const SystemPtr& ptr)
+	void AddSystem(const SystemPtr& ptr, bool enabled = true)
 	{
 		systems.push_back(std::dynamic_pointer_cast<ISystem>(ptr));
 
 		ptr->SetDependencies(pool, textureManager, this, eventManager);
+		ptr->enabled = enabled;
 	}
 
 	template<typename T>

@@ -1,4 +1,4 @@
-#include    "GameRoomServer.h"
+#include "GameRoomServer.h"
 #include <raylib.h>
 #include <ECSlib.h>
 #include "Constants.h"
@@ -30,7 +30,7 @@ void* RunGame(void* param)
 	//auto physicsSystem = std::make_shared <PhysicsSystem>();
 	//auto animationSystem = std::make_shared <AnimationSystem>();
 	//auto hitBoxSystem = std::make_shared<HitBoxSystem>();
-	auto networkSystem = std::make_shared<NetworkSystem>(clients);
+	auto networkSystem = std::make_shared<GameRoomServerSystem>(clients);
 
 	//manager.systemManager.AddSystem(defferSystem);
 	//manager.systemManager.AddSystem(drawSystem);
@@ -108,7 +108,7 @@ int main()
 	InitWindow(100, 100, "Ciopillis Server");
 
 #ifdef WIN32
-	std::thread listening(listening_thread);
+	std::thread listening(listening_thread, nullptr);
 #elif __linux__
 	pthread_t listening;
 	pthread_create(&listening, NULL, &listening_thread, nullptr);

@@ -11,4 +11,9 @@ public:
 		}
 		std::queue<T, Container>::push(value);
 	}
+
+	bool is_full()
+	{
+		return MaxLen == std::queue<T, Container>::size();
+	}
 };

@@ -31,7 +31,7 @@ void GameRoomManager::Initialize()
 	int wsOk = WSAStartup(ver, &wsData);
 	if (wsOk != 0)
 	{
-		std::cerr << "Can't Initialize winsock! Quitting" << std::endl;
+		std::cout << "Can't Initialize winsock! Quitting" << std::endl;
 		return;
 	}
 
@@ -39,7 +39,7 @@ void GameRoomManager::Initialize()
 	SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
 	if (listening == INVALID_SOCKET)
 	{
-		std::cerr << "Can't create a socket! Quitting" << std::endl;
+		std::cout << "Can't create a socket! Quitting" << std::endl;
 		return;
 	}
 
@@ -195,4 +195,24 @@ void GameRoomManager::Destroy()
 	close(sd);
 	sd = -1;
 #endif
+}
+
+void GameRoomServerSystem::RunMainThread()
+{
+	while (true)
+	{
+		if (signal_access(READ_TYPE, false))
+			break;
+
+		auto packets = gather_packets();
+
+		if (signal_access(READ_TYPE, false))
+			break;
+
+		send_packets(std::vector<Packet>{packets[1], packets[0]});
+	}
+}
+
+void GameRoomServerSystem::Execute()
+{
 }

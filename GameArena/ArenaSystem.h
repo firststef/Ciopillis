@@ -2,13 +2,13 @@
 #include <filesystem>
 #include "System.h"
 #include "ArenaGameComponent.h"
-#include "ArenaPlayerEvent.h"
 #include "ArenaPlayerComponent.h"
 #include "Constants.h"
+#include "NetworkEvent.h"
 
 class ArenaSystem : public ISystem
 {
-	//void* body_ptr = nullptr;
+	bool connected_with_server = false;
 	
     void OnInit(EntityPtr e)
     {
@@ -338,50 +338,107 @@ public:
         }
     }
 
-	void Receive(const ArenaPlayerEvent& event)
+	void Receive(const KeyboardEvent& event)
 	{
 		//TODO: aici trebuie verificat daca jucatorul tine apasat pe hold, daca a trecut timpul de cooldown
 
-		auto& arena = event.arena->Get<ArenaGameComponent>();
-		auto& comp = arena.player->Get<PhysicsComponent>();
-		auto& box = arena.player->Get<HitBoxComponent>();
+		for (auto& te : event.triggered_entities) {
 
-		arena.lastAxesPlayer = { event.axes.x != 0 ? event.axes.x : arena.lastAxesPlayer.x, event.axes.y != 0 ? event.axes.y : arena.lastAxesPlayer.y };
-		*arena.playerOrientation = arena.lastAxesPlayer.x > 0;
+			if (!te.entity->Has<ArenaPlayerComponent>())
+				continue;
 
-		//box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
-		//box.cont.Update();
+			auto& apc = te.entity->Get<ArenaPlayerComponent>();
+			auto& arena = apc.arena->Get<ArenaGameComponent>();
+			auto& comp = arena.player->Get<PhysicsComponent>();
+			auto& box = arena.player->Get<HitBoxComponent>();
 
-		if (arena.blockPlayerInput)
-			return;
+			//Move
+			const float x = ((std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_RIGHT) != te.pressedKeys.end())
+				- (std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_LEFT) != te.pressedKeys.end()));
+			const float y = ((std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_DOWN) != te.pressedKeys.end())
+				- (std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_UP) != te.pressedKeys.end()));
 
-		if (event.action == ArenaPlayerEvent::ATTACK_X)
-		{
-			arena.currentActionPlayer = ArenaGameComponent::ATTACK_X;
-			arena.blockPlayerInput = true;
-			comp.body->velocity = { 0,0 };
-		}
-		else if (event.action == ArenaPlayerEvent::ATTACK_Z)
-		{
-			arena.currentActionPlayer = ArenaGameComponent::ATTACK_Z;
-			arena.blockPlayerInput = true;
-			comp.body->velocity = { 0,0 };
-		}
-		else if (event.action == ArenaPlayerEvent::MOVE)
-		{
-			comp.body->velocity = { event.axes.x * VELOCITY , event.axes.y * VELOCITY };
+			const float hX = ((std::find(te.heldKeys.begin(), te.heldKeys.end(), KEY_RIGHT) != te.heldKeys.end())
+				- (std::find(te.heldKeys.begin(), te.heldKeys.end(), KEY_LEFT) != te.heldKeys.end()));
+			const float hY = ((std::find(te.heldKeys.begin(), te.heldKeys.end(), KEY_DOWN) != te.heldKeys.end())
+				- (std::find(te.heldKeys.begin(), te.heldKeys.end(), KEY_UP) != te.heldKeys.end()));
 
-			if (event.axes == Vector2 {0, 0}) {
-				arena.currentActionPlayer = ArenaGameComponent::IDLE;
+			Vector2 axes{ x + hX, y + hY };
+
+			arena.lastAxesPlayer = { axes.x != 0 ? axes.x : arena.lastAxesPlayer.x, axes.y != 0 ? axes.y : arena.lastAxesPlayer.y };
+			*arena.playerOrientation = arena.lastAxesPlayer.x > 0;
+
+			//box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
+			//box.cont.Update();
+
+			if (arena.blockPlayerInput)
+				continue;
+
+			ArenaGameComponent::CurrentAction action;
+
+			//Action
+			if (std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_X) != te.pressedKeys.end())
+			{
+				arena.currentActionPlayer = ArenaGameComponent::ATTACK_X;
+				action = ArenaGameComponent::ATTACK_X;
+				arena.blockPlayerInput = true;
+				comp.body->velocity = { 0,0 };
+			}
+			else if (std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_Z) != te.pressedKeys.end())
+			{
+				arena.currentActionPlayer = ArenaGameComponent::ATTACK_Z;
+				action = ArenaGameComponent::ATTACK_X;
+				arena.blockPlayerInput = true;
+				comp.body->velocity = { 0,0 };
 			}
 			else {
-				arena.currentActionPlayer = ArenaGameComponent::MOVE;
+
+				comp.body->velocity = { axes.x * VELOCITY , axes.y * VELOCITY };
+
+				if (axes == Vector2{ 0, 0 }) {
+					arena.currentActionPlayer = ArenaGameComponent::IDLE;
+					action = ArenaGameComponent::ATTACK_X;
+				}
+				else {
+					arena.currentActionPlayer = ArenaGameComponent::MOVE;
+					action = ArenaGameComponent::ATTACK_X;
+				}
 			}
+
+			eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
+				{"head", "player_keyboard_event"},
+				{"pressed_keys", nlohmann::json::array({te.pressedKeys})},
+				{"held_keys", nlohmann::json::array({te.heldKeys})}
+			}
+				);
 		}
 	}
 
     void Receive(const HitBoxEvent& event)
     {
         auto test = 3;
+    }
+
+	void Receive(const NetworkEvent& event)
+    {
+    	if(connected_with_server)
+        {
+	        if (event.type == NetworkEvent::RECEIVE)
+	        {
+		        for (auto& p : event.packets)
+		        {
+			        printf("p: %s\n", &p[0]);
+		        }
+	        }
+        }
+		else
+        {
+	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "KeyboardInputSystem");
+	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "PhysicsSystem");
+	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "AnimationSystem");
+	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "HitBoxSystem");
+
+	        connected_with_server = true;
+        }
     }
 };

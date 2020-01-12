@@ -4,10 +4,9 @@ struct SystemControlEvent : IEvent
 {
     enum ControlAction
     {
-        NONE,
         ENABLE,
         DISABLE
-    } controlAction = NONE;
+    } controlAction;
 
     std::string systemName;
 

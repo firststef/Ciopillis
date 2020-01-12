@@ -57,6 +57,9 @@ public:
 	template<typename T, typename... TArgs>
 	void Notify(TArgs&&... mArgs)
 	{
+		if (holders[GetEventTypeID<T>()] == nullptr)
+			return;
+		
 		auto it = holders[GetEventTypeID<T>()]->typeSubscribers.begin();
 		auto end = holders[GetEventTypeID<T>()]->typeSubscribers.end();
 		for (auto func = *it; it != end; ++it)

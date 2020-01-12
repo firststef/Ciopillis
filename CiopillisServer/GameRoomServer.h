@@ -19,3 +19,20 @@ public:
 
 	void Destroy();
 };
+
+class GameRoomServerSystem : public INetworkSystem
+{
+public:
+
+	GameRoomServerSystem(std::vector<std::shared_ptr<ClientSocket>> client_sockets = {})
+		: INetworkSystem("GameRoomServerSystem", client_sockets)
+	{}
+
+	GameRoomServerSystem(std::string server_address, int port)
+		: INetworkSystem("GameRoomServerSystem", server_address, port)
+	{}
+
+	void RunMainThread() override;
+
+	void Execute() override;
+};
