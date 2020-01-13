@@ -24,7 +24,6 @@ struct ClientSocket
 
 bool INetworkSystem::signal_access(AccessType type, bool value)
 {
-	std::cout << "Wanted to set access" << value <<"\n";
 #ifdef WIN32
 	std::lock_guard<std::mutex> guard(signal_mutex);
 #else
@@ -176,7 +175,6 @@ std::vector<Packet> INetworkSystem::gather_packets()
 #ifdef WIN32
 		ZeroMemory(buffer, 4096);
 		bytesReceived = recv(socket_ptr, buffer, 4096, 0);
-		std::cout << bytesReceived << "\n";
 		if(bytesReceived <= 0)
 		{
 			std::cout << "Error on recv(). Quitting\n";
@@ -207,6 +205,11 @@ void INetworkSystem::send_packets(std::vector<Packet> packets)
     if (type == SERVER) {
         if (client_sockets.size() != packets.size()) {
             packets.resize(client_sockets.size());
+        	for (auto& p: packets)
+        	{
+				if (p.empty())
+					p.resize(1);
+        	}
         }
 
         for (unsigned int i = 0; i < client_sockets.size(); ++i) {
@@ -225,6 +228,14 @@ void INetworkSystem::send_packets(std::vector<Packet> packets)
         }
     }
     else {
+		if (packets.empty())
+			packets.resize(1);
+		for (auto& p : packets)
+		{
+			if (p.empty())
+				p.resize(1);
+		}
+    	
 #ifdef WIN32
 		int sendResult = send(socket_ptr, &packets[0][0], packets[0].size() + 1, 0);
 		if (sendResult <= 0)
@@ -318,8 +329,6 @@ void NetworkSystem::RunMainThread()
                 break;
 
 			auto send = send_queue_access(READ_TYPE, nullptr);
-			if (send.empty())
-				send.resize(1);
 			send_packets(send);
 
 			SleepFunc(10);

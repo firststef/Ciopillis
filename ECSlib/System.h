@@ -66,9 +66,8 @@ public:
 	void Initialize()
 	{
 		for (const auto& ptr : systems)
-		{
-			if (ptr->enabled)//TODO: systems might rather need Initialize(enabled) or Execute(Enabled) to run in "stealth" mode.
-				ptr->Initialize();
+		{//TODO: systems might rather need Initialize(enabled) or Execute(Enabled) to run in "stealth" mode.
+			ptr->Initialize();
 		}
 	}
 

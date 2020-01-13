@@ -36,6 +36,10 @@ int main()
 	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
 	manager.eventManager.Subscribe<NetworkEvent>(networkSystem);
 	manager.eventManager.Subscribe<NetworkEvent>(arenaSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(keyboardInputSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(physicsSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(animationSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(hitBoxSystem);
 
 	manager.Initialize();
 

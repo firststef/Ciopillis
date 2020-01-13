@@ -30,4 +30,7 @@ struct ArenaGameComponent : IComponent
     EntityPtr enemy;
     Vector2 lastAxesEnemy{ -1,-1 };
     CurrentAction currentActionEnemy = IDLE;
+	std::shared_ptr<bool> enemyOrientation = std::make_shared<bool>();
+	
+    bool blockEnemyInput = false;
 };
