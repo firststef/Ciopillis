@@ -65,9 +65,7 @@ source_group("Sources" FILES ${SRC_FILES})
 # Header Files
 set(HEADERS_FILES
     ArenaEvent.h
-    ArenaEventSystem.h
     ArenaGameComponent.h
-    ArenaPlayerEvent.h
     ArenaSystem.h
     ArenaEvents.h
     ArenaComponents.h
