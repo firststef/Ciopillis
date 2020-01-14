@@ -98,6 +98,7 @@ set(HEADERS_FILES
     KeyboardInputSystem.h
     MouseEvent.h
     MouseInputSystem.h
+    NetworkEvent.h
     NetworkSystem.h
     nvidia.h
     PhyFunctions.h
