@@ -84,6 +84,8 @@ constexpr float degreesToRadians(float deg) { return deg / 360 * (2 * PI); }
 
 struct Shape
 {
+	std::string name;
+	
 	enum ShapeType
 	{
 		NONE,
@@ -93,37 +95,70 @@ struct Shape
 		POLYGON
 	}
 	type = NONE;
+
+	Shape(std::string name, ShapeType type)
+		: name(std::move(name)), type(type)
+	{}
 	
 	float rotation;
 
 	union
 	{
-		struct { Vector2 center; float radius; } circle;
-		struct { Vector2 startPosition; float width, height; } rectangle;
-		struct { Vector2 a; Vector2 b; Vector2 c; } triangle;
-		struct { Vector2 center; int sides; float radius; } poly;
+		struct
+		{
+			Vector2 center;
+			float radius;
+		} circle;
+		Rectangle rectangle;
+		struct
+		{
+			Vector2 a;
+			Vector2 b;
+			Vector2 c;
+		} triangle;
+		struct
+		{
+			Vector2 center;
+			int sides;
+			float radius;
+		} poly;
 	};
 
 	float GetCenterX()
 	{
 		switch (type)
 		{
-		case Shape::ShapeType::CIRCLE: return circle.center.x;
-		case Shape::ShapeType::RECTANGLE: return rectangle.startPosition.x + rectangle.width / 2;
-		case Shape::ShapeType::TRIANGLE: return (triangle.a.x + triangle.b.x + triangle.c.x) / 3;
-		case Shape::ShapeType::POLYGON: return poly.center.x;
+		case CIRCLE:
+			return circle.center.x;
+		case RECTANGLE:
+			return rectangle.x + rectangle.width / 2;
+		case TRIANGLE:
+			return (triangle.a.x + triangle.b.x + triangle.c.x) / 3;
+		case POLYGON:
+			return poly.center.x;
+		default:
+			break;
 		}
+
+		return 0.0f;
 	}
 
 	float GetCenterY()
 	{
 		switch (type)
 		{
-		case Shape::ShapeType::CIRCLE: return circle.center.y;
-		case Shape::ShapeType::RECTANGLE: return rectangle.startPosition.y + rectangle.height / 2;
-		case Shape::ShapeType::TRIANGLE: return (triangle.a.y + triangle.b.y + triangle.c.y) / 3;
-		case Shape::ShapeType::POLYGON: return poly.center.y;
+		case CIRCLE:
+			return circle.center.y;
+		case RECTANGLE:
+			return rectangle.y + rectangle.height / 2;
+		case TRIANGLE:
+			return (triangle.a.y + triangle.b.y + triangle.c.y) / 3;
+		case POLYGON:
+			return poly.center.y;
+		default:
+			break;
 		}
+		return 0.0f;
 	}
 
 	void SetCenterX(float newX)
@@ -131,20 +166,22 @@ struct Shape
 		float change = newX - GetCenterX();
 		switch (type)
 		{
-		case Shape::ShapeType::CIRCLE:
+		case CIRCLE:
 			circle.center.x = newX;
 			break;
-		case Shape::ShapeType::RECTANGLE:
-			rectangle.startPosition.x = newX - rectangle.width / 2;
+		case RECTANGLE:
+			rectangle.x = newX - rectangle.width / 2;
 			break;
-		case Shape::ShapeType::TRIANGLE:
+		case TRIANGLE:
 			triangle.a.x += change;
 			triangle.b.x += change;
 			triangle.c.x += change;
 
 			break;
-		case Shape::ShapeType::POLYGON:
+		case POLYGON:
 			poly.center.x = newX;
+			break;
+		default:
 			break;
 		}
 	}
@@ -154,47 +191,49 @@ struct Shape
 		float change = newY - GetCenterY();
 		switch (type)
 		{
-		case Shape::ShapeType::CIRCLE:
+		case CIRCLE:
 			circle.center.y = newY;
 			break;
-		case Shape::ShapeType::RECTANGLE:
-			rectangle.startPosition.y = newY - rectangle.height / 2;
+		case RECTANGLE:
+			rectangle.y = newY - rectangle.height / 2;
 			break;
-		case Shape::ShapeType::TRIANGLE:
+		case TRIANGLE:
 			triangle.a.y += change;
 			triangle.b.y += change;
 			triangle.c.y += change;
 			break;
-		case Shape::ShapeType::POLYGON:
+		case POLYGON:
 			poly.center.y = newY;
+			break;
+		default:
 			break;
 		}
 	}
 
 	void Draw()
 	{
-		if (type == CIRCLE)
+		switch (type)
 		{
-			DrawCircle(circle.center.x, circle.center.y, circle.radius, Fade(BLUE, 0.3f));
-		}
-		else if (type == RECTANGLE)
-		{
-			DrawRectanglePro(Rectangle{ rectangle.startPosition.x, rectangle.startPosition.y, rectangle.width, rectangle.height }, Vector2{ 0, 0 }, rotation * (180.0 / 3.141592653589793238463), Fade(RED, 0.3f));
-			DrawCircle(rectangle.startPosition.x, rectangle.startPosition.y, 10, BLACK);
-		}
-		else if (type == TRIANGLE)
-		{
-			//DrawTriangle(shape.triangle.a, shape.triangle.b, shape.triangle.c, shape.color);
-		}
-		else if (type == POLYGON)
-		{
-			DrawPoly(poly.center, poly.sides, poly.radius, rotation, RED);
+		case CIRCLE:
+
+				DrawCircle(circle.center.x, circle.center.y, circle.radius, Fade(BLUE, 0.3f));
+				break;
+		case RECTANGLE:
+				DrawRectanglePro(Rectangle{ rectangle.x, rectangle.y, rectangle.width, rectangle.height }, Vector2{ 0, 0 }, rotation * (180.0 / 3.141592653589793238463), Fade(RED, 0.3f));
+				DrawCircle(rectangle.x, rectangle.y, 10, BLACK);
+				break;
+		case TRIANGLE:
+				//DrawTriangle(shape.triangle.a, shape.triangle.b, shape.triangle.c, shape.color);
+				break;
+		case POLYGON:
+				DrawPoly(poly.center, poly.sides, poly.radius, rotation, RED);
+				break;
+		default:
+			break;
 		}
 	}
-};
 
-struct AttachedShape : Shape
-{
+	//Attached Shape
 	Vector2 mainBodyCenter;
 	float angleFromMainBody; // in radians
 
@@ -250,15 +289,13 @@ struct ShapeContainer
 	Shape origin_position;
 	Vector2 origin_orientation;
 
-	std::vector<AttachedShape> shapes;
+	std::vector<Shape> shapes;
 
 	ShapeContainer(std::string name, Shape mainBody, Vector2 orientation)
 	: name(std::move(name)), origin_position(mainBody),origin_orientation(orientation)
-	{
+	{}
 
-	}
-
-	void AddShape(AttachedShape s)
+	void AddShape(Shape s)
 	{
 		shapes.push_back(s);
 	}
@@ -317,6 +354,8 @@ struct ShapeContainer
 
 			origin_orientation.y = bool(orientation.y);
 		}
+
+		Update();
 	}
 
 	void Draw()

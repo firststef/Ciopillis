@@ -186,10 +186,9 @@ class ArenaSystem : public ISystem
 		arena.player->Add<AnimationComponent>(AnimationGraph(player_idle));
 
 		//Player HitBox
-		Shape mainBody;
-		mainBody.type = Shape::ShapeType::RECTANGLE;
-		mainBody.rectangle.startPosition.x = arena.player->Get<TransformComponent>().position.x + (CHARACTER_PLACEHOLDER_WIDTH - CHARACTER_WIDTH) / 2;
-		mainBody.rectangle.startPosition.y = arena.player->Get<TransformComponent>().position.y + 20;
+		Shape mainBody("mainBodyP",Shape::ShapeType::RECTANGLE);
+		mainBody.rectangle.x = arena.player->Get<TransformComponent>().position.x + (CHARACTER_PLACEHOLDER_WIDTH - CHARACTER_WIDTH) / 2;
+		mainBody.rectangle.y = arena.player->Get<TransformComponent>().position.y + 20;
 		mainBody.rectangle.width = CHARACTER_WIDTH;
 		mainBody.rectangle.height = CHARACTER_HEIGHT - 20;
 		mainBody.rotation = 0;
@@ -199,15 +198,14 @@ class ArenaSystem : public ISystem
 		auto running_cont = idle_cont;
 		running_cont.name = "move";
 		running_cont.origin_position.rectangle.height -= 10;
-		running_cont.origin_position.rectangle.startPosition.y += 10;
+		running_cont.origin_position.rectangle.y += 10;
 
 		auto attack_x_cont = idle_cont;
 		attack_x_cont.name = "attack_x2";
 
-		AttachedShape fist;
-		fist.type = Shape::ShapeType::RECTANGLE;
-		fist.rectangle.startPosition.x = arena.player->Get<TransformComponent>().position.x + 10;
-		fist.rectangle.startPosition.y = arena.player->Get<TransformComponent>().position.y + CHARACTER_HEIGHT / 2 + 5;
+		Shape fist("p_fist", Shape::ShapeType::RECTANGLE);
+		fist.rectangle.x = arena.player->Get<TransformComponent>().position.x + 10;
+		fist.rectangle.y = arena.player->Get<TransformComponent>().position.y + CHARACTER_HEIGHT / 2 + 5;
 		fist.rectangle.width = 40;
 		fist.rectangle.height = 40;
 		fist.rotation = 0;
@@ -384,10 +382,9 @@ class ArenaSystem : public ISystem
 		arena.enemy->Add<AnimationComponent>(AnimationGraph(enemy_idle));
 
 		//Enemy HitBox
-		Shape mainBodyE;
-		mainBodyE.type = Shape::ShapeType::RECTANGLE;
-		mainBodyE.rectangle.startPosition.x = arena.enemy->Get<TransformComponent>().position.x + (CHARACTER_PLACEHOLDER_WIDTH - CHARACTER_WIDTH) / 2;
-		mainBodyE.rectangle.startPosition.y = arena.enemy->Get<TransformComponent>().position.y + 20;
+		Shape mainBodyE("mainBodyE",Shape::ShapeType::RECTANGLE);
+		mainBodyE.rectangle.x = arena.enemy->Get<TransformComponent>().position.x + (CHARACTER_PLACEHOLDER_WIDTH - CHARACTER_WIDTH) / 2;
+		mainBodyE.rectangle.y = arena.enemy->Get<TransformComponent>().position.y + 20;
 		mainBodyE.rectangle.width = CHARACTER_WIDTH;
 		mainBodyE.rectangle.height = CHARACTER_HEIGHT - 20;
 		mainBodyE.rotation = 0;
@@ -397,15 +394,14 @@ class ArenaSystem : public ISystem
 		auto e_running_cont = e_idle_cont;
 		e_running_cont.name = "move";
 		e_running_cont.origin_position.rectangle.height -= 10;
-		e_running_cont.origin_position.rectangle.startPosition.y += 10;
+		e_running_cont.origin_position.rectangle.y += 10;
 
 		auto e_attack_x_cont = e_idle_cont;
 		e_attack_x_cont.name = "attack_x2";
 
-		AttachedShape e_fist;
-		e_fist.type = Shape::ShapeType::RECTANGLE;
-		e_fist.rectangle.startPosition.x = arena.enemy->Get<TransformComponent>().position.x + 10;
-		e_fist.rectangle.startPosition.y = arena.enemy->Get<TransformComponent>().position.y + CHARACTER_HEIGHT / 2 + 5;
+		Shape e_fist("e_fist", Shape::ShapeType::RECTANGLE);
+		e_fist.rectangle.x = arena.enemy->Get<TransformComponent>().position.x + 10;
+		e_fist.rectangle.y = arena.enemy->Get<TransformComponent>().position.y + CHARACTER_HEIGHT / 2 + 5;
 		e_fist.rectangle.width = 40;
 		e_fist.rectangle.height = 40;
 		e_fist.rotation = 0;
@@ -465,18 +461,6 @@ class ArenaSystem : public ISystem
 
             //INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
         }
-
-		//if (! body_ptr)
-		//	return;
-    	
-		//auto body = *(ShapeContainer::ShapeHolder*)(body_ptr);
-		//printf("Player position %f %f\n", arena.player->Get<TransformComponent>().position.x, arena.player->Get<TransformComponent>().position.y);
-		//printf("Player rotation %f rad %f\n", arena.player->Get<TransformComponent>().rotation, arena.player->Get<PhysicsComponent>().body->orient);
-		//printf("Shape position %f %f\n", body.shape.rectangle.rec.x, body.shape.rectangle.rec.y);
-		//printf("Shape rotation %f\n", body.shape.rotation);
-		//printf("Shape offset %f", sqrt(pow(arena.player->Get<TransformComponent>().position.x - body.shape.rectangle.rec.x, 2)
-		//	+ pow(arena.player->Get<TransformComponent>().position.y - body.shape.rectangle.rec.y, 2)));
-		//system("CLS");
     }
 
     void OnEnd(EntityPtr e)
@@ -543,8 +527,8 @@ public:
 			arena.lastAxesPlayer = { axes.x != 0 ? axes.x : arena.lastAxesPlayer.x, axes.y != 0 ? axes.y : arena.lastAxesPlayer.y };
 			*arena.playerOrientation = arena.lastAxesPlayer.x > 0;
 
-			box.current_container->Mirror(Vector2{ float(*arena.playerOrientation), 0 });
-			box.current_container->Update();
+			box.Mirror(Vector2{ float(*arena.playerOrientation), 0 });
+			box.Update();
 
 			eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
 					{"head", "player_keyboard_event"},
@@ -591,7 +575,10 @@ public:
 
     void Receive(const HitBoxEvent& event)
     {
-        auto test = 3;
+        for (auto& info : event.allTriggerInfos)
+        {
+			auto& h = info.e1->Get<HealthComponent>();
+        }
     }
 
 	void Receive(const NetworkEvent& event)
@@ -633,8 +620,8 @@ public:
 						arena.lastAxesEnemy = { axes.x != 0 ? axes.x : arena.lastAxesEnemy.x, axes.y != 0 ? axes.y : arena.lastAxesEnemy.y };
 						*arena.enemyOrientation = arena.lastAxesEnemy.x > 0;
 
-						//box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
-						//box.cont.Update();
+						box.Mirror(Vector2{ float(*arena.enemyOrientation), 0 });
+						box.Update();
 
 						if (arena.blockEnemyInput)
 							continue;

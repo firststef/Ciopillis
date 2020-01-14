@@ -1,10 +1,14 @@
 #pragma once
+#include "Helpers.h"
 #include <utility>
 
 struct HitBoxTriggerInfo
 {
-    //Shape::Identifier identifier1;
-    //Shape::Identifier identifier2;
+	EntityPtr e1;
+	Shape s1;
+
+	EntityPtr e2;
+	Shape s2;
 };
 
 struct HitBoxEvent : IEvent

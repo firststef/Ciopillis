@@ -12,4 +12,20 @@ struct HitBoxComponent : IComponent
     	if (!this->containers.empty())
 			current_container = &(this->containers[0]);
     }
+
+	void Update()
+    {
+	    for (auto& c : containers)
+	    {
+			c.Update();
+	    }
+    }
+
+	void Mirror(Vector2 orientation)
+	{
+		for (auto& c : containers)
+		{
+			c.Mirror(orientation);
+		}
+	}
 };

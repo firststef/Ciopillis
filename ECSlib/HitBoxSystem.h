@@ -13,11 +13,7 @@ public:
 	//heavily. Ex: Physics and Transform should be solved by Physics
     void Execute() override
     {
-        std::vector<HitBoxComponent*> containers;
-
         auto entities = pool->GetEntities(1 << GetComponentTypeID<HitBoxComponent>());
-
-        containers.reserve(entities.size());
         for (auto e : entities)
         {
             auto& box = e->Get<HitBoxComponent>();
@@ -39,53 +35,54 @@ public:
 			}
         	
             box.current_container->Update();
-
-            containers.push_back(&e->Get<HitBoxComponent>());
         }
 
-        /*std::vector<HitBoxTriggerInfo> allTriggerInfos;
+        std::vector<HitBoxTriggerInfo> allTriggerInfos;
 
-        for (unsigned i = 0; i < containers.size() - 1; ++i) {
-            for (unsigned j = 1; j < containers.size(); ++j)
+        for (unsigned i = 0; i < entities.size() - 1; ++i) {
+            for (unsigned j = 1; j < entities.size(); ++j)
             {
-                for (auto& holder_left : containers[i]->cont.holders)
-                {
-                    for (auto& holder_right : containers[j]->cont.holders)
-                    {
-                        if (holder_left.shape.objectClass == holder_right.shape.objectClass)
-                        {
-                            continue;
-                        }
+				auto& box1 = entities[i]->Get<HitBoxComponent>();
+				auto shapes1 = box1.current_container->shapes;
+				shapes1.push_back(box1.current_container->origin_position);
 
-                        if (holder_left.shape.type == Shape::RECTANGLE && holder_right.shape.type == Shape::RECTANGLE)
+				auto& box2 = entities[j]->Get<HitBoxComponent>();
+				auto shapes2 = box2.current_container->shapes;
+				shapes2.push_back(box2.current_container->origin_position);
+            	
+                for (auto& shape_left : shapes1)
+                {
+                    for (auto& shape_right : shapes2)
+                    {
+                        if (shape_left.type == Shape::RECTANGLE && shape_right.type == Shape::RECTANGLE)
                         {
-                            if (CheckCollisionRecs(holder_left.shape.rectangle.rec, holder_right.shape.rectangle.rec))
+                            if (CheckCollisionRecs(shape_left.rectangle, shape_right.rectangle))
                             {
-                                allTriggerInfos.push_back(HitBoxTriggerInfo{ holder_left.shape.id, holder_right.shape.id });
+                                allTriggerInfos.push_back(HitBoxTriggerInfo{ entities[i], shape_left, entities[j],shape_right });
                             }
                         }
-                        else if (holder_left.shape.type == Shape::CIRCLE && holder_right.shape.type == Shape::CIRCLE)
+                        else if (shape_left.type == Shape::CIRCLE && shape_right.type == Shape::CIRCLE)
                         {
-                            if (CheckCollisionCircles(Vector2{ float(holder_left.shape.circle.x), float(holder_left.shape.circle.x) }, holder_left.shape.circle.radius,
-                                Vector2{ float(holder_right.shape.circle.x), float(holder_right.shape.circle.x) }, holder_right.shape.circle.radius))
+                            if (CheckCollisionCircles(Vector2{ float(shape_left.circle.center.x), float(shape_left.circle.center.x) }, shape_left.circle.radius,
+                                Vector2{ float(shape_right.circle.center.x), float(shape_right.circle.center.x) }, shape_right.circle.radius))
                             {
-                                allTriggerInfos.push_back(HitBoxTriggerInfo{ holder_left.shape.id, holder_right.shape.id });
+								allTriggerInfos.push_back(HitBoxTriggerInfo{ entities[i], shape_left, entities[j],shape_right });
                             }
                         }
-                        else if (holder_left.shape.type == Shape::CIRCLE && Shape::RECTANGLE == holder_right.shape.type)
+                        else if (shape_left.type == Shape::CIRCLE && Shape::RECTANGLE == shape_right.type)
                         {
-                            if (CheckCollisionCircleRec(Vector2{ float(holder_left.shape.circle.x), float(holder_left.shape.circle.x) }, holder_left.shape.circle.radius,
-                                holder_right.shape.rectangle.rec))
+                            if (CheckCollisionCircleRec(Vector2{ float(shape_left.circle.center.x), float(shape_left.circle.center.x) }, shape_left.circle.radius,
+								 shape_right.rectangle))
                             {
-                                allTriggerInfos.push_back(HitBoxTriggerInfo{ holder_left.shape.id, holder_right.shape.id });
+								allTriggerInfos.push_back(HitBoxTriggerInfo{ entities[i], shape_left, entities[j],shape_right });
                             }
                         }
-                        else if (Shape::CIRCLE == holder_right.shape.type && holder_left.shape.type == Shape::RECTANGLE)
+                        else if (Shape::CIRCLE == shape_right.type && shape_left.type == Shape::RECTANGLE)
                         {
-                            if (CheckCollisionCircleRec(Vector2{ float(holder_right.shape.circle.x), float(holder_right.shape.circle.x) }, holder_right.shape.circle.radius,
-                                holder_left.shape.rectangle.rec))
+                            if (CheckCollisionCircleRec(Vector2{ float(shape_right.circle.center.x), float(shape_right.circle.center.x) }, shape_right.circle.radius,
+                                shape_left.rectangle))
                             {
-                                allTriggerInfos.push_back(HitBoxTriggerInfo{ holder_left.shape.id, holder_right.shape.id });
+								allTriggerInfos.push_back(HitBoxTriggerInfo{ entities[i], shape_left, entities[j],shape_right });
                             }
                         }
                     }
@@ -94,6 +91,6 @@ public:
         }
 
         if (! allTriggerInfos.empty())
-            eventManager->Notify<HitBoxEvent>(allTriggerInfos);*/
+            eventManager->Notify<HitBoxEvent>(allTriggerInfos);
     }
 };
