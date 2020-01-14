@@ -31,8 +31,13 @@ public:
                 DrawRectangleRec(transform.position, e->Get<SpriteComponent>().color);
             else {
                 //TODO: Jittering is caused by unscaled resize
-                DrawTexturePro(sprite.texture, sprite.sourceRec, transform.position,
-                    Vector2{ 0, 0 }, 0.0f, RAYWHITE);
+                DrawTexturePro(sprite.texture, 
+					sprite.sourceRec,
+					transform.position,
+                    Vector2{ 0, 0 },
+					0.0f,
+					RAYWHITE
+				);
             }
         }
 
@@ -63,7 +68,7 @@ public:
         for (auto& e : hitBoxEntities)
         {
             auto box = e->Get<HitBoxComponent>();
-            box.cont.Draw();
+            box.current_container->Draw();
         }
 
 #endif

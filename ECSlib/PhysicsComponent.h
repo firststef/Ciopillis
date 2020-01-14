@@ -12,6 +12,7 @@
 struct PhysicsComponent : IComponent
 {
     PhysicsBody body;
+	Vector2 last_position;
 
     enum Type
     {
@@ -22,6 +23,7 @@ struct PhysicsComponent : IComponent
 
     PhysicsComponent(Type type, float x, float y, float first, float second, float third) : type(type)
     {
+		last_position = { x, y };
 #ifdef WIN32
         body = WIN_GetBody((int) type, x, y, first, second, third);
 #else

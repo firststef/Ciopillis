@@ -98,6 +98,8 @@ public:
                 StepAnimation(entity);
                 
                 anim.graph.lastIterationTime = now;
+
+				eventManager->Notify<AnimationEvent>(entity, node);
             }
         }
     }

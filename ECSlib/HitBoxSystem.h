@@ -25,13 +25,20 @@ public:
 			if (e->Has<TransformComponent>()) {
 				auto& transf = e->Get<TransformComponent>();
 
-				box.cont.origin_position.SetCenterX(transf.position.x);
-				box.cont.origin_position.SetCenterY(transf.position.y);
+				if (! box.current_container)
+					continue;
 
-				box.cont.origin_position.rotation = transf.rotation;
+				Vector2 delta = {transf.position.x - box.last_origin_position.x, transf.position.y - box.last_origin_position.y };
+
+				box.current_container->origin_position.SetCenterX(box.current_container->origin_position.GetCenterX() + delta.x);
+				box.current_container->origin_position.SetCenterY(box.current_container->origin_position.GetCenterY() + delta.y);
+
+				box.current_container->origin_position.rotation = transf.rotation;
+
+				box.last_origin_position = { transf.position.x, transf.position.y };
 			}
         	
-            box.cont.Update();
+            box.current_container->Update();
 
             containers.push_back(&e->Get<HitBoxComponent>());
         }

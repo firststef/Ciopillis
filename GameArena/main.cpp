@@ -37,6 +37,7 @@ int main()
 	manager.eventManager.Subscribe<DefferEvent>(defferSystem);
 	manager.eventManager.Subscribe<KeyboardEvent>(arenaSystem);
 	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
+	manager.eventManager.Subscribe<AnimationEvent>(arenaSystem);
 
     manager.Initialize();
 

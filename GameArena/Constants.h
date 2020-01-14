@@ -10,6 +10,14 @@ const float VELOCITY = 0.3f;
 const unsigned SPRITE_WIDTH = 29;
 const unsigned SPRITE_HEIGHT = 24;
 
+const unsigned CHARACTER_PLACEHOLDER_WIDTH = 200;
+const unsigned CHARACTER_PLACEHOLDER_HEIGHT = 200;
+
+const unsigned CHARACTER_WIDTH = 100;
+const unsigned CHARACTER_HEIGHT = 200;
+
+const unsigned ARENA_BORDER = 200;
+
 //Animations
 inline unsigned MOVE_ANIM_TIME = 600;
 inline unsigned MOVE_ANIM_FRAMES = 4;

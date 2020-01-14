@@ -5,231 +5,239 @@
 #include "ArenaPlayerComponent.h"
 #include "Constants.h"
 #include "NetworkEvent.h"
+#include <iostream>
 
 class ArenaSystem : public ISystem
 {
 	bool connected_with_server = false;
 	
-    void OnInit(EntityPtr e)
-    {
-        auto& arena = e->Get<ArenaGameComponent>();
+	void OnInit(EntityPtr e)
+	{
+		auto& arena = e->Get<ArenaGameComponent>();
 
-        //Background Setup
-        auto fadedBackground(pool->AddEntity());
-        fadedBackground->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
-        fadedBackground->Add<SpriteComponent>(std::string("FadedBackground"), Texture2D(), Fade(BLACK, 0.6f));
-        arena.generatedEntities.push_back(fadedBackground);
+		//Background Setup
+		auto fadedBackground(pool->AddEntity());
+		fadedBackground->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
+		fadedBackground->Add<SpriteComponent>(std::string("FadedBackground"), Texture2D(), Fade(BLACK, 0.6f));
+		arena.generatedEntities.push_back(fadedBackground);
 
-        //Player Setup
-        arena.player = pool->AddEntity();
+		//Player Setup
+		arena.player = pool->AddEntity();
 		arena.player->Add<ArenaPlayerComponent>(e);
 
-        Rectangle player_rec{ 1000,500,200,200 };
+		Rectangle player_rec{ ARENA_BORDER,SCREEN_HEIGHT / 2 - CHARACTER_HEIGHT / 2, CHARACTER_PLACEHOLDER_WIDTH,CHARACTER_PLACEHOLDER_HEIGHT };
 
 		auto sprite_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "basesprite.png").string();
 
-        auto& transform = arena.player->Add<TransformComponent>(player_rec);
-        arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(sprite_path), Color(ORANGE), Rectangle{ 0, 0, 29, 24});
-        arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
-        
-        auto& playerBody = arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, player_rec.x, player_rec.y, 100, player_rec.height, 1).body;
-        playerBody->staticFriction = 0.2f;
-        playerBody->dynamicFriction = 0.2f;
-        playerBody->freezeOrient = false;
+		auto& transform = arena.player->Add<TransformComponent>(player_rec);
+		arena.player->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(sprite_path), Color(ORANGE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
+		arena.player->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
 
-        //Player Animation
-        std::shared_ptr<AnimationNode> player_idle = std::make_shared<AnimationNode>(
-            AnimationUnit(
-                std::string("idle"),
-                textureManager->Load(sprite_path),
-                Rectangle{ 0,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
-                1,
-                1,
-                arena.playerOrientation,
-                std::make_shared<bool>(false),
-                0)
-            );
+		auto& playerBody = arena.player->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, player_rec.x + player_rec.width / 2, player_rec.y + player_rec.height / 2, CHARACTER_WIDTH, CHARACTER_HEIGHT, 1).body;
+		playerBody->staticFriction = 0.2f;
+		playerBody->dynamicFriction = 0.2f;
+		playerBody->freezeOrient = true;
 
-        std::shared_ptr<AnimationNode> player_move = std::make_shared<AnimationNode>(
-            AnimationUnit(
-                std::string("move"),
-                textureManager->Load(sprite_path),
-                Rectangle{ (float)SPRITE_WIDTH,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
-                MOVE_ANIM_FRAMES,
-                MOVE_ANIM_TIME / MOVE_ANIM_FRAMES,
-                arena.playerOrientation,
-                arena.playerOrientation,
-                0
-            )
-            );
+		*arena.playerOrientation = true;
+		arena.lastAxesPlayer = { 1, 0 };
 
-        std::shared_ptr<AnimationNode> player_attack_x = std::make_shared<AnimationNode>(
-            AnimationUnit(
-                std::string("attack_x"),
-                textureManager->Load(sprite_path),
-                Rectangle{ (float)SPRITE_WIDTH * 5,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
-                ATTACK_X_ANIM_FRAMES,
-                ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
-                arena.playerOrientation,
-                std::make_shared<bool>(false),
-                1)
-            );
+		//Player Animation
+		std::shared_ptr<AnimationNode> player_idle = std::make_shared<AnimationNode>(
+			AnimationUnit(
+				std::string("idle"),
+				textureManager->Load(sprite_path),
+				Rectangle{ 0,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+				1,
+				1,
+				arena.playerOrientation,
+				std::make_shared<bool>(false),
+				0)
+			);
 
-        std::shared_ptr<AnimationNode> player_attack_z = std::make_shared<AnimationNode>(
-            AnimationUnit(
-                std::string("attack_y"),
-                textureManager->Load(sprite_path),
-                Rectangle{ (float)SPRITE_WIDTH * 8,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
-                ATTACK_Y_ANIM_FRAMES,
-                ATTACK_Y_ANIM_TIME / ATTACK_Y_ANIM_FRAMES,
-                arena.playerOrientation,
-                std::make_shared<bool>(false),
-                1)
-            );
+		std::shared_ptr<AnimationNode> player_move = std::make_shared<AnimationNode>(
+			AnimationUnit(
+				std::string("move"),
+				textureManager->Load(sprite_path),
+				Rectangle{ (float)SPRITE_WIDTH,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+				MOVE_ANIM_FRAMES,
+				MOVE_ANIM_TIME / MOVE_ANIM_FRAMES,
+				arena.playerOrientation,
+				arena.playerOrientation,
+				0
+			)
+			);
 
-        //idle-move
-        player_idle->Next(player_move, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+		std::shared_ptr<AnimationNode> player_attack_x = std::make_shared<AnimationNode>(
+			AnimationUnit(
+				std::string("attack_x"),
+				textureManager->Load(sprite_path),
+				Rectangle{ (float)SPRITE_WIDTH * 5,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+				ATTACK_X_ANIM_FRAMES,
+				ATTACK_X_ANIM_TIME / ATTACK_X_ANIM_FRAMES,
+				arena.playerOrientation,
+				std::make_shared<bool>(false),
+				1)
+			);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
-        }, &arena);
-        player_move->Next(player_idle, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+		std::shared_ptr<AnimationNode> player_attack_z = std::make_shared<AnimationNode>(
+			AnimationUnit(
+				std::string("attack_y"),
+				textureManager->Load(sprite_path),
+				Rectangle{ (float)SPRITE_WIDTH * 8,0,(float)SPRITE_WIDTH, (float)SPRITE_HEIGHT },
+				ATTACK_Y_ANIM_FRAMES,
+				ATTACK_Y_ANIM_TIME / ATTACK_Y_ANIM_FRAMES,
+				arena.playerOrientation,
+				std::make_shared<bool>(false),
+				1)
+			);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
-        }, &arena);
+		//idle-move
+		player_idle->Next(player_move, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-        //idle, move - attack_x
-        player_idle->Next(player_attack_x, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
+		}, &arena);
+		player_move->Next(player_idle, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_X;
-        }, &arena);
-        player_move->Next(player_attack_x, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
+		}, &arena);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_X;
-        }, &arena);
+		//idle, move - attack_x
+		player_idle->Next(player_attack_x, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-        player_attack_x->Next(player_idle, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_X;
+		}, &arena);
+		player_move->Next(player_attack_x, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-            if (node.animationUnit->currentRepeat == 1)
-            {
-                arenaCtx.currentActionPlayer = ArenaGameComponent::IDLE;
-                arenaCtx.blockPlayerInput = false;
-            }
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_X;
+		}, &arena);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
-        }, &arena);
-        player_attack_x->Next(player_move, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+		player_attack_x->Next(player_idle, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
-        }, &arena);
+			if (node.animationUnit->currentRepeat == 1)
+			{
+				arenaCtx.currentActionPlayer = ArenaGameComponent::IDLE;
+				arenaCtx.blockPlayerInput = false;
+			}
 
-        //idle, move, attack_x - attack_z
-        player_idle->Next(player_attack_z, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
+		}, &arena);
+		player_attack_x->Next(player_move, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
-        }, &arena);
-        player_move->Next(player_attack_z, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
+		}, &arena);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
-        }, &arena);
-        player_attack_x->Next(player_attack_z, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+		//idle, move, attack_x - attack_z
+		player_idle->Next(player_attack_z, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
-        }, &arena);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
+		}, &arena);
+		player_move->Next(player_attack_z, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-        player_attack_z->Next(player_idle, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
+		}, &arena);
+		player_attack_x->Next(player_attack_z, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-            if (node.animationUnit->currentRepeat == 1)
-            {
-                arenaCtx.currentActionPlayer = ArenaGameComponent::IDLE;
-                arenaCtx.blockPlayerInput = false;
-            }
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_Z;
+		}, &arena);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
-        }, &arena);
-        player_attack_z->Next(player_move, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+		player_attack_z->Next(player_idle, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
-        }, &arena);
-        player_attack_z->Next(player_attack_x, [](const AnimationNode& node, void* context) ->bool
-        {
-            auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
+			if (node.animationUnit->currentRepeat == 1)
+			{
+				arenaCtx.currentActionPlayer = ArenaGameComponent::IDLE;
+				arenaCtx.blockPlayerInput = false;
+			}
 
-            return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_X;
-        }, &arena);
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::IDLE;
+		}, &arena);
+		player_attack_z->Next(player_move, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-        arena.player->Add<AnimationComponent>(AnimationGraph(player_idle));
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::MOVE;
+		}, &arena);
+		player_attack_z->Next(player_attack_x, [](const AnimationNode& node, void* context) ->bool
+		{
+			auto& arenaCtx = *static_cast<ArenaGameComponent*>(context);
 
-		/*Shape mainBody;
+			return arenaCtx.currentActionPlayer == ArenaGameComponent::ATTACK_X;
+		}, &arena);
+
+		arena.player->Add<AnimationComponent>(AnimationGraph(player_idle));
+
+		//Player HitBox
+		Shape mainBody;
 		mainBody.type = Shape::ShapeType::RECTANGLE;
-		mainBody.rectangle.center.x = arena.player->Get<TransformComponent>().position.x;
-		mainBody.rectangle.center.y = arena.player->Get<TransformComponent>().position.y;
-		mainBody.rectangle.width = 100;
-		mainBody.rectangle.height = 200;
+		mainBody.rectangle.startPosition.x = arena.player->Get<TransformComponent>().position.x + (CHARACTER_PLACEHOLDER_WIDTH - CHARACTER_WIDTH) / 2;
+		mainBody.rectangle.startPosition.y = arena.player->Get<TransformComponent>().position.y + 20;
+		mainBody.rectangle.width = CHARACTER_WIDTH;
+		mainBody.rectangle.height = CHARACTER_HEIGHT - 20;
 		mainBody.rotation = 0;
 
-		ShapeContainer player_idle_cont(mainBody, 0.0f);
-    	
-        //Player HitBox
+		ShapeContainer idle_cont("idle", mainBody, Vector2{ 0, 0 });
 
-        //Shape body("body", "player");
-        //body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
-        //auto& b = player_idle_cont.AddShape(body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
-		//body_ptr = &b;
+		auto running_cont = idle_cont;
+		running_cont.name = "move";
+		running_cont.origin_position.rectangle.height -= 10;
+		running_cont.origin_position.rectangle.startPosition.y += 10;
+
+		auto attack_x_cont = idle_cont;
+		attack_x_cont.name = "attack_x2";
 
 		AttachedShape fist;
 		fist.type = Shape::ShapeType::RECTANGLE;
-		fist.rectangle.center.x = arena.player->Get<TransformComponent>().position.x + 30;
-		fist.rectangle.center.y = arena.player->Get<TransformComponent>().position.y;
+		fist.rectangle.startPosition.x = arena.player->Get<TransformComponent>().position.x + 10;
+		fist.rectangle.startPosition.y = arena.player->Get<TransformComponent>().position.y + CHARACTER_HEIGHT / 2 + 5;
 		fist.rectangle.width = 40;
 		fist.rectangle.height = 40;
 		fist.rotation = 0;
 
-        //Shape fist("fist", "player");
-        //fist.SetRectangle(Rectangle{ 0,0,20,20 }, 0.0f, Fade(RED, 0.4f));
-        //player_idle_cont.AddShape(fist, Vector2{ 0,0 }, Vector2{ 1, 1 }, false);
+		fist.SetMainBodyCenter(attack_x_cont.origin_position);
+		attack_x_cont.AddShape(fist);
 
-		fist.SetMainBodyCenter(mainBody);
-		player_idle_cont.AddShape(fist);
+		std::vector<ShapeContainer> s_containers;
+		s_containers.push_back(idle_cont);
+		s_containers.push_back(running_cont);
+		s_containers.push_back(attack_x_cont);
 
-        arena.player->Add<HitBoxComponent>(player_idle_cont);
-        player_idle_cont.Update();*/
+		idle_cont.Update();
+		running_cont.Update();
+		attack_x_cont.Update();
+		auto& player_box = arena.player->Add<HitBoxComponent>(s_containers, Vector2{ arena.player->Get<TransformComponent>().position.x , arena.player->Get<TransformComponent>().position.y });
 
-        arena.generatedEntities.push_back(arena.player);
+		arena.generatedEntities.push_back(arena.player);
 
-        //Enemy Setup
+		//Enemy Setup
+		Rectangle enemy_rec{ SCREEN_WIDTH - ARENA_BORDER - CHARACTER_WIDTH,SCREEN_HEIGHT / 2 - CHARACTER_HEIGHT / 2,CHARACTER_PLACEHOLDER_WIDTH,CHARACTER_PLACEHOLDER_HEIGHT };
 
-        Rectangle enemy_rec{ 200,200,200,200 };
+		arena.enemy = pool->AddEntity();
+		arena.enemy->Add<TransformComponent>(enemy_rec);
+		arena.enemy->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load(sprite_path), Color(BLUE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
 
-        arena.enemy = pool->AddEntity();
-        arena.enemy->Add<TransformComponent>(enemy_rec);
-        arena.enemy->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load(sprite_path), Color(BLUE), Rectangle{ 0, 0, 29, 24 });
-        
-        auto& enemyBody = arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, enemy_rec.x, enemy_rec.y, 100, enemy_rec.height, 1).body;
-        enemyBody->staticFriction = 0.2f;
-        enemyBody->dynamicFriction = 0.2f;
-        enemyBody->freezeOrient = true;
+		auto& enemyBody = arena.enemy->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, enemy_rec.x + enemy_rec.width / 2, enemy_rec.y + enemy_rec.height / 2, CHARACTER_WIDTH, CHARACTER_HEIGHT, 1).body;
+		enemyBody->staticFriction = 0.2f;
+		enemyBody->dynamicFriction = 0.2f;
+		enemyBody->freezeOrient = true;
 
 		//Enemy Animation
 		std::shared_ptr<AnimationNode> enemy_idle = std::make_shared<AnimationNode>(
@@ -375,24 +383,47 @@ class ArenaSystem : public ISystem
 
 		arena.enemy->Add<AnimationComponent>(AnimationGraph(enemy_idle));
 
-        //Enemy hitboxlayer_idle
-		/*ShapeContainer enemy_idle_cont(
-			arena.enemy->Get<TransformComponent>().position,
-			arena.enemy->Get<PhysicsComponent>().body->orient
-		);
+		//Enemy HitBox
+		Shape mainBodyE;
+		mainBodyE.type = Shape::ShapeType::RECTANGLE;
+		mainBodyE.rectangle.startPosition.x = arena.enemy->Get<TransformComponent>().position.x + (CHARACTER_PLACEHOLDER_WIDTH - CHARACTER_WIDTH) / 2;
+		mainBodyE.rectangle.startPosition.y = arena.enemy->Get<TransformComponent>().position.y + 20;
+		mainBodyE.rectangle.width = CHARACTER_WIDTH;
+		mainBodyE.rectangle.height = CHARACTER_HEIGHT - 20;
+		mainBodyE.rotation = 0;
 
-        Shape enemy_body("body", "enemy");
-        enemy_body.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(BLUE, 0.4f));
-        enemy_idle_cont.AddShape(enemy_body, Vector2{ -100,0 }, Vector2{ -1, 1 }, false);
+		ShapeContainer e_idle_cont("idle", mainBodyE, Vector2{ 0, 0 });
 
-        /*Shape enemy_fist("fist", "enemy");
-        enemy_fist.SetRectangle(Rectangle{ 0,0,100,200 }, 0.0f, Fade(RED, 0.4f));
-        enemy_idle_cont.AddShape(Vector2{ 0,0 }, enemy_fist, false);
+		auto e_running_cont = e_idle_cont;
+		e_running_cont.name = "move";
+		e_running_cont.origin_position.rectangle.height -= 10;
+		e_running_cont.origin_position.rectangle.startPosition.y += 10;
 
-        arena.enemy->Add<HitBoxComponent>(enemy_idle_cont);
-        enemy_idle_cont.Update();*/
+		auto e_attack_x_cont = e_idle_cont;
+		e_attack_x_cont.name = "attack_x2";
 
-        arena.generatedEntities.push_back(arena.enemy);
+		AttachedShape e_fist;
+		e_fist.type = Shape::ShapeType::RECTANGLE;
+		e_fist.rectangle.startPosition.x = arena.enemy->Get<TransformComponent>().position.x + 10;
+		e_fist.rectangle.startPosition.y = arena.enemy->Get<TransformComponent>().position.y + CHARACTER_HEIGHT / 2 + 5;
+		e_fist.rectangle.width = 40;
+		e_fist.rectangle.height = 40;
+		e_fist.rotation = 0;
+
+		e_fist.SetMainBodyCenter(e_attack_x_cont.origin_position);
+		e_attack_x_cont.AddShape(fist);
+
+		std::vector<ShapeContainer> e_containers;
+		e_containers.push_back(e_idle_cont);
+		e_containers.push_back(e_running_cont);
+		e_containers.push_back(e_attack_x_cont);
+
+		e_idle_cont.Update();
+		e_running_cont.Update();
+		e_attack_x_cont.Update();
+		auto& enemy_box = arena.enemy->Add<HitBoxComponent>(e_containers, Vector2{ arena.enemy->Get<TransformComponent>().position.x , arena.enemy->Get<TransformComponent>().position.y });
+
+		arena.generatedEntities.push_back(arena.enemy);
 
         arena.state = ArenaGameComponent::RUNNING;
     }
@@ -512,8 +543,8 @@ public:
 			arena.lastAxesPlayer = { axes.x != 0 ? axes.x : arena.lastAxesPlayer.x, axes.y != 0 ? axes.y : arena.lastAxesPlayer.y };
 			*arena.playerOrientation = arena.lastAxesPlayer.x > 0;
 
-			//box.cont.Mirror(Vector2{ arena.lastAxesPlayer.x, 1 });
-			//box.cont.Update();
+			box.current_container->Mirror(Vector2{ float(*arena.playerOrientation), 0 });
+			box.current_container->Update();
 
 			eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
 					{"head", "player_keyboard_event"},
@@ -597,7 +628,7 @@ public:
 						const float hY = ((std::find(heldKeys.begin(), heldKeys.end(), KEY_DOWN) != heldKeys.end())
 							- (std::find(heldKeys.begin(), heldKeys.end(), KEY_UP) != heldKeys.end()));
 
-						Vector2 axes{ x + hX, y + hY };
+						Vector2 axes{ -x + -hX, y + hY };
 
 						arena.lastAxesEnemy = { axes.x != 0 ? axes.x : arena.lastAxesEnemy.x, axes.y != 0 ? axes.y : arena.lastAxesEnemy.y };
 						*arena.enemyOrientation = arena.lastAxesEnemy.x > 0;
@@ -645,5 +676,26 @@ public:
 
 	        connected_with_server = true;
         }
+    }
+
+	void Receive(const AnimationEvent& event)
+    {
+		if (event.entity->Has<HitBoxComponent>())
+		{
+			auto& box = event.entity->Get<HitBoxComponent>();
+
+			for (auto& b : box.containers)
+			{
+				if (box.current_container->name != b.name && (b.name == event.node.animationUnit->name || b.name == event.node.animationUnit->name + std::to_string(event.node.animationUnit->currentFrame)))
+				{
+					b.origin_position.SetCenterX(box.current_container->origin_position.GetCenterX());
+					b.origin_position.SetCenterY(box.current_container->origin_position.GetCenterY());
+					box.current_container = &b;
+					box.current_container->Update();
+				}
+			}
+
+			
+		}
     }
 };
