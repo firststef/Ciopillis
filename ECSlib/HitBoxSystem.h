@@ -18,11 +18,11 @@ public:
         {
             auto& box = e->Get<HitBoxComponent>();
 
+			if (!box.current_container)
+				continue;
+
 			if (e->Has<TransformComponent>()) {
 				auto& transf = e->Get<TransformComponent>();
-
-				if (! box.current_container)
-					continue;
 
 				Vector2 delta = {transf.position.x - box.last_origin_position.x, transf.position.y - box.last_origin_position.y };
 
@@ -40,13 +40,17 @@ public:
         std::vector<HitBoxTriggerInfo> allTriggerInfos;
 
         for (unsigned i = 0; i < entities.size() - 1; ++i) {
-            for (unsigned j = 1; j < entities.size(); ++j)
+            for (unsigned j = i + 1; j < entities.size(); ++j)
             {
 				auto& box1 = entities[i]->Get<HitBoxComponent>();
+				auto& box2 = entities[j]->Get<HitBoxComponent>();
+
+            	if (!box1.current_container || !box2.current_container)
+					continue;
+            	
 				auto shapes1 = box1.current_container->shapes;
 				shapes1.push_back(box1.current_container->origin_position);
 
-				auto& box2 = entities[j]->Get<HitBoxComponent>();
 				auto shapes2 = box2.current_container->shapes;
 				shapes2.push_back(box2.current_container->origin_position);
             	

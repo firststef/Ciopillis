@@ -28,7 +28,7 @@ public:
             const auto sprite = e->Get<SpriteComponent>();
 
             if (sprite.texture.id == 0)
-                DrawRectangleRec(transform.position, e->Get<SpriteComponent>().color);
+                DrawRectangleRec(transform.position, sprite.color);
             else {
                 //TODO: Jittering is caused by unscaled resize
                 DrawTexturePro(sprite.texture, 
@@ -68,7 +68,8 @@ public:
         for (auto& e : hitBoxEntities)
         {
             auto box = e->Get<HitBoxComponent>();
-            box.current_container->Draw();
+        	if (box.current_container)
+				box.current_container->Draw();
         }
 
 #endif

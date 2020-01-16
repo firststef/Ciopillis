@@ -16,9 +16,16 @@ struct DelayHolder
     VoidContextFuncCoverter f;
 };
 
+struct DelayTriggerHolder
+{
+	std::chrono::system_clock::time_point endPoint;
+	std::vector<char> buffer;
+};
+
 class DefferSystem : public ISystem
 {
     std::vector<DelayHolder> delayVector;
+    std::vector<DelayTriggerHolder> delayTriggerVector;
 
 public:
 
@@ -30,18 +37,46 @@ public:
     {
         auto now = std::chrono::system_clock::now();
 
-        for (auto it = delayVector.begin(); it != delayVector.end();)
+        for (unsigned i = 0; i < delayVector.size();++i)
         {
-            if (now >= it->endPoint)
+            if (now >= delayVector[i].endPoint)
             {
-                it->f();
-                it = delayVector.erase(it);
-            }
-            else
-            {
-                ++it;
+				delayVector[i].f();
             }
         }
+
+    	//Erasing is done after because f() could add events
+		for (auto it = delayVector.begin(); it != delayVector.end();)
+		{
+			if (now >= it->endPoint)
+			{
+				it = delayVector.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+
+		for (unsigned i = 0; i < delayTriggerVector.size(); ++i)
+		{
+			if (now >= delayTriggerVector[i].endPoint)
+			{
+				eventManager->Notify<TriggerEvent>(delayTriggerVector[i].buffer);
+			}
+		}
+
+		for (auto it = delayTriggerVector.begin(); it != delayTriggerVector.end();)
+		{
+			if (now >= it->endPoint)
+			{
+				it = delayTriggerVector.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
     }
 
     void Receive(const DefferEvent& event)
@@ -52,6 +87,16 @@ public:
                     event.func,
                     event.context
                 }
-            });
+            }
+		);
     }
+
+	void Receive(const DefferTriggerEvent& event)
+	{
+		delayTriggerVector.push_back(DelayTriggerHolder{
+				std::chrono::system_clock::now() + std::chrono::duration<int, std::ratio<1, 1000>>(event.delayTime),
+				std::move(event.buffer)
+			}
+		);
+	}
 };

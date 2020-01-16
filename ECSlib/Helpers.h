@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <cmath>
+#include <string>
 
 inline Rectangle operator+(Rectangle &a, Rectangle b)
 {
@@ -219,14 +220,14 @@ struct Shape
 				DrawCircle(circle.center.x, circle.center.y, circle.radius, Fade(BLUE, 0.3f));
 				break;
 		case RECTANGLE:
-				DrawRectanglePro(Rectangle{ rectangle.x, rectangle.y, rectangle.width, rectangle.height }, Vector2{ 0, 0 }, rotation * (180.0 / 3.141592653589793238463), Fade(RED, 0.3f));
+				DrawRectanglePro(Rectangle{ rectangle.x, rectangle.y, rectangle.width, rectangle.height }, Vector2{ 0, 0 }, rotation * (180.0 / 3.141592653589793238463), Fade(BLUE, 0.3f));
 				DrawCircle(rectangle.x, rectangle.y, 10, BLACK);
 				break;
 		case TRIANGLE:
 				//DrawTriangle(shape.triangle.a, shape.triangle.b, shape.triangle.c, shape.color);
 				break;
 		case POLYGON:
-				DrawPoly(poly.center, poly.sides, poly.radius, rotation, RED);
+				DrawPoly(poly.center, poly.sides, poly.radius, rotation, BLUE);
 				break;
 		default:
 			break;
@@ -367,3 +368,9 @@ struct ShapeContainer
         }
     }
 };
+
+inline bool operator < (const char* c, const std::string& str){
+	return str.find(c) != std::string::npos;
+}
+
+#define _in <
