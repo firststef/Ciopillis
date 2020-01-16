@@ -62,6 +62,12 @@ public:
         return *static_cast<T*>(ptr);
     }
 
+	template<typename T>
+	T* GetPtr() const
+	{
+		return static_cast<T*>(componentArray[GetComponentTypeID<T>()]);
+	}
+
     template <typename T, typename... TArgs>
     T& Replace(TArgs&&... mArgs)
     {
