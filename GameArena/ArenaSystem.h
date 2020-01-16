@@ -466,6 +466,32 @@ class ArenaSystem : public ISystem
 		e_attack_x_cont.Update();
 		auto& enemy_box = arena.enemy.ptr->Add<HitBoxComponent>(e_containers, Vector2{ arena.enemy.ptr->Get<TransformComponent>().position.x , arena.enemy.ptr->Get<TransformComponent>().position.y });
 
+		// Target Enemy
+		arena.enemy.target = pool->AddEntity();
+
+		arena.enemy.target->Add<TransformComponent>(Rectangle{OUT_OF_BOUNDS_X, OUT_OF_BOUNDS_Y, TARGET_WIDTH, TARGET_HEIGHT});
+		arena.enemy.target->Add<SpriteComponent>(std::string("EnemyTarget"), textureManager->Load(target_path), Color(BLUE), Rectangle{ 0, 0, TARGET_SPRITE_WIDTH, TARGET_SPRITE_HEIGHT });
+
+		Shape targetPEnemy("targetPEnemy", Shape::ShapeType::RECTANGLE);
+		targetPEnemy.rectangle.x = arena.enemy.target->Get<TransformComponent>().position.x + arena.enemy.target->Get<TransformComponent>().position.width / 2 + 25;
+		targetPEnemy.rectangle.y = arena.enemy.target->Get<TransformComponent>().position.y + arena.enemy.target->Get<TransformComponent>().position.height / 2 + 25;
+		targetPEnemy.rectangle.width = TARGET_WIDTH - 50;
+		targetPEnemy.rectangle.height = TARGET_HEIGHT - 50;
+
+		ShapeContainer targetPEnemyCont("explode", targetPEnemy, Vector2{ 0, 0 });
+		targetPEnemyCont.Update();
+		
+		std::vector<ShapeContainer> etargetvec = { targetPEnemyCont };
+		
+		auto& e_tbox = arena.enemy.target->Add<HitBoxComponent>(etargetvec, 
+			Vector2{
+				arena.enemy.target->Get<TransformComponent>().position.x + (arena.enemy.target->Get<TransformComponent>().position.width / 2),
+				arena.enemy.target->Get<TransformComponent>().position.y + (arena.enemy.target->Get<TransformComponent>().position.height / 2)
+			});
+		e_tbox.current_container = nullptr;
+
+		arena.generatedEntities.push_back(arena.enemy.target);
+
 		//Enemy Stats
 		arena.enemy.ptr->Add<CharacterStatsComponent>(BASE_HP, BASE_VELOCITY);
 
