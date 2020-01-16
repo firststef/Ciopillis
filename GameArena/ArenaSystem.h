@@ -589,7 +589,6 @@ public:
 	        {
 		        for (auto& p : event.packets)
 		        {
-			        printf("p: %s\n", &p[0]);
 
 					nlohmann::json j = nlohmann::json::parse(&p[0], nullptr, false);
 		        	if (j.is_discarded())

@@ -222,8 +222,7 @@ void INetworkSystem::send_packets(std::vector<Packet> packets)
             if (write(client_sockets[i]->cl, &packets[i][0], packets[i].size() + 1) <= 0) {
                 perror("Error in write(). Quitting.\n");
                 signal_access(WRITE_TYPE, true);
-            } else
-                printf("Message sent.\n");
+            }
 #endif
         }
     }
@@ -247,8 +246,7 @@ void INetworkSystem::send_packets(std::vector<Packet> packets)
         if (write(sd, &packets[0][0], packets[0].size() + 1) <= 0) {
             perror("Error in write(). Quitting.\n");
             signal_access(WRITE_TYPE, true);
-        } else
-            printf("Message sent.\n");
+        }
 #endif
     }
 }
