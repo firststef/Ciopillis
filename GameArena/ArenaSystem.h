@@ -3,6 +3,7 @@
 #include "System.h"
 #include "ArenaGameComponent.h"
 #include "ArenaPlayerComponent.h"
+#include "ArenaEnemyComponent.h"
 #include "Constants.h"
 #include "NetworkEvent.h"
 #include <iostream>
@@ -273,9 +274,10 @@ class ArenaSystem : public ISystem
 		arena.generatedEntities.push_back(arena.player.ptr);
 
 		//Enemy Setup
-		Rectangle enemy_rec{ SCREEN_WIDTH - ARENA_BORDER - CHARACTER_WIDTH,SCREEN_HEIGHT / 2 - CHARACTER_HEIGHT / 2,CHARACTER_PLACEHOLDER_WIDTH,CHARACTER_PLACEHOLDER_HEIGHT };
-
 		arena.enemy.ptr = pool->AddEntity();
+		arena.enemy.ptr->Add<ArenaEnemyComponent>(e);
+
+		Rectangle enemy_rec{ SCREEN_WIDTH - ARENA_BORDER - CHARACTER_WIDTH,SCREEN_HEIGHT / 2 - CHARACTER_HEIGHT / 2,CHARACTER_PLACEHOLDER_WIDTH,CHARACTER_PLACEHOLDER_HEIGHT };
 		arena.enemy.ptr->Add<TransformComponent>(enemy_rec);
 		arena.enemy.ptr->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load(sprite_path), Color(BLUE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
 
@@ -553,11 +555,20 @@ public:
     	
 		for (auto& te : event.triggered_entities) {
 
-			if (!te.entity->Has<ArenaPlayerComponent>())
+			if (!te.entity->Has<ArenaPlayerComponent>() && !te.entity->Has<ArenaEnemyComponent>())
 				continue;
 
-			auto& apc = te.entity->Get<ArenaPlayerComponent>();
-			auto& arena = apc.arena->Get<ArenaGameComponent>();
+			//auto& apc = te.entity->Get<ArenaPlayerComponent>();
+			ArenaGameComponent* arenaPtr;
+			if (te.entity->Has<ArenaPlayerComponent>())
+			{
+				arenaPtr = te.entity->Get<ArenaPlayerComponent>().arena->GetPtr<ArenaGameComponent>();
+			}
+			else
+			{
+				arenaPtr = te.entity->Get<ArenaEnemyComponent>().arena->GetPtr<ArenaGameComponent>();
+			}
+			auto& arena = *arenaPtr;
 			auto& comp = arena.player.ptr->Get<PhysicsComponent>();
 			auto& box = arena.player.ptr->Get<HitBoxComponent>();
 			auto& stats = arena.player.ptr->Get<CharacterStatsComponent>();
@@ -573,6 +584,7 @@ public:
 			const float hY = ((std::find(te.heldKeys.begin(), te.heldKeys.end(), KEY_DOWN) != te.heldKeys.end())
 				- (std::find(te.heldKeys.begin(), te.heldKeys.end(), KEY_UP) != te.heldKeys.end()));
 
+			//Dash
 			const auto t = time(nullptr);
 
 			if (arena.player.dashState == ArenaGameComponent::INITIAL && x != 0)
@@ -663,7 +675,7 @@ public:
 					transt.position.x = e_rec.x - transt.position.width / 2 + e_rec.width / 2;
 					transt.position.y = e_rec.y - transt.position.height / 2 + e_rec.height / 2;
 
-					auto cptr = new void*[2]{ apc.arena.get(), eventManager };
+					auto cptr = new void*[2]{ arenaPtr, eventManager };
 
 					std::function<void(void*)> trigger_target = [](void* context)->void
 					{
@@ -778,152 +790,22 @@ public:
 		        	
 					auto pressedKeys = j.at("pressed_keys").get<std::vector<int>>();
 					auto heldKeys = j.at("held_keys").get<std::vector<int>>();
+					decltype(heldKeys) releasedKeys;
 
 					for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>())) {
 
-						auto& arena =e->Get<ArenaGameComponent>();
-						auto& comp = arena.enemy.ptr->Get<PhysicsComponent>();
-						auto& box = arena.enemy.ptr->Get<HitBoxComponent>();
-						auto& stats = arena.enemy.ptr->Get<CharacterStatsComponent>();
-
-						//Move
-						const float x = ((std::find(pressedKeys.begin(), pressedKeys.end(), KEY_RIGHT) != pressedKeys.end())
-							- (std::find(pressedKeys.begin(), pressedKeys.end(), KEY_LEFT) != pressedKeys.end()));
-						const float y = ((std::find(pressedKeys.begin(), pressedKeys.end(), KEY_DOWN) != pressedKeys.end())
-							- (std::find(pressedKeys.begin(), pressedKeys.end(), KEY_UP) != pressedKeys.end()));
-
-						const float hX = ((std::find(heldKeys.begin(), heldKeys.end(), KEY_RIGHT) != heldKeys.end())
-							- (std::find(heldKeys.begin(), heldKeys.end(), KEY_LEFT) != heldKeys.end()));
-						const float hY = ((std::find(heldKeys.begin(), heldKeys.end(), KEY_DOWN) != heldKeys.end())
-							- (std::find(heldKeys.begin(), heldKeys.end(), KEY_UP) != heldKeys.end()));
-
-						const auto t = time(nullptr);
-
-						if (arena.enemy.dashState == ArenaGameComponent::INITIAL && x != 0)
-						{
-							arena.enemy.dashOrientation = x;
-							arena.enemy.dashCounter = t;
-							arena.enemy.dashState = ArenaGameComponent::NOT_READY;
-						}
-						else if (arena.enemy.dashState == ArenaGameComponent::NOT_READY)
-						{
-							if (difftime(t, arena.enemy.dashCounter) > DASH_INTERVAL || (arena.enemy.dashOrientation != x && x != 0))
-							{
-								arena.enemy.dashState = ArenaGameComponent::INITIAL;
+						auto& arena = e->Get<ArenaGameComponent>();
+						
+						std::vector<KeyboardEvent::TriggeredEntity> triggered_entities{
+							KeyboardEvent::TriggeredEntity{
+								arena.enemy.ptr,
+								pressedKeys,
+								heldKeys,
+								releasedKeys
 							}
-							else if (x == 0)
-							{
-								arena.enemy.dashState = ArenaGameComponent::READY;
-							}
-						}
-						else if (arena.enemy.dashState == ArenaGameComponent::READY)
-						{
-							if (difftime(t, arena.enemy.dashCounter) < DASH_INTERVAL) {
-								if (x != 0 && x == arena.enemy.dashOrientation)
-								{
-									arena.enemy.dashState = ArenaGameComponent::DASHED;
-									stats.agility = BOOST_VELOCITY;
-								}
-							}
-							else
-							{
-								arena.enemy.dashState = ArenaGameComponent::INITIAL;
-							}
-						}
-						else if (arena.enemy.dashState == ArenaGameComponent::DASHED)
-						{
-							if (x == 0)
-							{
-								arena.enemy.dashState = ArenaGameComponent::INITIAL;
-							}
-							else
-							{
-								arena.enemy.dashState = ArenaGameComponent::NOT_READY;
-								arena.enemy.dashOrientation = x;
-							}
-						}
-
-						stats.agility *= 0.85;
-						stats.agility = stats.agility > stats.base_agility ? stats.agility : stats.base_agility;
-
-						Vector2 axes{ -x + -hX, y + hY };
-
-						arena.enemy.lastAxes = { axes.x != 0 ? axes.x : arena.enemy.lastAxes.x, axes.y != 0 ? axes.y : arena.enemy.lastAxes.y };
-						*arena.enemy.orientation = arena.enemy.lastAxes.x > 0;
-
-						box.Mirror(Vector2{ float(*arena.enemy.orientation), 0 });
-						box.Update();
-
-						if (arena.enemy.blockInput)
-							continue;
-
-						//Action
-						if (std::find(pressedKeys.begin(), pressedKeys.end(), KEY_X) != pressedKeys.end())
-						{
-							arena.enemy.currentAction = ArenaGameComponent::ATTACK_X;
-							arena.enemy.blockInput = true;
-							comp.body->velocity = { 0,0 };
-						}
-						else if (std::find(pressedKeys.begin(), pressedKeys.end(), KEY_Z) != pressedKeys.end())
-						{
-							arena.enemy.currentAction = ArenaGameComponent::ATTACK_Z;
-							arena.enemy.blockInput = true;
-							comp.body->velocity = { 0,0 };
-
-							//Enable target
-							if (!arena.enemy.targetActive)
-							{
-								auto& transt = arena.enemy.target->Get<TransformComponent>();
-
-								const auto e_rec = arena.player.ptr->Get<TransformComponent>().position;
-
-								transt.position.x = e_rec.x - transt.position.width / 2 + e_rec.width / 2;
-								transt.position.y = e_rec.y - transt.position.height / 2 + e_rec.height / 2;
-
-								auto cptr = new void*[2]{ e.get(), eventManager };
-
-								std::function<void(void*)> trigger_target = [](void* context)->void
-								{
-									auto& ar = *static_cast<Entity*>(reinterpret_cast<void**>(context)[0])->GetPtr<ArenaGameComponent>();
-									auto& boxt = ar.enemy.target->Get<HitBoxComponent>();
-									boxt.current_container = &boxt.containers[0];
-									boxt.current_container->Update();
-
-									std::function<void(void*)> move_target = [](void* ctx)->void
-									{
-										auto& a = *static_cast<Entity*>(reinterpret_cast<void**>(ctx)[0])->GetPtr<ArenaGameComponent>();
-										auto& t = a.enemy.target->Get<TransformComponent>();
-										auto& boxt2 = a.enemy.target->Get<HitBoxComponent>();
-										boxt2.current_container = &boxt2.containers[0];
-										boxt2.current_container->Update();
-
-										boxt2.current_container = nullptr;
-										t.position.x = OUT_OF_BOUNDS_X;
-										t.position.y = OUT_OF_BOUNDS_Y;
-										a.enemy.targetActive = false;
-
-										delete[] reinterpret_cast<void**>(ctx);
-									};
-
-									static_cast<EventManager*>(reinterpret_cast<void**>(context)[1])->Notify<DefferEvent>(1000, move_target, context);
-								};
-
-								eventManager->Notify<DefferEvent>(1000, trigger_target, cptr);
-
-								arena.enemy.targetActive = true;
-							}
-						}
-						else {
-
-							comp.body->velocity = { axes.x * BASE_VELOCITY , axes.y * BASE_VELOCITY };
-
-							if (axes == Vector2{ 0, 0 }) {
-								arena.enemy.currentAction = ArenaGameComponent::IDLE;
-							}
-							else {
-								arena.enemy.currentAction = ArenaGameComponent::MOVE;
-							}
-						}
+						};
+						
+						eventManager->Notify<KeyboardEvent>(triggered_entities);
 					}
 		        }
 	        }
