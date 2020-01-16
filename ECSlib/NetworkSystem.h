@@ -93,11 +93,17 @@ public:
 
 	NetworkSystem(std::vector<std::shared_ptr<ClientSocket>> client_sockets = {})
 		: INetworkSystem("NetworkSystem",client_sockets)
-	{}
+	{
+	}
 
 	NetworkSystem(std::string server_address, int port)
 		: INetworkSystem("NetworkSystem", server_address, port)
-	{}
+	{
+		std::vector<char> ab;
+		ab.push_back('a');
+		ab.push_back('b');
+		send_queue.push(ab);
+	}
 
 	FixedQueue<Packet, 40> receive_queue;
 	FixedQueue<Packet, 40> send_queue;

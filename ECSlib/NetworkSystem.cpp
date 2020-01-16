@@ -9,6 +9,8 @@
 #include <cstring>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <fcntl.h>
 #endif
 
 struct ClientSocket
@@ -111,6 +113,9 @@ void INetworkSystem::Initialize()
 			signal_access(WRITE_TYPE, true);
 			return;
 		}
+
+		int flags = fcntl(sd, F_GETFL);
+		fcntl(sd, F_SETFL, flags | O_NONBLOCK);
 #endif
 	}
 
@@ -135,38 +140,53 @@ std::vector<Packet> INetworkSystem::gather_packets()
 {
     std::vector<Packet> packets;
     if (type == SERVER) {
+		int got_one;
 
-        for (auto &client : client_sockets) {
-            char buffer[4096];
+		do {
+			got_one = false;
 
-            int bytesReceived;
+			for (auto &client : client_sockets) {
+				char buffer[4096];
+
+				int bytesReceived;
 #ifdef WIN32
-            ZeroMemory(buffer, 4096);
+				ZeroMemory(buffer, 4096);
 
-            // Wait for client to send data
-            bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
-            if (bytesReceived <= 0 )
-            {
-                std::cout << "Error in recv(). Quitting" << std::endl;
-				signal_access(WRITE_TYPE, true);
-                break;
-            }
+				// Wait for client to send data
+				bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
+				if (bytesReceived <= 0 )
+				{
+					std::cout << "Error in recv(). Quitting" << std::endl;
+					signal_access(WRITE_TYPE, true);
+					break;
+				}
 
 #elif __linux__
-            bytesReceived = read(client->cl, buffer, 4096);
+				bytesReceived = read(client->cl, buffer, 4096);
 
-            if (bytesReceived <= 0) {
-                perror("Error in read(). Quitting.\n");
-                signal_access(WRITE_TYPE, true);
-            }
+				if (bytesReceived <= 0) {
+					if (errno != EWOULDBLOCK){
+						perror("Error in read(). Quitting.\n");
+						signal_access(WRITE_TYPE, true);
+						return packets;
+					}
+					else {
+						continue;
+					}
+				}
+
 #endif
-            if (signal_access(READ_TYPE, false))
-                break;
+				if (signal_access(READ_TYPE, false))
+					break;
 
-            std::vector<char> packet;
-            packet.insert(packet.begin(), buffer, buffer + bytesReceived);
-            packets.push_back(packet);
-        }
+				got_one = true;
+
+				std::vector<char> packet;
+				packet.insert(packet.begin(), buffer, buffer + bytesReceived);
+				packets.push_back(packet);
+			}
+		} while(got_one == true);
+
     }
     else {
         char buffer[4096];
@@ -186,9 +206,11 @@ std::vector<Packet> INetworkSystem::gather_packets()
         bytesReceived = read(sd, buffer, 4096);
 
         if (bytesReceived <= 0) {
-            perror("Error in read(). Quitting.\n");
-            signal_access(WRITE_TYPE, true);
-
+			if (errno != EWOULDBLOCK){
+				perror("Error in read(). Quitting.\n");
+				signal_access(WRITE_TYPE, true);
+				return packets;
+			}
 			return packets;
         }
 #endif
@@ -223,31 +245,29 @@ void INetworkSystem::send_packets(std::vector<Packet> packets)
                 perror("Error in write(). Quitting.\n");
                 signal_access(WRITE_TYPE, true);
             }
+			printf("[Server] Sent message\n");
 #endif
         }
     }
     else {
-		if (packets.empty())
-			packets.resize(1);
-		for (auto& p : packets)
-		{
-			if (p.empty())
-				p.resize(1);
-		}
-    	
+		for (auto& packet : packets){
+			if (packet.empty())
+				continue;
 #ifdef WIN32
-		int sendResult = send(socket_ptr, &packets[0][0], packets[0].size() + 1, 0);
-		if (sendResult <= 0)
-		{
-			std::cout << "Error on send(). Quitting\n" << WSAGetLastError() << "\n";
-			signal_access(WRITE_TYPE, true);
-		}
+			int sendResult = send(socket_ptr, &packet[0], packet.size() + 1, 0);
+			if (sendResult <= 0)
+			{
+				std::cout << "Error on send(). Quitting\n" << WSAGetLastError() << "\n";
+				signal_access(WRITE_TYPE, true);
+			}
 #elif __linux__
-        if (write(sd, &packets[0][0], packets[0].size() + 1) <= 0) {
-            perror("Error in write(). Quitting.\n");
-            signal_access(WRITE_TYPE, true);
-        }
+			if (write(sd, &packet[0], packet.size() + 1) <= 0) {
+				perror("Error in write(). Quitting.\n");
+				signal_access(WRITE_TYPE, true);
+			}
+			printf("[Client] Sent message\n");
 #endif
+		}
     }
 }
 
@@ -335,9 +355,6 @@ void NetworkSystem::RunMainThread()
 
             if (signal_access(READ_TYPE, false))
                 break;
-
-			if (p.empty())
-				break;
 
 	    	for(auto& pack : p)
 	    	{

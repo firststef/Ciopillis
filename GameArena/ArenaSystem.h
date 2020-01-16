@@ -586,18 +586,27 @@ public:
 
 			//auto& apc = te.entity->Get<ArenaPlayerComponent>();
 			ArenaGameComponent* arenaPtr;
+			bool isPlayer;
+			EntityPtr triggeredEntity = nullptr;
+			ArenaGameComponent::ArenaCharacterAttributes* characterAttributes = nullptr;
 			if (te.entity->Has<ArenaPlayerComponent>())
 			{
+				isPlayer = true;
 				arenaPtr = te.entity->Get<ArenaPlayerComponent>().arena->GetPtr<ArenaGameComponent>();
+				triggeredEntity = te.entity;
+				characterAttributes = &arenaPtr->player;
 			}
 			else
 			{
+				isPlayer = false;
 				arenaPtr = te.entity->Get<ArenaEnemyComponent>().arena->GetPtr<ArenaGameComponent>();
+				triggeredEntity = te.entity;
+				characterAttributes = &arenaPtr->enemy;
 			}
 			auto& arena = *arenaPtr;
-			auto& comp = arena.player.ptr->Get<PhysicsComponent>();
-			auto& box = arena.player.ptr->Get<HitBoxComponent>();
-			auto& stats = arena.player.ptr->Get<CharacterStatsComponent>();
+			auto& comp = triggeredEntity->Get<PhysicsComponent>();
+			auto& box = triggeredEntity->Get<HitBoxComponent>();
+			auto& stats = triggeredEntity->Get<CharacterStatsComponent>();
 
 			//Move
 			const float x = ((std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_RIGHT) != te.pressedKeys.end())
@@ -613,88 +622,99 @@ public:
 			//Dash
 			const auto t = time(nullptr);
 
-			if (arena.player.dashState == ArenaGameComponent::INITIAL && x != 0)
+			if (characterAttributes->dashState == ArenaGameComponent::INITIAL && x != 0)
 			{
-				arena.player.dashOrientation = x;
-				arena.player.dashCounter = t;
-				arena.player.dashState = ArenaGameComponent::NOT_READY;
+				characterAttributes->dashOrientation = x;
+				characterAttributes->dashCounter = t;
+				characterAttributes->dashState = ArenaGameComponent::NOT_READY;
 			}
-			else if (arena.player.dashState == ArenaGameComponent::NOT_READY)
+			else if (characterAttributes->dashState == ArenaGameComponent::NOT_READY)
 			{
-				if (difftime(t, arena.player.dashCounter) > DASH_INTERVAL || (arena.player.dashOrientation != x && x != 0))
+				if (difftime(t, characterAttributes->dashCounter) > DASH_INTERVAL || (characterAttributes->dashOrientation != x && x != 0))
 				{
-					arena.player.dashState = ArenaGameComponent::INITIAL;
+					characterAttributes->dashState = ArenaGameComponent::INITIAL;
 				}
 				else if (x == 0)
 				{
-					arena.player.dashState = ArenaGameComponent::READY;
+					characterAttributes->dashState = ArenaGameComponent::READY;
 				}
 			}
-			else if (arena.player.dashState == ArenaGameComponent::READY)
+			else if (characterAttributes->dashState == ArenaGameComponent::READY)
 			{
-				if (difftime(t, arena.player.dashCounter) < DASH_INTERVAL) {
-					if (x != 0 && x == arena.player.dashOrientation)
+				if (difftime(t, characterAttributes->dashCounter) < DASH_INTERVAL) {
+					if (x != 0 && x == characterAttributes->dashOrientation)
 					{
-						arena.player.dashState = ArenaGameComponent::DASHED;
+						characterAttributes->dashState = ArenaGameComponent::DASHED;
 						stats.agility = BOOST_VELOCITY;
 					}
 				}
 				else
 				{
-					arena.player.dashState = ArenaGameComponent::INITIAL;
+					characterAttributes->dashState = ArenaGameComponent::INITIAL;
 				}
 			}
-			else if (arena.player.dashState == ArenaGameComponent::DASHED)
+			else if (characterAttributes->dashState == ArenaGameComponent::DASHED)
 			{
 				if (x == 0)
 				{
-					arena.player.dashState = ArenaGameComponent::INITIAL;
+					characterAttributes->dashState = ArenaGameComponent::INITIAL;
 				}
 				else
 				{
-					arena.player.dashState = ArenaGameComponent::NOT_READY;
-					arena.player.dashOrientation = x;
+					characterAttributes->dashState = ArenaGameComponent::NOT_READY;
+					characterAttributes->dashOrientation = x;
 				}
 			}
 
 			stats.agility *= 0.85;
 			stats.agility = stats.agility > stats.base_agility ? stats.agility : stats.base_agility;
 
-			Vector2 axes{ x + hX, y + hY };
+			Vector2 axes;
+			if (isPlayer)
+			{
+				axes = Vector2{ x + hX, y + hY };
+			}
+			else
+			{
+				axes = Vector2{ x - hX, y + hY };
+			}
 
-			arena.player.lastAxes = { axes.x != 0 ? axes.x : arena.player.lastAxes.x, axes.y != 0 ? axes.y : arena.player.lastAxes.y };
-			*arena.player.orientation = arena.player.lastAxes.x > 0;
+			characterAttributes->lastAxes = { axes.x != 0 ? axes.x : characterAttributes->lastAxes.x, axes.y != 0 ? axes.y : characterAttributes->lastAxes.y };
+			*characterAttributes->orientation = characterAttributes->lastAxes.x > 0;
 
-			box.Mirror(Vector2{ float(*arena.player.orientation), 0 });
+			box.Mirror(Vector2{ float(*characterAttributes->orientation), 0 });
 			box.Update();
 
-			eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
-					{"head", "player_keyboard_event"},
-					{"pressed_keys", te.pressedKeys},
-					{"held_keys", te.heldKeys}
-				}
-			);
+			if (isPlayer)
+			{
+				eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
+						{"head", "player_keyboard_event"},
+						{"pressed_keys", te.pressedKeys},
+						{"held_keys", te.heldKeys}
+					}
+				);
+			}
 
-			if (arena.player.blockInput)
+			if (characterAttributes->blockInput)
 				continue;
 
 			//Action
 			if (std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_X) != te.pressedKeys.end())
 			{
-				arena.player.currentAction = ArenaGameComponent::ATTACK_X;
-				arena.player.blockInput = true;
+				characterAttributes->currentAction = ArenaGameComponent::ATTACK_X;
+				characterAttributes->blockInput = true;
 				comp.body->velocity = { 0,0 };
 			}
 			else if (std::find(te.pressedKeys.begin(), te.pressedKeys.end(), KEY_Z) != te.pressedKeys.end())
 			{
-				arena.player.currentAction = ArenaGameComponent::ATTACK_Z;
-				arena.player.blockInput = true;
+				characterAttributes->currentAction = ArenaGameComponent::ATTACK_Z;
+				characterAttributes->blockInput = true;
 				comp.body->velocity = { 0,0 };
 
 				//Enable target
-				if (! arena.player.targetActive)
+				if (! characterAttributes->targetActive)
 				{
-					auto& transt = arena.player.target->Get<TransformComponent>();
+					auto& transt = characterAttributes->target->Get<TransformComponent>();
 
 					const auto e_rec = arena.enemy.ptr->Get<TransformComponent>().position;
 
@@ -714,7 +734,7 @@ public:
 						{
 							auto& a = *static_cast<Entity*>(reinterpret_cast<void**>(ctx)[0])->GetPtr<ArenaGameComponent>();
 							auto& t = a.player.target->Get<TransformComponent>();
-							auto& boxt2 = a.player.target->Get<HitBoxComponent>();
+							auto& boxt2 = a.player.target->Get<HitBoxComponent>();//TODO schimbat
 							boxt2.current_container = &boxt2.containers[0];
 							boxt2.current_container->Update();
 							
@@ -731,7 +751,7 @@ public:
 
 					eventManager->Notify<DefferEvent>(1000, trigger_target, cptr);
 
-					arena.player.targetActive = true;
+					characterAttributes->targetActive = true;
 				}
 			}
 			else {
@@ -739,10 +759,10 @@ public:
 				comp.body->velocity = { axes.x * stats.agility , axes.y * stats.agility };
 
 				if (axes == Vector2{ 0, 0 }) {
-					arena.player.currentAction = ArenaGameComponent::IDLE;
+					characterAttributes->currentAction = ArenaGameComponent::IDLE;
 				}
 				else {
-					arena.player.currentAction = ArenaGameComponent::MOVE;
+					characterAttributes->currentAction = ArenaGameComponent::MOVE;
 				}
 			}
 		}
@@ -807,6 +827,11 @@ public:
         {
 	        if (event.type == NetworkEvent::RECEIVE)
 	        {
+				for (int i = 0; i < event.packets.size(); i++)
+				{
+					printf("%d: %s\n", i, event.packets[i].data());
+				}
+
 		        for (auto& p : event.packets)
 		        {
 
@@ -826,8 +851,8 @@ public:
 							KeyboardEvent::TriggeredEntity{
 								arena.enemy.ptr,
 								pressedKeys,
-								heldKeys,
-								releasedKeys
+								releasedKeys,
+								heldKeys
 							}
 						};
 						
