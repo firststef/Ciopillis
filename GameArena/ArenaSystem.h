@@ -872,10 +872,10 @@ public:
 			if (connected_with_server)
 			{
 
-				for (unsigned i = 0; i < event.packets.size(); i++)
+				/*for (unsigned i = 0; i < event.packets.size(); i++)
 				{
 					printf("%d: %s\n", i, event.packets[i].data());
-				}
+				}*/
 
 				for (auto& p : event.packets)
 				{
