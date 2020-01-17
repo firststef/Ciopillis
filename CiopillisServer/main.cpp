@@ -18,14 +18,34 @@ void* RunGame(void* param)
     delete param;
 #endif
 	//Initialization
+	InitWindow(200, 100, windowTitle);
 	SetTargetFPS(60);
 
 	ECSManager manager;
 
+	auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem::SERVER);
+	auto drawSystem = std::make_shared<DrawSystem>();
+	auto physicsSystem = std::make_shared <PhysicsSystem>();
+	auto animationSystem = std::make_shared <AnimationSystem>();
+	auto hitBoxSystem = std::make_shared<HitBoxSystem>();
 	auto networkSystem = std::make_shared<GameRoomServerSystem>(clients);
 
+	manager.systemManager.AddSystem(drawSystem);
+	manager.systemManager.AddSystem(arenaSystem);
+	manager.systemManager.AddSystem(physicsSystem);
+	manager.systemManager.AddSystem(animationSystem);
+	manager.systemManager.AddSystem(hitBoxSystem);
 	manager.systemManager.AddSystem(networkSystem);
 
+	auto game(manager.pool.AddEntity());
+	game->Add<ArenaGameComponent>();
+
+	manager.eventManager.Subscribe<KeyboardEvent>(arenaSystem);
+	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
+	manager.eventManager.Subscribe<AnimationEvent>(arenaSystem);
+	manager.eventManager.Subscribe<NetworkEvent>(networkSystem);
+	manager.eventManager.Subscribe<NetworkEvent>(arenaSystem);
+	
 	manager.Initialize();
 
 	while (! g.close_server)

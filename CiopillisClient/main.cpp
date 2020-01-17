@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
 	ECSManager manager;
 
-	auto arenaSystem = std::make_shared<ArenaSystem>();
+	auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem::CLIENT);
 	auto drawSystem = std::make_shared<DrawSystem>();
 	auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>();
 	auto physicsSystem = std::make_shared <PhysicsSystem>();

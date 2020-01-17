@@ -107,7 +107,6 @@ public:
 
 	FixedQueue<Packet, 40> receive_queue;
 	FixedQueue<Packet, 40> send_queue;
-	bool changed = false;
 
 	void RunMainThread() override;
 

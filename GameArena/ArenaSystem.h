@@ -539,21 +539,42 @@ class ArenaSystem : public ISystem
             //INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
         }
 
-		for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
-		{
-			auto& arena = e->Get<ArenaGameComponent>();
-			auto& transp = arena.player.ptr->Get<TransformComponent>();
-			auto& physicp = arena.player.ptr->Get<PhysicsComponent>();
-			
-			eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
-					{"head", "player_coordinates"},
-					{"x", physicp.body->position.x},
-					{"y", physicp.body->position.y},
-					{"vx", physicp.body->velocity.x},
-					{"vy", physicp.body->velocity.y},
-					{"current_action", int(arena.player.currentAction)},
-					{"orientation", *arena.player.orientation}
-				});
+		if (type == SERVER) {
+			for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+			{
+				auto& arena = e->Get<ArenaGameComponent>();
+				auto& transp = arena.player.ptr->Get<TransformComponent>();
+				auto& physicp = arena.player.ptr->Get<PhysicsComponent>();
+
+				eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
+						{"head", "player_coordinates"},
+						{"x", physicp.body->position.x},
+						{"y", physicp.body->position.y},
+						{"vx", physicp.body->velocity.x},
+						{"vy", physicp.body->velocity.y},
+						{"current_action", int(arena.player.currentAction)},
+						{"orientation", *arena.player.orientation},
+						{"player", 0}
+					});
+			}
+
+			for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+			{
+				auto& arena = e->Get<ArenaGameComponent>();
+				auto& transp = arena.enemy.ptr->Get<TransformComponent>();
+				auto& physicp = arena.enemy.ptr->Get<PhysicsComponent>();
+
+				eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
+						{"head", "player_coordinates"},
+						{"x", SCREEN_WIDTH - physicp.body->position.x},
+						{"y", physicp.body->position.y},
+						{"vx", - physicp.body->velocity.x},
+						{"vy", physicp.body->velocity.y},
+						{"current_action", int(arena.enemy.currentAction)},
+						{"orientation", !*arena.enemy.orientation},
+						{"enemy", 0}
+					});
+			}
 		}
     }
 
@@ -565,7 +586,15 @@ class ArenaSystem : public ISystem
     }
 
 public:
-    ArenaSystem() : ISystem(std::string("ArenaSystem")) {}
+	enum Type {
+		SERVER,
+		CLIENT,
+		TESTER
+	} type;
+	
+    ArenaSystem(Type type) : ISystem(std::string("ArenaSystem")), type(type)
+    {
+    }
 
     void Initialize() override {}
 
@@ -600,7 +629,6 @@ public:
 			if (!te.entity->Has<ArenaPlayerComponent>() && !te.entity->Has<ArenaEnemyComponent>())
 				continue;
 
-			//auto& apc = te.entity->Get<ArenaPlayerComponent>();
 			ArenaGameComponent* arenaPtr;
 			bool isPlayer;
 			EntityPtr triggeredEntity = nullptr;
@@ -701,7 +729,7 @@ public:
 			box.Mirror(Vector2{ float(*characterAttributes->orientation), 0 });
 			box.Update();
 
-			if (isPlayer)
+			if (type == CLIENT && isPlayer)
 			{
 				eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
 						{"head", "player_keyboard_event"},
@@ -839,28 +867,36 @@ public:
 
 	void Receive(const NetworkEvent& event)
     {
-		if (event.type == NetworkEvent::RECEIVE)
+		if (type == CLIENT && event.type == NetworkEvent::RECEIVE)
 		{
 			if (connected_with_server)
 			{
 
-				for (unsigned i = 0; i < event.packets.size(); i++)
-				{
-					printf("%d: %s\n", i, event.packets[i].data());
-				}
+				//for (unsigned i = 0; i < event.packets.size(); i++)
+				//{
+				//	printf("%d: %s\n", i, event.packets[i].data());
+				//}
 
 				for (auto& p : event.packets)
 				{
 					if (p.empty())
 						continue;
 
-					nlohmann::json j = nlohmann::json::parse(&p[0], nullptr, false);
+					std::string jstr(&p[0], p.size() + 1);
+					if (jstr.find('}') != std::string::npos)
+						jstr[jstr.find('}') + 1] = '\0';
+					nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
 					if (j.is_discarded())
+					{
+						printf("Malformed packet%d\n", __LINE__);
 						continue;
+					}
 
 					auto head = j.at("head").get<std::string>();
 					if (head == "player_coordinates")
 					{
+						printf("Received json %s\n", jstr.c_str());
+						
 						auto x = j.at("x").get<float>();
 						auto y = j.at("y").get<float>();
 						auto vx = j.at("vx").get<float>();
@@ -868,29 +904,97 @@ public:
 						auto current_action = j.at("current_action").get<int>();
 						auto orientation = j.at("orientation").get<bool>();
 
-						for (auto& a : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+						if (j.find("player") != j.end()) {
+
+							for (auto& a : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+							{
+								auto& arena = a->Get<ArenaGameComponent>();
+								auto& phys_e = arena.player.ptr->Get<PhysicsComponent>();
+
+								phys_e.body->position.x = x;
+								phys_e.body->position.y = y;
+								phys_e.body->velocity.x = vx;
+								phys_e.body->velocity.y = vy;
+
+								arena.player.currentAction = ArenaGameComponent::CurrentAction(current_action);
+								*arena.player.orientation = orientation;
+							}
+						}
+						else if (j.find("enemy") != j.end())
 						{
-							auto& arena = a->Get<ArenaGameComponent>();
-							auto& phys_e = arena.enemy.ptr->Get<PhysicsComponent>();
+							for (auto& a : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+							{
+								auto& arena = a->Get<ArenaGameComponent>();
+								auto& phys_e = arena.enemy.ptr->Get<PhysicsComponent>();
 
-							//phys_e.body->position.x = SCREEN_WIDTH - x;
-							//phys_e.body->position.y = y;
-							//phys_e.body->velocity.x = -vx;
-							//phys_e.body->velocity.y = vy;
+								phys_e.body->position.x = SCREEN_WIDTH - x;
+								phys_e.body->position.y = y;
+								phys_e.body->velocity.x = - vx;
+								phys_e.body->velocity.y = vy;
 
-							//arena.enemy.currentAction = ArenaGameComponent::CurrentAction(current_action);
-							//*arena.enemy.orientation = !orientation;
+								arena.enemy.currentAction = ArenaGameComponent::CurrentAction(current_action);
+								*arena.enemy.orientation = !orientation;
+							}
 						}
 					}
-					else if (head == "player_keyboard_event") {
-						auto pressedKeys = j.at("pressed_keys").get<std::vector<int>>();
-						auto heldKeys = j.at("held_keys").get<std::vector<int>>();
-						decltype(heldKeys) releasedKeys;
+				}
+			}
+			else
+			{
+				printf("Started game\n");
+				
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "KeyboardInputSystem");
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "PhysicsSystem");
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "AnimationSystem");
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "HitBoxSystem");
 
-						for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>())) {
+				connected_with_server = true;
+			}
+		}
+		else if (type == SERVER && event.type == NetworkEvent::RECEIVE){
+			/*for (unsigned i = 0; i < event.packets.size(); i++)
+			{
+				printf("%d: %s\n", i, event.packets[i].data());
+			}*/
 
-							auto& arena = e->Get<ArenaGameComponent>();
+			for (auto& p : event.packets)
+			{
+				if (p.empty())
+					continue;
 
+				std::string jstr(&p[0], p.size() + 1);
+				if (jstr.find('}') != std::string::npos)
+					jstr[jstr.find('}') + 1] = '\0';
+				nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
+				if (j.is_discarded())
+				{
+					printf("Malformed packet%d\n", __LINE__);
+					continue;
+				}
+
+				auto head = j.at("head").get<std::string>();
+				if (head == "player_keyboard_event") {
+					auto pressedKeys = j.at("pressed_keys").get<std::vector<int>>();
+					auto heldKeys = j.at("held_keys").get<std::vector<int>>();
+					decltype(heldKeys) releasedKeys;
+
+					for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>())) {
+
+						auto& arena = e->Get<ArenaGameComponent>();
+
+						if (j.find("player") != j.end()) {
+							std::vector<KeyboardEvent::TriggeredEntity> triggered_entities{
+								KeyboardEvent::TriggeredEntity{
+									arena.player.ptr,
+									pressedKeys,
+									releasedKeys,
+									heldKeys
+								}
+							};
+							eventManager->Notify<KeyboardEvent>(triggered_entities);
+						}
+						else if (j.find("enemy") != j.end())
+						{
 							std::vector<KeyboardEvent::TriggeredEntity> triggered_entities{
 								KeyboardEvent::TriggeredEntity{
 									arena.enemy.ptr,
@@ -899,20 +1003,10 @@ public:
 									heldKeys
 								}
 							};
-
 							eventManager->Notify<KeyboardEvent>(triggered_entities);
 						}
 					}
 				}
-			}
-			else
-			{
-				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "KeyboardInputSystem");
-				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "PhysicsSystem");
-				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "AnimationSystem");
-				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "HitBoxSystem");
-
-				connected_with_server = true;
 			}
 		}
     }

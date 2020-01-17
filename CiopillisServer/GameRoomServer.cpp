@@ -1,5 +1,6 @@
 #include "GameRoomServer.h"
 #include "Constants.h"
+#include "External.h"
 #include <iostream>
 #ifdef WIN32
 #include <WS2tcpip.h>
@@ -219,14 +220,113 @@ void GameRoomServerSystem::RunMainThread()
 {
 	while (true)
 	{
-		if (signal_access(READ_TYPE, false))
-			break;
-
 		auto packets = gather_packets();
 
 		if (signal_access(READ_TYPE, false))
 			break;
-	
-		send_packets({ packets[1], packets[0] });
+
+		for (auto& pack : packets[0])
+		{
+			printf("packet from 0\n");
+			
+			if (pack.empty())
+				continue;
+
+			std::string jstr(&pack[0], pack.size() + 1);
+			jstr[pack.size() - 1] = '\0';
+			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
+			if (j.is_discarded())
+			{
+				printf("Malformed packet%d\n", __LINE__);
+				continue;
+			}
+
+			j.emplace("player", 0);
+			
+			receive_queue_access(WRITE_TYPE, &pack);
+		}
+
+		for (auto& pack : packets[1])
+		{
+			printf("packet from 1\n");
+			
+			if (pack.empty())
+				continue;
+
+			std::string jstr(&pack[0], pack.size() + 1);
+			jstr[pack.size() - 1] = '\0';
+			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
+			if (j.is_discarded())
+			{
+				printf("Malformed packet%d\n", __LINE__);
+				continue;
+			}
+
+			j.emplace("enemy", 0);
+
+			receive_queue_access(WRITE_TYPE, &pack);
+		}
+
+		auto send = send_queue_access(READ_TYPE, nullptr);
+
+		SleepFunc(9);
+
+		std::vector<Packet> packets_for_one;
+		std::vector<Packet> packets_for_two;
+		for (auto& pack : send)
+		{
+			if (pack.empty())
+				continue;
+
+			std::string jstr(&pack[0], pack.size() + 1);
+			jstr[pack.size() - 1] = '\0';
+			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
+			if (j.is_discarded())
+			{
+				printf("Malformed packet%d\n", __LINE__);
+				continue;
+			}
+
+			if (j.find("player") != j.end())
+			{
+				packets_for_one.push_back(pack);
+
+				j.erase("player");
+				j.emplace("enemy", 0);
+				auto str = j.dump();
+				Packet p;
+				p.insert(p.begin(), str.begin(), str.end());
+				packets_for_two.push_back(p);
+			}
+			else if (j.find("enemy") != j.end())
+			{
+				j.erase("enemy");
+				j.emplace("player", 0);
+				auto str = j.dump();
+				Packet p;
+				p.insert(p.begin(), str.begin(), str.end());
+				packets_for_two.push_back(p);
+				
+				packets_for_one.push_back(pack);
+			}
+		}
+
+		if (!packets_for_one.empty())
+		{
+			auto str = packets_for_one[0].data();
+			auto x = 0;
+		}
+
+		if (!packets_for_two.empty())
+		{
+			auto str = packets_for_two[0].data();
+			auto x = 0;
+		}
+		
+		send_packets({ packets_for_one, packets_for_two });
+
+		if (signal_access(READ_TYPE, false))
+			break;
 	}
+	
 }
