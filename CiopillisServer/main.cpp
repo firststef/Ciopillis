@@ -23,6 +23,7 @@ void* RunGame(void* param)
 
 	ECSManager manager;
 
+	auto defferSystem = std::make_shared<DefferSystem>();
 	auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem::SERVER);
 	auto drawSystem = std::make_shared<DrawSystem>();
 	auto physicsSystem = std::make_shared <PhysicsSystem>();
@@ -40,6 +41,7 @@ void* RunGame(void* param)
 	auto game(manager.pool.AddEntity());
 	game->Add<ArenaGameComponent>();
 
+	manager.eventManager.Subscribe<DefferEvent>(defferSystem);
 	manager.eventManager.Subscribe<KeyboardEvent>(arenaSystem);
 	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
 	manager.eventManager.Subscribe<AnimationEvent>(arenaSystem);

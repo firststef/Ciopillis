@@ -500,6 +500,12 @@ class ArenaSystem : public ISystem
 
 		arena.generatedEntities.push_back(arena.enemy.ptr);
 
+		//Waiting for server screen
+		/*auto waitingScreen(pool->AddEntity());
+		waitingScreen->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
+		waitingScreen->Add<SpriteComponent>(std::string("WaitingScreen"), textureManager->Load(background_path), WHITE);
+		arena.generatedEntities.push_back(waitingScreen);*/
+
         arena.state = ArenaGameComponent::RUNNING;
     }
 
@@ -929,6 +935,10 @@ public:
 
 								arena.player.currentAction = ArenaGameComponent::CurrentAction(current_action);
 								*arena.player.orientation = orientation;
+
+								auto& box = arena.player.ptr->Get<HitBoxComponent>();
+								box.Mirror(Vector2{ float(orientation), 0 });
+								box.Update();
 							}
 						}
 						else if (j.find("enemy") != j.end())
@@ -945,6 +955,10 @@ public:
 
 								arena.enemy.currentAction = ArenaGameComponent::CurrentAction(current_action);
 								*arena.enemy.orientation = !orientation;
+
+								auto& box = arena.enemy.ptr->Get<HitBoxComponent>();
+								box.Mirror(Vector2{ float(!orientation), 0 });
+								box.Update();
 							}
 						}
 					}

@@ -19,6 +19,7 @@ int main(int argc, char** argv)
 
 	ECSManager manager;
 
+	auto defferSystem = std::make_shared<DefferSystem>();
 	auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem::CLIENT);
 	auto drawSystem = std::make_shared<DrawSystem>();
 	auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>();
@@ -38,6 +39,7 @@ int main(int argc, char** argv)
 	auto game(manager.pool.AddEntity());
 	game->Add<ArenaGameComponent>();
 
+	manager.eventManager.Subscribe<DefferEvent>(defferSystem);
 	manager.eventManager.Subscribe<KeyboardEvent>(arenaSystem);
 	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
 	manager.eventManager.Subscribe<AnimationEvent>(arenaSystem);
