@@ -7,7 +7,7 @@ const unsigned SCREEN_HEIGHT = 900;
 
 const float BASE_HP = 100;
 const float BASE_VELOCITY = 0.3f;
-const float BOOST_VELOCITY = 5.0f;
+const float BOOST_VELOCITY = 2.0f;
 const float DASH_INTERVAL = 1.0f;
 
 const float ATTACK_X_POINTS = 1.0f;

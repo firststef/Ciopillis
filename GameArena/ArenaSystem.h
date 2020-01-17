@@ -49,7 +49,7 @@ class ArenaSystem : public ISystem
 		auto target_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "target.png").string();
 
 		auto& transform = arena.player.ptr->Add<TransformComponent>(player_rec);
-		arena.player.ptr->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(sprite_path), Color(ORANGE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
+		arena.player.ptr->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(sprite_path), Color(WHITE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
 		arena.player.ptr->Add<KeyboardInputComponent>(KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_X, KEY_Z);
 
 		auto& playerBody = arena.player.ptr->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, player_rec.x + player_rec.width / 2, player_rec.y + player_rec.height / 2, CHARACTER_WIDTH, CHARACTER_HEIGHT, 1).body;
@@ -246,7 +246,7 @@ class ArenaSystem : public ISystem
 		arena.player.target = pool->AddEntity();
 
 		arena.player.target->Add<TransformComponent>(Rectangle{OUT_OF_BOUNDS_X, OUT_OF_BOUNDS_Y, TARGET_WIDTH, TARGET_HEIGHT});
-		arena.player.target->Add<SpriteComponent>(std::string("PlayerTarget"), textureManager->Load(target_path), Color(BLUE), Rectangle{ 0, 0, TARGET_SPRITE_WIDTH, TARGET_SPRITE_HEIGHT });
+		arena.player.target->Add<SpriteComponent>(std::string("PlayerTarget"), textureManager->Load(target_path), Color(WHITE), Rectangle{ 0, 0, TARGET_SPRITE_WIDTH, TARGET_SPRITE_HEIGHT });
 
 		Shape targetPPlayer("targetPPlayer", Shape::ShapeType::RECTANGLE);
 		targetPPlayer.rectangle.x = arena.player.target->Get<TransformComponent>().position.x + arena.player.target->Get<TransformComponent>().position.width / 2 + 25;
@@ -279,7 +279,7 @@ class ArenaSystem : public ISystem
 
 		Rectangle enemy_rec{ SCREEN_WIDTH - ARENA_BORDER - CHARACTER_WIDTH,SCREEN_HEIGHT / 2 - CHARACTER_HEIGHT / 2,CHARACTER_PLACEHOLDER_WIDTH,CHARACTER_PLACEHOLDER_HEIGHT };
 		arena.enemy.ptr->Add<TransformComponent>(enemy_rec);
-		arena.enemy.ptr->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load(sprite_path), Color(BLUE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
+		arena.enemy.ptr->Add<SpriteComponent>(std::string("Enemy"), textureManager->Load(sprite_path), Color(WHITE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
 
 		auto& enemyBody = arena.enemy.ptr->Add<PhysicsComponent>(PhysicsComponent::RECTANGLE, enemy_rec.x + enemy_rec.width / 2, enemy_rec.y + enemy_rec.height / 2, CHARACTER_WIDTH, CHARACTER_HEIGHT, 1).body;
 		enemyBody->staticFriction = 0.2f;
@@ -472,7 +472,7 @@ class ArenaSystem : public ISystem
 		arena.enemy.target = pool->AddEntity();
 
 		arena.enemy.target->Add<TransformComponent>(Rectangle{OUT_OF_BOUNDS_X, OUT_OF_BOUNDS_Y, TARGET_WIDTH, TARGET_HEIGHT});
-		arena.enemy.target->Add<SpriteComponent>(std::string("EnemyTarget"), textureManager->Load(target_path), Color(BLUE), Rectangle{ 0, 0, TARGET_SPRITE_WIDTH, TARGET_SPRITE_HEIGHT });
+		arena.enemy.target->Add<SpriteComponent>(std::string("EnemyTarget"), textureManager->Load(target_path), Color(WHITE), Rectangle{ 0, 0, TARGET_SPRITE_WIDTH, TARGET_SPRITE_HEIGHT });
 
 		Shape targetPEnemy("targetPEnemy", Shape::ShapeType::RECTANGLE);
 		targetPEnemy.rectangle.x = arena.enemy.target->Get<TransformComponent>().position.x + arena.enemy.target->Get<TransformComponent>().position.width / 2 + 25;
@@ -633,21 +633,23 @@ public:
 			bool isPlayer;
 			EntityPtr triggeredEntity = nullptr;
 			ArenaGameComponent::ArenaCharacterAttributes* characterAttributes = nullptr;
+			ArenaGameComponent::ArenaCharacterAttributes* other_character_attributes = nullptr;
+			arenaPtr = te.entity->Get<ArenaPlayerComponent>().arena->GetPtr<ArenaGameComponent>();
+			auto& arena = *arenaPtr;
 			if (te.entity->Has<ArenaPlayerComponent>())
 			{
 				isPlayer = true;
-				arenaPtr = te.entity->Get<ArenaPlayerComponent>().arena->GetPtr<ArenaGameComponent>();
 				triggeredEntity = te.entity;
 				characterAttributes = &arenaPtr->player;
+				other_character_attributes = &arenaPtr->enemy;
 			}
 			else
 			{
 				isPlayer = false;
-				arenaPtr = te.entity->Get<ArenaEnemyComponent>().arena->GetPtr<ArenaGameComponent>();
 				triggeredEntity = te.entity;
 				characterAttributes = &arenaPtr->enemy;
+				other_character_attributes = &arenaPtr->player;
 			}
-			auto& arena = *arenaPtr;
 			auto& comp = triggeredEntity->Get<PhysicsComponent>();
 			auto& box = triggeredEntity->Get<HitBoxComponent>();
 			auto& stats = triggeredEntity->Get<CharacterStatsComponent>();
@@ -665,8 +667,12 @@ public:
 
 			//Dash
 			const auto t = time(nullptr);
-
-			if (characterAttributes->dashState == ArenaGameComponent::INITIAL && x != 0)
+			//poate ar trebui serializat si dashtime
+			if (stats.state == CharacterStatsComponent::STUNNED)
+			{
+				characterAttributes->dashState = ArenaGameComponent::INITIAL;
+			}
+			else if (characterAttributes->dashState == ArenaGameComponent::INITIAL && x != 0)
 			{
 				characterAttributes->dashOrientation = x;
 				characterAttributes->dashCounter = t;
@@ -710,8 +716,10 @@ public:
 				}
 			}
 
-			stats.agility *= 0.85;
-			stats.agility = stats.agility > stats.base_agility ? stats.agility : stats.base_agility;
+			if (stats.state != CharacterStatsComponent::STUNNED) {
+				stats.agility *= 0.85;
+				stats.agility = stats.agility > stats.base_agility ? stats.agility : stats.base_agility;
+			}
 
 			Vector2 axes;
 			if (isPlayer)
@@ -720,7 +728,7 @@ public:
 			}
 			else
 			{
-				axes = Vector2{ x - hX, y + hY };
+				axes = Vector2{ - x - hX, y + hY };
 			}
 
 			characterAttributes->lastAxes = { axes.x != 0 ? axes.x : characterAttributes->lastAxes.x, axes.y != 0 ? axes.y : characterAttributes->lastAxes.y };
@@ -760,32 +768,31 @@ public:
 				{
 					auto& transt = characterAttributes->target->Get<TransformComponent>();
 
-					const auto e_rec = arena.enemy.ptr->Get<TransformComponent>().position;
+					const auto e_rec = other_character_attributes->ptr->Get<TransformComponent>().position;
 
 					transt.position.x = e_rec.x - transt.position.width / 2 + e_rec.width / 2;
 					transt.position.y = e_rec.y - transt.position.height / 2 + e_rec.height / 2;
 
-					auto cptr = new void*[2]{ arenaPtr, eventManager };
+					auto cptr = new void*[2]{ characterAttributes, eventManager };
 
 					std::function<void(void*)> trigger_target = [](void* context)->void
 					{
-						auto& ar = *static_cast<Entity*>(reinterpret_cast<void**>(context)[0])->GetPtr<ArenaGameComponent>();
-						auto& boxt = ar.player.target->Get<HitBoxComponent>();
+						auto& boxt = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(context)[0])->target->Get<HitBoxComponent>();
 						boxt.current_container = &boxt.containers[0];
 						boxt.current_container->Update();
 
 						std::function<void(void*)> move_target = [](void* ctx)->void
 						{
-							auto& a = *static_cast<Entity*>(reinterpret_cast<void**>(ctx)[0])->GetPtr<ArenaGameComponent>();
-							auto& t = a.player.target->Get<TransformComponent>();
-							auto& boxt2 = a.player.target->Get<HitBoxComponent>();//TODO schimbat
+							auto& boxt = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<HitBoxComponent>();
+							auto& t = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<TransformComponent>();
+							auto& boxt2 = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<HitBoxComponent>();
 							boxt2.current_container = &boxt2.containers[0];
 							boxt2.current_container->Update();
 							
 							boxt2.current_container = nullptr;
 							t.position.x = OUT_OF_BOUNDS_X;
 							t.position.y = OUT_OF_BOUNDS_Y;
-							a.player.targetActive = false;
+							static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->targetActive = false;
 
 							delete[] reinterpret_cast<void**>(ctx);
 						};
@@ -816,50 +823,53 @@ public:
     {
         for (auto& info : event.allTriggerInfos)
         {
-			auto& stats_1 = info.e1->Get<CharacterStatsComponent>();
-			auto& stats_2 = info.e2->Get<CharacterStatsComponent>();
+			auto ptr1 = &info.s1;
+			auto ptr2 = &info.s2;
 
-			auto ptr1 = &stats_1;
-			auto ptr2 = &stats_2;
+			auto t1 = info.e1->GetPtr<TransformComponent>();
+			auto t2 = info.e2->GetPtr<TransformComponent>();
 
-			auto& transf_1 = info.e1->Get<TransformComponent>();
-			auto& transf_2 = info.e2->Get<TransformComponent>();
+			auto e1 = info.e1.get();
+			auto e2 = info.e2.get();
 
-        	for (int i = 0; i <= 1; ++i, std::swap(ptr1, ptr2))
+        	for (int i = 0; i <= 1; ++i, std::swap(ptr1, ptr2), std::swap(t1, t2), std::swap(e1, e2))
         	{
-        		if ("fist" _in info.s1.name && "mainBody" _in info.s2.name)
+        		if ("fist" _in ptr1->name && "mainBody" _in ptr2->name)
         		{
 					const auto velocity = BASE_VELOCITY * 3;
-					const auto tg = (transf_1.position.y - transf_2.position.y) / (transf_1.position.x - transf_2.position.x);
+					const auto tg = (t1->position.y - t2->position.y) / (t1->position.x - t2->position.x);
 					const auto angle = atan(tg);
         			
-					info.e2->Get<PhysicsComponent>().body->velocity = {
-						(transf_1.position.x < transf_2.position.x ? 1 : -1) * cos(angle) * velocity ,
+					e2->Get<PhysicsComponent>().body->velocity = {
+						(t1->position.x < t2->position.x ? 1 : -1) * cos(angle) * velocity ,
 						sin(angle) * velocity
 					};
         		}
 
-        		if ("targetPPlayer" _in info.s1.name && "mainBody" _in info.s2.name)
+        		if ("target" _in ptr1->name && "mainBody" _in ptr2->name)
         		{
 					const auto velocity = BASE_VELOCITY * 6;
-					const auto tg = (transf_1.position.y + transf_1.position.height / 2 - transf_2.position.y)
-        			/ (transf_1.position.x + transf_1.position.width / 2 - transf_2.position.x);
+					const auto tg = (t1->position.y + t2->position.height / 2 - t2->position.y)
+        			/ (t1->position.x + t1->position.width / 2 - t2->position.x);
 					const auto angle = atan(tg);
 
-					info.e2->Get<PhysicsComponent>().body->velocity = {
-						(transf_1.position.x < transf_2.position.x ? 1 : -1) * cos(angle) * velocity ,
-						sin(angle) * velocity
-					};
+					e2->Get<PhysicsComponent>().body->velocity = {0,0};
 
-					info.e2->Get<CharacterStatsComponent>().state = CharacterStatsComponent::STUNNED;//add tint
+					e2->Get<CharacterStatsComponent>().state = CharacterStatsComponent::STUNNED;//add tint
+					e2->Get<CharacterStatsComponent>().agility *= 0.5f;
+					e2->Get<SpriteComponent>().color = RED;
 
 					std::function<void(void*)> remove_stun = [](void* ctx)->void
 					{
-						auto& stats = *(CharacterStatsComponent*)ctx;
+						auto e = (Entity*)ctx;
+						auto& stats = e->Get<CharacterStatsComponent>();
+						auto& s = e->Get<SpriteComponent>();
 
+						s.color = RAYWHITE;
 						stats.state = CharacterStatsComponent::NORMAL;
 					};
-        			
+
+					eventManager->Notify<DefferEvent>(4000, remove_stun, e2);
         		}
         	}
         }
