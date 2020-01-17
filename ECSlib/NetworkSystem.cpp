@@ -93,6 +93,12 @@ void INetworkSystem::Initialize()
 			signal_access(WRITE_TYPE, true);
 			return;
 		}
+
+		u_long iMode = 1;
+		auto iResult = ioctlsocket(sock, FIONBIO, &iMode);
+		if (iResult != NO_ERROR)
+			printf("ioctlsocket failed with error: %ld\n", iResult);
+
 #elif __linux__
 		sockaddr_in server;
 
@@ -136,9 +142,9 @@ void INetworkSystem::Initialize()
     std::cout << "Thread started" << std::endl;
 }
 
-std::vector<Packet> INetworkSystem::gather_packets()
+std::vector<std::vector<Packet>> INetworkSystem::gather_packets()
 {
-    std::vector<Packet> packets;
+    std::vector<std::vector<Packet>> packets;
     if (type == SERVER) {
 		int got_one;
 
@@ -156,9 +162,11 @@ std::vector<Packet> INetworkSystem::gather_packets()
 				bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
 				if (bytesReceived <= 0 )
 				{
-					std::cout << "Error in recv(). Quitting" << std::endl;
-					signal_access(WRITE_TYPE, true);
-					break;
+					if (bytesReceived != WSAEWOULDBLOCK) {
+						std::cout << "Error in recv(). Quitting" << std::endl;
+						signal_access(WRITE_TYPE, true);
+						break;
+					}
 				}
 
 #elif __linux__
@@ -181,12 +189,15 @@ std::vector<Packet> INetworkSystem::gather_packets()
 
 				got_one = true;
 
-				std::vector<char> packet;
-				packet.insert(packet.begin(), buffer, buffer + bytesReceived);
-				packets.push_back(packet);
+				std::vector<Packet> packets_socket;
+				if (bytesReceived > 0) {
+					std::vector<char> packet;
+					packet.insert(packet.begin(), buffer, buffer + bytesReceived);
+					packets_socket.push_back(packet);
+				}
+				packets.push_back(packets_socket);
 			}
 		} while(got_one == true);
-
     }
     else {
         char buffer[4096];
@@ -197,14 +208,15 @@ std::vector<Packet> INetworkSystem::gather_packets()
 		bytesReceived = recv(socket_ptr, buffer, 4096, 0);
 		if(bytesReceived <= 0)
 		{
-			std::cout << "Error on recv(). Quitting\n";
-			signal_access(WRITE_TYPE, true);
-			return packets;
+			if (bytesReceived != WSAEWOULDBLOCK) {
+				std::cout << "Error on recv(). Quitting\n";
+				signal_access(WRITE_TYPE, true);
+				return packets;
+			}
 		}
     	
 #elif __linux__
         bytesReceived = read(sd, buffer, 4096);
-
         if (bytesReceived <= 0) {
 			if (errno != EWOULDBLOCK){
 				perror("Error in read(). Quitting.\n");
@@ -216,52 +228,52 @@ std::vector<Packet> INetworkSystem::gather_packets()
 #endif
 		std::vector<char> packet;
 		packet.insert(packet.begin(), buffer, buffer + bytesReceived);
-		packets.push_back(packet);
+		packets.push_back({ packet });
     }
 
 	return packets;
 }
 
-void INetworkSystem::send_packets(std::vector<Packet> packets)
+void INetworkSystem::send_packets(std::vector<std::vector<Packet>> packets)
 {
     if (type == SERVER) {
         if (client_sockets.size() != packets.size()) {
             packets.resize(client_sockets.size());
-        	for (auto& p: packets)
-        	{
-				if (p.empty())
-					p.resize(1);
-        	}
         }
 
         for (unsigned int i = 0; i < client_sockets.size(); ++i) {
+			for (auto& packet : packets[i]) {
+				if (packet.empty())
+					continue;
 #ifdef WIN32
-            if (send(client_sockets[i]->clientSocket, &packets[i][0], packets[i].size() + 1, 0) <= 0)
-            {
-				signal_access(WRITE_TYPE, true);
-            }
+				if (send(client_sockets[i]->clientSocket, &packet[0], packet.size(), 0) <= 0)
+				{
+					printf("[Server] Error on send\n");
+					signal_access(WRITE_TYPE, true);
+				}
 #elif __linux__
-            if (write(client_sockets[i]->cl, &packets[i][0], packets[i].size() + 1) <= 0) {
-                perror("Error in write(). Quitting.\n");
-                signal_access(WRITE_TYPE, true);
-            }
-			printf("[Server] Sent message\n");
+				if (write(client_sockets[i]->cl, &packet[0], packets.size()) <= 0) {
+					perror("Error in write(). Quitting.\n");
+					signal_access(WRITE_TYPE, true);
+				}
+				printf("[Server] Sent message\n");
 #endif
+			}
         }
     }
     else {
-		for (auto& packet : packets){
+		for (auto& packet : packets[0]){
 			if (packet.empty())
 				continue;
 #ifdef WIN32
-			int sendResult = send(socket_ptr, &packet[0], packet.size() + 1, 0);
+			int sendResult = send(socket_ptr, &packet[0], packet.size(), 0);
 			if (sendResult <= 0)
 			{
 				std::cout << "Error on send(). Quitting\n" << WSAGetLastError() << "\n";
 				signal_access(WRITE_TYPE, true);
 			}
 #elif __linux__
-			if (write(sd, &packet[0], packet.size() + 1) <= 0) {
+			if (write(sd, &packet[0], packet.size()) <= 0) {
 				perror("Error in write(). Quitting.\n");
 				signal_access(WRITE_TYPE, true);
 			}
@@ -326,14 +338,14 @@ void NetworkSystem::RunMainThread()
 			}
 			receive_queue_access(WRITE_TYPE, &new_packet);
 
-			std::vector<Packet> new_packets;
+			std::vector<std::vector<Packet>> new_packets;
 			for (auto& client : client_sockets) {
 				Packet pack;
 				for (auto& packet : packets)
 				{
 					pack.insert(pack.end(), packet.begin(), packet.end());
 				}
-				new_packets.push_back(pack);
+				new_packets.push_back({ pack });
 			}
 
 			send_packets(new_packets);
@@ -347,7 +359,7 @@ void NetworkSystem::RunMainThread()
                 break;
 
 			auto send = send_queue_access(READ_TYPE, nullptr);
-			send_packets(send);
+			send_packets({ send });
 
 			SleepFunc(10);
 
@@ -356,7 +368,7 @@ void NetworkSystem::RunMainThread()
             if (signal_access(READ_TYPE, false))
                 break;
 
-	    	for(auto& pack : p)
+	    	for(auto& pack : p[0])
 	    	{
 				receive_queue_access(WRITE_TYPE, &pack);
 	    	}
@@ -383,14 +395,7 @@ std::vector<Packet> NetworkSystem::send_queue_access(AccessType type, const Pack
 	const Packet& data = *packet;
 	
 	if (type == WRITE_TYPE)
-	{
-		/*struct tm * dt;
-		char buffer[30];
-		time_t rawtime = time(nullptr);
-		dt = localtime(&rawtime);
-		strftime(buffer, sizeof(buffer), "Send queue put %m%d%H%M%y:", dt);
-		std::cout << std::string(buffer) << std::endl;*/
-		
+	{	
 		if (send_queue.is_full())
 		{
 			std::cout << "Warning: Send queue full, dropping data\n";

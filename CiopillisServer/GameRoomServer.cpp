@@ -104,11 +104,21 @@ std::pair<std::shared_ptr<ClientSocket>, std::shared_ptr<ClientSocket>> GameRoom
 
 	std::cout << "client1 connected\n" << WSAGetLastError() << "\n";
 
+	u_long iMode1 = 1;
+	auto iResult = ioctlsocket(client1->clientSocket, FIONBIO, &iMode1);
+	if (iResult != NO_ERROR)
+		printf("ioctlsocket failed with error: %ld\n", iResult);
+
 	auto client2 = std::make_shared<ClientSocket>();
 	client2->clientSize = sizeof(client1->address);
 	client2->clientSocket = accept(server_socket, (sockaddr*)&(client1->address), &(client1->clientSize));
 
 	std::cout << "client2 connected\n" << WSAGetLastError() << "\n";
+
+	u_long iMode2 = 1;
+	iResult = ioctlsocket(client2->clientSocket, FIONBIO, &iMode2);
+	if (iResult != NO_ERROR)
+		printf("ioctlsocket failed with error: %ld\n", iResult);
 
 	char client1_host[NI_MAXHOST];		// Client's remote name
 	char client1_service[NI_MAXSERV];	// Service (i.e. port) the client is connect on
@@ -212,97 +222,11 @@ void GameRoomServerSystem::RunMainThread()
 		if (signal_access(READ_TYPE, false))
 			break;
 
-		auto packets = gather_p();
+		auto packets = gather_packets();
 
 		if (signal_access(READ_TYPE, false))
 			break;
 		
-		send_p(packets);
+		send_packets({ packets[1], packets[0] });
 	}
-}
-
-std::pair<std::vector<Packet>, std::vector<Packet>> GameRoomServerSystem::gather_p(){
-	std::pair<std::vector<Packet>, std::vector<Packet>> packets;
-	int got_one;
-
-	do {
-		got_one = false;
-
-		for (int i = 0; i < client_sockets.size(); ++i) {
-			auto &client = client_sockets[i];
-			char buffer[4096];
-
-			int bytesReceived;
-#ifdef WIN32
-			ZeroMemory(buffer, 4096);
-
-			// Wait for client to send data
-			bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
-			if (bytesReceived <= 0 )
-			{
-				std::cout << "Error in recv(). Quitting" << std::endl;
-				signal_access(WRITE_TYPE, true);
-				break;
-			}
-
-#elif __linux__
-			bytesReceived = read(client->cl, buffer, 4096);
-
-			if (bytesReceived <= 0) {
-				if (errno != EWOULDBLOCK){
-					perror("Error in read(). Quitting.\n");
-					signal_access(WRITE_TYPE, true);
-					return packets;
-				}
-				else {
-					continue;
-				}
-			}
-
-#endif
-			if (signal_access(READ_TYPE, false))
-				break;
-
-			got_one = true;
-
-			std::vector<char> packet;
-			packet.insert(packet.begin(), buffer, buffer + bytesReceived);
-			(i == 0 ? packets.second : packets.first).push_back(packet);
-		}
-	} while(got_one == true);
-
-	return packets;
-}
-
-void GameRoomServerSystem::send_p(std::pair<std::vector<Packet>, std::vector<Packet>> pair){
-        for (unsigned int i = 0; i < client_sockets.size(); ++i) {
-#ifdef WIN32
-            if (send(client_sockets[i]->clientSocket, &packets[i][0], packets[i].size() + 1, 0) <= 0)
-            {
-				signal_access(WRITE_TYPE, true);
-            }
-#elif __linux__
-			if (i == 0){
-				for (auto& p : pair.first){
-				if (write(client_sockets[i]->cl, &p[0], p.size() + 1) <= 0) {
-						perror("Error in write(). Quitting.\n");
-						signal_access(WRITE_TYPE, true);
-					}
-				}
-			}
-			else{
-				for (auto& p : pair.second){
-				if (write(client_sockets[i]->cl, &p[0], p.size() + 1) <= 0) {
-						perror("Error in write(). Quitting.\n");
-						signal_access(WRITE_TYPE, true);
-					}
-				}
-			}
-			printf("[Server] Sent message\n");
-#endif
-        }
-}
-
-void GameRoomServerSystem::Execute()
-{
 }

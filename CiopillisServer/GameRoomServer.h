@@ -32,10 +32,5 @@ public:
 		: INetworkSystem("GameRoomServerSystem", server_address, port)
 	{}
 
-	std::pair<std::vector<Packet>, std::vector<Packet>> gather_p();
-	void send_p(std::pair<std::vector<Packet>, std::vector<Packet>>);
-
 	void RunMainThread() override;
-
-	void Execute() override;
 };

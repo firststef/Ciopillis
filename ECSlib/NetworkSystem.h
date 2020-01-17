@@ -70,8 +70,8 @@ public:
 
 	bool signal_access(AccessType type, bool value);
 
-	std::vector<Packet> gather_packets();
-	void send_packets(std::vector<Packet> packets);
+	std::vector<std::vector<Packet>> gather_packets();
+	void send_packets(std::vector<std::vector<Packet>> packets);
 	
 	virtual void RunMainThread() = 0;
 
