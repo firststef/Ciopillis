@@ -332,18 +332,22 @@ void NetworkSystem::RunMainThread()
                 break;
 
 			Packet new_packet;
-			for (auto& p : packets)
+			for (auto& ps : packets)
 			{
-				new_packet.insert(new_packet.end(), p.begin(), p.end());
+			    for (auto& p : ps) {
+                    new_packet.insert(new_packet.end(), p.begin(), p.end());
+                }
 			}
 			receive_queue_access(WRITE_TYPE, &new_packet);
 
 			std::vector<std::vector<Packet>> new_packets;
 			for (auto& client : client_sockets) {
 				Packet pack;
-				for (auto& packet : packets)
+				for (auto& ps : packets)
 				{
-					pack.insert(pack.end(), packet.begin(), packet.end());
+				    for (auto& packet : ps) {
+                        pack.insert(pack.end(), packet.begin(), packet.end());
+                    }
 				}
 				new_packets.push_back({ pack });
 			}
