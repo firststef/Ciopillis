@@ -99,10 +99,10 @@ public:
 	NetworkSystem(std::string server_address, int port)
 		: INetworkSystem("NetworkSystem", server_address, port)
 	{
-		std::vector<char> ab;
-		ab.push_back('a');
-		ab.push_back('b');
-		send_queue.push(ab);
+		std::vector<char> conn_msg;
+		std::string msg = "connect";
+		conn_msg.insert(conn_msg.begin(), msg.begin(), msg.end());
+		send_queue.push(conn_msg);
 	}
 
 	FixedQueue<Packet, 40> receive_queue;

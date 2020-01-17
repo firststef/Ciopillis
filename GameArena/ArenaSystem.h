@@ -505,7 +505,6 @@ class ArenaSystem : public ISystem
     void OnRunning(EntityPtr e)
     {
         //Height sorting
-    	//TODO: this might be the job for another system
         auto& arena = e->Get<ArenaGameComponent>();
 
         std::sort(arena.generatedEntities.begin(), arena.generatedEntities.end(), [](EntityPtr a, EntityPtr b)
@@ -539,6 +538,23 @@ class ArenaSystem : public ISystem
 
             //INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
         }
+
+		for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+		{
+			auto& arena = e->Get<ArenaGameComponent>();
+			auto& transp = arena.player.ptr->Get<TransformComponent>();
+			auto& physicp = arena.player.ptr->Get<PhysicsComponent>();
+			
+			eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
+					{"head", "player_coordinates"},
+					{"x", physicp.body->position.x},
+					{"y", physicp.body->position.y},
+					{"vx", physicp.body->velocity.x},
+					{"vy", physicp.body->velocity.y},
+					{"current_action", int(arena.player.currentAction)},
+					{"orientation", *arena.player.orientation}
+				});
+		}
     }
 
     void OnEnd(EntityPtr e)
@@ -823,53 +839,82 @@ public:
 
 	void Receive(const NetworkEvent& event)
     {
-    	if(connected_with_server)
-        {
-	        if (event.type == NetworkEvent::RECEIVE)
-	        {
-				for (int i = 0; i < event.packets.size(); i++)
+		if (event.type == NetworkEvent::RECEIVE)
+		{
+			if (connected_with_server)
+			{
+
+				for (unsigned i = 0; i < event.packets.size(); i++)
 				{
 					printf("%d: %s\n", i, event.packets[i].data());
 				}
 
-		        for (auto& p : event.packets)
-		        {
+				for (auto& p : event.packets)
+				{
+					if (p.empty())
+						continue;
 
 					nlohmann::json j = nlohmann::json::parse(&p[0], nullptr, false);
-		        	if (j.is_discarded())
+					if (j.is_discarded())
 						continue;
-		        	
-					auto pressedKeys = j.at("pressed_keys").get<std::vector<int>>();
-					auto heldKeys = j.at("held_keys").get<std::vector<int>>();
-					decltype(heldKeys) releasedKeys;
 
-					for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>())) {
+					auto head = j.at("head").get<std::string>();
+					if (head == "player_coordinates")
+					{
+						auto x = j.at("x").get<float>();
+						auto y = j.at("y").get<float>();
+						auto vx = j.at("vx").get<float>();
+						auto vy = j.at("vy").get<float>();
+						auto current_action = j.at("current_action").get<int>();
+						auto orientation = j.at("orientation").get<bool>();
 
-						auto& arena = e->Get<ArenaGameComponent>();
-						
-						std::vector<KeyboardEvent::TriggeredEntity> triggered_entities{
-							KeyboardEvent::TriggeredEntity{
-								arena.enemy.ptr,
-								pressedKeys,
-								releasedKeys,
-								heldKeys
-							}
-						};
-						
-						eventManager->Notify<KeyboardEvent>(triggered_entities);
+						for (auto& a : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+						{
+							auto& arena = a->Get<ArenaGameComponent>();
+							auto& phys_e = arena.enemy.ptr->Get<PhysicsComponent>();
+
+							//phys_e.body->position.x = SCREEN_WIDTH - x;
+							//phys_e.body->position.y = y;
+							//phys_e.body->velocity.x = -vx;
+							//phys_e.body->velocity.y = vy;
+
+							//arena.enemy.currentAction = ArenaGameComponent::CurrentAction(current_action);
+							//*arena.enemy.orientation = !orientation;
+						}
 					}
-		        }
-	        }
-        }
-		else
-        {
-	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "KeyboardInputSystem");
-	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "PhysicsSystem");
-	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "AnimationSystem");
-	        eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "HitBoxSystem");
+					else if (head == "player_keyboard_event") {
+						auto pressedKeys = j.at("pressed_keys").get<std::vector<int>>();
+						auto heldKeys = j.at("held_keys").get<std::vector<int>>();
+						decltype(heldKeys) releasedKeys;
 
-	        connected_with_server = true;
-        }
+						for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>())) {
+
+							auto& arena = e->Get<ArenaGameComponent>();
+
+							std::vector<KeyboardEvent::TriggeredEntity> triggered_entities{
+								KeyboardEvent::TriggeredEntity{
+									arena.enemy.ptr,
+									pressedKeys,
+									releasedKeys,
+									heldKeys
+								}
+							};
+
+							eventManager->Notify<KeyboardEvent>(triggered_entities);
+						}
+					}
+				}
+			}
+			else
+			{
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "KeyboardInputSystem");
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "PhysicsSystem");
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "AnimationSystem");
+				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "HitBoxSystem");
+
+				connected_with_server = true;
+			}
+		}
     }
 
 	void Receive(const AnimationEvent& event)

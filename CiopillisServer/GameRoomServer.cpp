@@ -226,7 +226,7 @@ void GameRoomServerSystem::RunMainThread()
 
 		if (signal_access(READ_TYPE, false))
 			break;
-		
+	
 		send_packets({ packets[1], packets[0] });
 	}
 }

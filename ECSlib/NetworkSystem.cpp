@@ -155,6 +155,8 @@ std::vector<std::vector<Packet>> INetworkSystem::gather_packets()
 				char buffer[4096];
 
 				int bytesReceived;
+				std::vector<Packet> packets_socket;
+				packets.push_back(packets_socket);
 #ifdef WIN32
 				ZeroMemory(buffer, 4096);
 
@@ -162,10 +164,14 @@ std::vector<std::vector<Packet>> INetworkSystem::gather_packets()
 				bytesReceived = recv(client->clientSocket, buffer, 4096, 0);
 				if (bytesReceived <= 0 )
 				{
-					if (bytesReceived != WSAEWOULDBLOCK) {
+					if (WSAGetLastError() != WSAEWOULDBLOCK) {
 						std::cout << "Error in recv(). Quitting" << std::endl;
 						signal_access(WRITE_TYPE, true);
-						break;
+						return packets;
+					}
+					else
+					{
+						continue;
 					}
 				}
 
@@ -189,13 +195,11 @@ std::vector<std::vector<Packet>> INetworkSystem::gather_packets()
 
 				got_one = true;
 
-				std::vector<Packet> packets_socket;
 				if (bytesReceived > 0) {
 					std::vector<char> packet;
 					packet.insert(packet.begin(), buffer, buffer + bytesReceived);
-					packets_socket.push_back(packet);
+					packets.back().push_back(packet);
 				}
-				packets.push_back(packets_socket);
 			}
 		} while(got_one == true);
     }
@@ -208,8 +212,8 @@ std::vector<std::vector<Packet>> INetworkSystem::gather_packets()
 		bytesReceived = recv(socket_ptr, buffer, 4096, 0);
 		if(bytesReceived <= 0)
 		{
-			if (bytesReceived != WSAEWOULDBLOCK) {
-				std::cout << "Error on recv(). Quitting\n";
+			if (WSAGetLastError() != WSAEWOULDBLOCK) {
+				std::cout << "Error on recv(). Quitting " << WSAGetLastError() << "\n";
 				signal_access(WRITE_TYPE, true);
 				return packets;
 			}
@@ -227,7 +231,8 @@ std::vector<std::vector<Packet>> INetworkSystem::gather_packets()
         }
 #endif
 		std::vector<char> packet;
-		packet.insert(packet.begin(), buffer, buffer + bytesReceived);
+    	if (bytesReceived > 0)
+			packet.insert(packet.begin(), buffer, buffer + bytesReceived);
 		packets.push_back({ packet });
     }
 
@@ -439,7 +444,8 @@ std::vector<Packet> NetworkSystem::receive_queue_access(AccessType type, const P
 		{
 			std::cout << "Warning: Receive queue full, dropping data\n";
 		}
-		receive_queue.push(data);
+		if (!data.empty())
+			receive_queue.push(data);
 	}
 	else
 	{
