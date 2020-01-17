@@ -232,6 +232,11 @@ void GameRoomServerSystem::RunMainThread()
 			if (pack.empty())
 				continue;
 
+			if (strcmp(pack.data(), "connect") == 0)
+			{
+				continue;
+			}
+
 			std::string jstr(&pack[0], pack.size() + 1);
 			jstr[pack.size() - 1] = '\0';
 			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
@@ -255,6 +260,11 @@ void GameRoomServerSystem::RunMainThread()
 			
 			if (pack.empty())
 				continue;
+
+			if (strcmp(pack.data(), "connect") == 0)
+			{
+				continue;
+			}
 
 			std::string jstr(&pack[0], pack.size() + 1);
 			jstr[pack.size() - 1] = '\0';
