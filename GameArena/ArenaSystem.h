@@ -634,12 +634,11 @@ public:
 			EntityPtr triggeredEntity = nullptr;
 			ArenaGameComponent::ArenaCharacterAttributes* characterAttributes = nullptr;
 			ArenaGameComponent::ArenaCharacterAttributes* other_character_attributes = nullptr;
-			arenaPtr = te.entity->Get<ArenaPlayerComponent>().arena->GetPtr<ArenaGameComponent>();
-			auto& arena = *arenaPtr;
 			if (te.entity->Has<ArenaPlayerComponent>())
 			{
 				isPlayer = true;
 				triggeredEntity = te.entity;
+				arenaPtr = te.entity->Get<ArenaPlayerComponent>().arena->GetPtr<ArenaGameComponent>();
 				characterAttributes = &arenaPtr->player;
 				other_character_attributes = &arenaPtr->enemy;
 			}
@@ -647,6 +646,7 @@ public:
 			{
 				isPlayer = false;
 				triggeredEntity = te.entity;
+				arenaPtr = te.entity->Get<ArenaEnemyComponent>().arena->GetPtr<ArenaGameComponent>();
 				characterAttributes = &arenaPtr->enemy;
 				other_character_attributes = &arenaPtr->player;
 			}
