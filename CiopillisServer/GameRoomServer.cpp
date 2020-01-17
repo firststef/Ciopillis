@@ -227,7 +227,7 @@ void GameRoomServerSystem::RunMainThread()
 
 		for (auto& pack : packets[0])
 		{
-			printf("packet from 0\n");
+			//printf("packet from 0\n");
 			
 			if (pack.empty())
 				continue;
@@ -256,7 +256,7 @@ void GameRoomServerSystem::RunMainThread()
 
 		for (auto& pack : packets[1])
 		{
-			printf("packet from 1\n");
+			//printf("packet from 1\n");
 			
 			if (pack.empty())
 				continue;
