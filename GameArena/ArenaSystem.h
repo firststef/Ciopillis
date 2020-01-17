@@ -16,10 +16,14 @@ class ArenaSystem : public ISystem
 	{
 		auto& arena = e->Get<ArenaGameComponent>();
 
+		auto sprite_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "basesprite.png").string();
+		auto target_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "target.png").string();
+		auto background_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "background.png").string();
+
 		//Background Setup
 		auto fadedBackground(pool->AddEntity());
 		fadedBackground->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
-		fadedBackground->Add<SpriteComponent>(std::string("FadedBackground"), Texture2D(), Fade(BLACK, 0.6f));
+		fadedBackground->Add<SpriteComponent>(std::string("FadedBackground"), textureManager->Load(background_path), WHITE);
 		arena.generatedEntities.push_back(fadedBackground);
 
 		auto wall_left = pool->AddEntity();
@@ -44,9 +48,6 @@ class ArenaSystem : public ISystem
 		arena.player.ptr->Add<ArenaPlayerComponent>(e);
 
 		Rectangle player_rec{ ARENA_BORDER,SCREEN_HEIGHT / 2 - CHARACTER_HEIGHT / 2, CHARACTER_PLACEHOLDER_WIDTH,CHARACTER_PLACEHOLDER_HEIGHT };
-
-		auto sprite_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "basesprite.png").string();
-		auto target_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "target.png").string();
 
 		auto& transform = arena.player.ptr->Add<TransformComponent>(player_rec);
 		arena.player.ptr->Add<SpriteComponent>(std::string("Fighter"), textureManager->Load(sprite_path), Color(WHITE), Rectangle{ 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT });
