@@ -242,8 +242,11 @@ void GameRoomServerSystem::RunMainThread()
 			}
 
 			j.emplace("player", 0);
+			auto str = j.dump();
+			Packet p;
+			p.insert(p.begin(), str.begin(), str.end());
 			
-			receive_queue_access(WRITE_TYPE, &pack);
+			receive_queue_access(WRITE_TYPE, &p);
 		}
 
 		for (auto& pack : packets[1])
@@ -263,8 +266,11 @@ void GameRoomServerSystem::RunMainThread()
 			}
 
 			j.emplace("enemy", 0);
+			auto str = j.dump();
+			Packet p;
+			p.insert(p.begin(), str.begin(), str.end());
 
-			receive_queue_access(WRITE_TYPE, &pack);
+			receive_queue_access(WRITE_TYPE, &p);
 		}
 
 		auto send = send_queue_access(READ_TYPE, nullptr);

@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 		server_ip = "127.0.0.1";
 	
 	//Initialization
-	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Client");
 	SetTargetFPS(60);
 
 	ECSManager manager;

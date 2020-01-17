@@ -18,7 +18,7 @@ void* RunGame(void* param)
     delete param;
 #endif
 	//Initialization
-	InitWindow(200, 100, windowTitle);
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "GameRoom");
 	SetTargetFPS(60);
 
 	ECSManager manager;

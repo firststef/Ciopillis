@@ -825,7 +825,7 @@ public:
 			auto& transf_1 = info.e1->Get<TransformComponent>();
 			auto& transf_2 = info.e2->Get<TransformComponent>();
 
-        	for (int i = 0; i < 1; ++i, std::swap(ptr1, ptr2))
+        	for (int i = 0; i <= 1; ++i, std::swap(ptr1, ptr2))
         	{
         		if ("fist" _in info.s1.name && "mainBody" _in info.s2.name)
         		{
@@ -872,10 +872,10 @@ public:
 			if (connected_with_server)
 			{
 
-				//for (unsigned i = 0; i < event.packets.size(); i++)
-				//{
-				//	printf("%d: %s\n", i, event.packets[i].data());
-				//}
+				for (unsigned i = 0; i < event.packets.size(); i++)
+				{
+					printf("%d: %s\n", i, event.packets[i].data());
+				}
 
 				for (auto& p : event.packets)
 				{
@@ -895,7 +895,7 @@ public:
 					auto head = j.at("head").get<std::string>();
 					if (head == "player_coordinates")
 					{
-						printf("Received json %s\n", jstr.c_str());
+						//printf("Received json %s\n", jstr.c_str());
 						
 						auto x = j.at("x").get<float>();
 						auto y = j.at("y").get<float>();
