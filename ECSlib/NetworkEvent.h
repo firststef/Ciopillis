@@ -23,8 +23,7 @@ struct NetworkEvent : IEvent
 	{
 		auto str = json.dump();
 		std::vector<char> packet;
-		packet.resize(str.size());
-		packet.insert(packet.begin(), str.begin(), str.end());
+		packet.insert(packet.begin(), str.begin(), str.end() + 1);
 		packets.push_back(packet);
 	}
 };

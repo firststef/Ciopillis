@@ -61,6 +61,10 @@ struct ArenaGameComponent : IComponent
 		EntityPtr target;
 		bool targetActive = false;
 		time_t lastTargetTime = time(nullptr);
+
+		bool triggerTarget = false;
+
+		EntityPtr lifeBox = nullptr;
 		
 	} player, enemy;
 };

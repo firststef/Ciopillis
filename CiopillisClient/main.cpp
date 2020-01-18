@@ -28,6 +28,7 @@ int main(int argc, char** argv)
 	auto hitBoxSystem = std::make_shared<HitBoxSystem>();
 	auto networkSystem = std::make_shared<NetworkSystem>(server_ip, 54000);
 
+	manager.systemManager.AddSystem(defferSystem);
 	manager.systemManager.AddSystem(drawSystem);
 	manager.systemManager.AddSystem(arenaSystem);
 	manager.systemManager.AddSystem(keyboardInputSystem, false);

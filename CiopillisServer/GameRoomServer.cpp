@@ -238,7 +238,7 @@ void GameRoomServerSystem::RunMainThread()
 			}
 
 			std::string jstr(&pack[0], pack.size() + 1);
-			jstr[pack.size() - 1] = '\0';
+			jstr[pack.size()] = '\0';
 			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
 			if (j.is_discarded())
 			{
@@ -249,7 +249,7 @@ void GameRoomServerSystem::RunMainThread()
 			j.emplace("player", 0);
 			auto str = j.dump();
 			Packet p;
-			p.insert(p.begin(), str.begin(), str.end());
+			p.insert(p.begin(), str.begin(), str.end() + 1);
 			
 			receive_queue_access(WRITE_TYPE, &p);
 		}
@@ -267,7 +267,7 @@ void GameRoomServerSystem::RunMainThread()
 			}
 
 			std::string jstr(&pack[0], pack.size() + 1);
-			jstr[pack.size() - 1] = '\0';
+			jstr[pack.size()] = '\0';
 			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
 			if (j.is_discarded())
 			{
@@ -278,7 +278,7 @@ void GameRoomServerSystem::RunMainThread()
 			j.emplace("enemy", 0);
 			auto str = j.dump();
 			Packet p;
-			p.insert(p.begin(), str.begin(), str.end());
+			p.insert(p.begin(), str.begin(), str.end()+1);
 
 			receive_queue_access(WRITE_TYPE, &p);
 		}
@@ -295,36 +295,34 @@ void GameRoomServerSystem::RunMainThread()
 				continue;
 
 			std::string jstr(&pack[0], pack.size() + 1);
-			jstr[pack.size() - 1] = '\0';
+			jstr[pack.size()] = '\0';
 			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
 			if (j.is_discarded())
 			{
 				printf("Malformed packet%d\n", __LINE__);
 				continue;
 			}
+			
+			packets_for_one.push_back(pack);
 
-			if (j.find("player") != j.end())
-			{
-				packets_for_one.push_back(pack);
+			auto b = j.find("player") != j.end();
 
-				j.erase("player");
-				j.emplace("enemy", 0);
-				auto str = j.dump();
-				Packet p;
-				p.insert(p.begin(), str.begin(), str.end());
-				packets_for_two.push_back(p);
-			}
-			else if (j.find("enemy") != j.end())
-			{
-				j.erase("enemy");
-				j.emplace("player", 0);
-				auto str = j.dump();
-				Packet p;
-				p.insert(p.begin(), str.begin(), str.end());
-				packets_for_two.push_back(p);
-				
-				packets_for_one.push_back(pack);
-			}
+			nlohmann::json::iterator it1 = j.find("player");
+			std::swap(j["aux"], it1.value());
+			j.erase(it1);
+
+			nlohmann::json::iterator it2 = j.find("enemy");
+			std::swap(j["player"], it2.value());
+			j.erase(it2);
+
+			nlohmann::json::iterator it3 = j.find("aux");
+			std::swap(j["enemy"], it3.value());
+			j.erase(it3);
+			
+			auto str = j.dump();
+			Packet p;
+			p.insert(p.begin(), str.begin(), str.end() + 1);
+			packets_for_two.push_back(p);
 		}
 
 		if (!packets_for_one.empty())

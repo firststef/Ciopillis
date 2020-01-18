@@ -35,6 +35,10 @@ const unsigned STUN_TIME = 2000;
 
 const unsigned ARENA_BORDER = 200;
 
+const unsigned HEALTH_BAR_WIDTH = 800;
+const unsigned HEALTH_BAR_HEIGHT = 50;
+const unsigned HEALTH_BAR_PADDING = 50;
+
 //Animations
 inline unsigned MOVE_ANIM_TIME = 600;
 inline unsigned MOVE_ANIM_FRAMES = 4;

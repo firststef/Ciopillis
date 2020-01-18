@@ -1,16 +1,17 @@
 #pragma once
-#include <filesystem>
 #include "System.h"
 #include "ArenaGameComponent.h"
 #include "ArenaPlayerComponent.h"
 #include "ArenaEnemyComponent.h"
 #include "Constants.h"
 #include "NetworkEvent.h"
+#include <filesystem>
 #include <iostream>
 
 class ArenaSystem : public ISystem
 {
 	bool connected_with_server = false;
+	EntityPtr waitingScreen = nullptr;
 	
 	void OnInit(EntityPtr e)
 	{
@@ -43,7 +44,7 @@ class ArenaSystem : public ISystem
 		arena.generatedEntities.push_back(wall_right);
 		arena.generatedEntities.push_back(wall_down);
 
-		//Player Setup
+		////////////////////////////////////////////////////////////////////Player Setup
 		arena.player.ptr = pool->AddEntity();
 		arena.player.ptr->Add<ArenaPlayerComponent>(e);
 
@@ -272,9 +273,14 @@ class ArenaSystem : public ISystem
 		//Player Stats
 		arena.player.ptr->Add<CharacterStatsComponent>(BASE_HP, BASE_VELOCITY);
 
+		//Player LifeBox
+		arena.player.lifeBox = pool->AddEntity();
+		arena.player.lifeBox->Add<TransformComponent>(Rectangle{ HEALTH_BAR_PADDING, HEALTH_BAR_PADDING, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT });
+		arena.player.lifeBox->Add<SpriteComponent>(std::string("LifeBoxPlayer"), Texture2D({ 0 }), RED, Rectangle{ HEALTH_BAR_PADDING, HEALTH_BAR_PADDING, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT });
+
 		arena.generatedEntities.push_back(arena.player.ptr);
 
-		//Enemy Setup
+		///////////////////////////////////////////////////////////////Enemy Setup
 		arena.enemy.ptr = pool->AddEntity();
 		arena.enemy.ptr->Add<ArenaEnemyComponent>(e);
 
@@ -498,13 +504,12 @@ class ArenaSystem : public ISystem
 		//Enemy Stats
 		arena.enemy.ptr->Add<CharacterStatsComponent>(BASE_HP, BASE_VELOCITY);
 
-		arena.generatedEntities.push_back(arena.enemy.ptr);
+		//Enemy lifebox
+		arena.enemy.lifeBox = pool->AddEntity();
+		arena.enemy.lifeBox->Add<TransformComponent>(Rectangle{ SCREEN_WIDTH - HEALTH_BAR_PADDING - HEALTH_BAR_WIDTH, HEALTH_BAR_PADDING, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT });
+		arena.enemy.lifeBox->Add<SpriteComponent>(std::string("LifeBoxEnemy"), Texture2D({0}), RED, Rectangle{ SCREEN_WIDTH - HEALTH_BAR_PADDING - HEALTH_BAR_WIDTH, HEALTH_BAR_PADDING, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT });
 
-		//Waiting for server screen
-		/*auto waitingScreen(pool->AddEntity());
-		waitingScreen->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
-		waitingScreen->Add<SpriteComponent>(std::string("WaitingScreen"), textureManager->Load(background_path), WHITE);
-		arena.generatedEntities.push_back(waitingScreen);*/
+		arena.generatedEntities.push_back(arena.enemy.ptr);
 
         arena.state = ArenaGameComponent::RUNNING;
     }
@@ -552,37 +557,54 @@ class ArenaSystem : public ISystem
 				auto& arena = e->Get<ArenaGameComponent>();
 				auto& transp = arena.player.ptr->Get<TransformComponent>();
 				auto& physicp = arena.player.ptr->Get<PhysicsComponent>();
+				auto& attribp = arena.player;
+				auto& statsp = arena.player.ptr->Get<CharacterStatsComponent>();
+				auto& transe = arena.enemy.ptr->Get<TransformComponent>();
+				auto& physice = arena.enemy.ptr->Get<PhysicsComponent>();
+				auto& attribe = arena.enemy;
+				auto& statse = arena.enemy.ptr->Get<CharacterStatsComponent>();
+
+				bool auxTriggerTargetPlayer = false;
+				if (arena.player.triggerTarget)
+				{
+					auxTriggerTargetPlayer = true;
+					arena.player.triggerTarget = false;
+				}
+				
+				bool auxTriggerTargetEnemy = false;
+				if (arena.enemy.triggerTarget)
+				{
+					auxTriggerTargetEnemy = true;
+					arena.enemy.triggerTarget = false;
+				}
 
 				eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
-						{"head", "player_coordinates"},
-						{"x", physicp.body->position.x},
-						{"y", physicp.body->position.y},
-						{"vx", physicp.body->velocity.x},
-						{"vy", physicp.body->velocity.y},
-						{"current_action", int(arena.player.currentAction)},
-						{"orientation", *arena.player.orientation},
-						{"player", 0}
-					});
-			}
-
-			for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
-			{
-				auto& arena = e->Get<ArenaGameComponent>();
-				auto& transp = arena.enemy.ptr->Get<TransformComponent>();
-				auto& physicp = arena.enemy.ptr->Get<PhysicsComponent>();
-
-				eventManager->Notify<NetworkEvent>(NetworkEvent::SEND, nlohmann::json{
-						{"head", "player_coordinates"},
-						{"x", SCREEN_WIDTH - physicp.body->position.x},
-						{"y", physicp.body->position.y},
-						{"vx", - physicp.body->velocity.x},
-						{"vy", physicp.body->velocity.y},
-						{"current_action", int(arena.enemy.currentAction)},
-						{"orientation", !*arena.enemy.orientation},
-						{"enemy", 0}
-					});
-			}
-		}
+					{"head", "player_coordinates"},
+					{"player",{
+							{"x", physicp.body->position.x},
+							{"y", physicp.body->position.y},
+							{"vx", physicp.body->velocity.x},
+							{"vy", physicp.body->velocity.y},
+							{"current_action", int(arena.player.currentAction)},
+							{"orientation", *arena.player.orientation},
+							{"trigger_target", auxTriggerTargetPlayer},
+							{"hp", statsp.hp}
+						}
+					},
+					{"enemy",{
+							{"x", SCREEN_WIDTH - physice.body->position.x},
+							{"y", physice.body->position.y},
+							{"vx", -physice.body->velocity.x},
+							{"vy", physice.body->velocity.y},
+							{"current_action", int(arena.enemy.currentAction)},
+							{"orientation", !*arena.enemy.orientation},
+							{"trigger_target", auxTriggerTargetEnemy},
+							{"hp", statse.hp}
+						}
+					}
+				});
+			}//de sinronizat si target si transf
+		}//de reparat coordonatele inegale
     }
 
     void OnEnd(EntityPtr e)
@@ -591,6 +613,50 @@ class ArenaSystem : public ISystem
 
         arena.generatedEntities.clear();
     }
+
+	void TriggerTargetAttack(ArenaGameComponent::ArenaCharacterAttributes* characterAttributes, ArenaGameComponent::ArenaCharacterAttributes* other_character_attributes){
+		//Enable target
+		if (!characterAttributes->targetActive)
+		{
+			auto& transt = characterAttributes->target->Get<TransformComponent>();
+
+			const auto e_rec = other_character_attributes->ptr->Get<TransformComponent>().position;
+
+			transt.position.x = e_rec.x - transt.position.width / 2 + e_rec.width / 2;
+			transt.position.y = e_rec.y - transt.position.height / 2 + e_rec.height / 2;
+
+			auto cptr = new void*[2]{ characterAttributes, eventManager };
+
+			std::function<void(void*)> trigger_target = [](void* context)->void
+			{
+				auto& boxt = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(context)[0])->target->Get<HitBoxComponent>();
+				boxt.current_container = &boxt.containers[0];
+				boxt.current_container->Update();
+
+				std::function<void(void*)> move_target = [](void* ctx)->void
+				{
+					auto& boxt = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<HitBoxComponent>();
+					auto& t = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<TransformComponent>();
+					auto& boxt2 = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<HitBoxComponent>();
+					boxt2.current_container = &boxt2.containers[0];
+					boxt2.current_container->Update();
+
+					boxt2.current_container = nullptr;
+					t.position.x = OUT_OF_BOUNDS_X;
+					t.position.y = OUT_OF_BOUNDS_Y;
+					static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->targetActive = false;
+
+					delete[] reinterpret_cast<void**>(ctx);
+				};
+
+				static_cast<EventManager*>(reinterpret_cast<void**>(context)[1])->Notify<DefferEvent>(1000, move_target, context);
+			};
+
+			eventManager->Notify<DefferEvent>(1000, trigger_target, cptr);
+
+			characterAttributes->targetActive = true;
+		}
+	}
 
 public:
 	enum Type {
@@ -601,12 +667,23 @@ public:
 	
     ArenaSystem(Type type) : ISystem(std::string("ArenaSystem")), type(type)
     {
+		if (type == TESTER||type == SERVER)
+			connected_with_server = true;
     }
 
-    void Initialize() override {}
+	void Initialize() override
+    {
+		waitingScreen = pool->AddEntity();
+		waitingScreen->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
+		auto wait_screen_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "waitscreen.png").string();
+		waitingScreen->Add<SpriteComponent>(std::string("WaitingScreen"), textureManager->Load(wait_screen_path), RAYWHITE);
+    }
 
     void Execute() override
     {
+		if (!connected_with_server)
+			return;
+    	
         for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
         {
             auto arena = e->Get<ArenaGameComponent>();
@@ -770,46 +847,11 @@ public:
 				characterAttributes->blockInput = true;
 				comp.body->velocity = { 0,0 };
 
-				//Enable target
-				if (! characterAttributes->targetActive)
+				TriggerTargetAttack(characterAttributes, other_character_attributes);
+
+				if (type == SERVER)
 				{
-					auto& transt = characterAttributes->target->Get<TransformComponent>();
-
-					const auto e_rec = other_character_attributes->ptr->Get<TransformComponent>().position;
-
-					transt.position.x = e_rec.x - transt.position.width / 2 + e_rec.width / 2;
-					transt.position.y = e_rec.y - transt.position.height / 2 + e_rec.height / 2;
-
-					auto cptr = new void*[2]{ characterAttributes, eventManager };
-
-					std::function<void(void*)> trigger_target = [](void* context)->void
-					{
-						auto& boxt = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(context)[0])->target->Get<HitBoxComponent>();
-						boxt.current_container = &boxt.containers[0];
-						boxt.current_container->Update();
-
-						std::function<void(void*)> move_target = [](void* ctx)->void
-						{
-							auto& boxt = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<HitBoxComponent>();
-							auto& t = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<TransformComponent>();
-							auto& boxt2 = static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->target->Get<HitBoxComponent>();
-							boxt2.current_container = &boxt2.containers[0];
-							boxt2.current_container->Update();
-							
-							boxt2.current_container = nullptr;
-							t.position.x = OUT_OF_BOUNDS_X;
-							t.position.y = OUT_OF_BOUNDS_Y;
-							static_cast<ArenaGameComponent::ArenaCharacterAttributes*>(reinterpret_cast<void**>(ctx)[0])->targetActive = false;
-
-							delete[] reinterpret_cast<void**>(ctx);
-						};
-
-						static_cast<EventManager*>(reinterpret_cast<void**>(context)[1])->Notify<DefferEvent>(1000, move_target, context);
-					};
-
-					eventManager->Notify<DefferEvent>(1000, trigger_target, cptr);
-
-					characterAttributes->targetActive = true;
+					characterAttributes->triggerTarget = true;
 				}
 			}
 			else {
@@ -851,6 +893,23 @@ public:
 						(t1->position.x < t2->position.x ? 1 : -1) * cos(angle) * velocity ,
 						sin(angle) * velocity
 					};
+
+					if (type == SERVER)
+					{
+						e2->Get<CharacterStatsComponent>().hp -= 20;
+
+						if (e2->Has<ArenaPlayerComponent>())
+						{
+							auto& arena = e2->Get<ArenaPlayerComponent>().arena->Get<ArenaGameComponent>();
+							arena.player.lifeBox->Get<TransformComponent>().position.width = HEALTH_BAR_WIDTH * e2->Get<CharacterStatsComponent>().hp / BASE_HP;
+						}
+						else 
+						{
+							auto& arena = e2->Get<ArenaEnemyComponent>().arena->Get<ArenaGameComponent>();
+							arena.enemy.lifeBox->Get<TransformComponent>().position.width = HEALTH_BAR_WIDTH * e2->Get<CharacterStatsComponent>().hp / BASE_HP;
+							arena.enemy.lifeBox->Get<TransformComponent>().position.x = SCREEN_WIDTH - HEALTH_BAR_PADDING - arena.enemy.lifeBox->Get<TransformComponent>().position.width;
+						}
+					}
         		}
 
         		if ("target" _in ptr1->name && "mainBody" _in ptr2->name)
@@ -876,6 +935,9 @@ public:
 						stats.state = CharacterStatsComponent::NORMAL;
 					};
 
+					if (type == SERVER)
+						e2->Get<CharacterStatsComponent>().hp -= 40;
+
 					eventManager->Notify<DefferEvent>(4000, remove_stun, e2);
         		}
         	}
@@ -900,8 +962,6 @@ public:
 						continue;
 
 					std::string jstr(&p[0], p.size() + 1);
-					if (jstr.find('}') != std::string::npos)
-						jstr[jstr.find('}') + 1] = '\0';
 					nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
 					if (j.is_discarded())
 					{
@@ -913,15 +973,16 @@ public:
 					if (head == "player_coordinates")
 					{
 						//printf("Received json %s\n", jstr.c_str());
-						
-						auto x = j.at("x").get<float>();
-						auto y = j.at("y").get<float>();
-						auto vx = j.at("vx").get<float>();
-						auto vy = j.at("vy").get<float>();
-						auto current_action = j.at("current_action").get<int>();
-						auto orientation = j.at("orientation").get<bool>();
 
-						if (j.find("player") != j.end()) {
+						{
+							auto x = j.at("player").at("x").get<float>();
+							auto y = j.at("player").at("y").get<float>();
+							auto vx = j.at("player").at("vx").get<float>();
+							auto vy = j.at("player").at("vy").get<float>();
+							auto current_action = j.at("player").at("current_action").get<int>();
+							auto orientation = j.at("player").at("orientation").get<bool>();
+							auto trigger_target = j.at("player").at("trigger_target").get<bool>();
+							auto hp = j.at("player").at("hp").get<float>();
 
 							for (auto& a : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
 							{
@@ -939,10 +1000,27 @@ public:
 								auto& box = arena.player.ptr->Get<HitBoxComponent>();
 								box.Mirror(Vector2{ float(orientation), 0 });
 								box.Update();
+
+								if (trigger_target)
+								{
+									TriggerTargetAttack(&arena.player, &arena.enemy);
+								}
+
+								arena.player.ptr->Get<CharacterStatsComponent>().hp = hp;
+								arena.player.lifeBox->Get<TransformComponent>().position.width = HEALTH_BAR_WIDTH * hp / BASE_HP;
 							}
 						}
-						else if (j.find("enemy") != j.end())
+						
 						{
+							auto x = j.at("enemy").at("x").get<float>();
+							auto y = j.at("enemy").at("y").get<float>();
+							auto vx = j.at("enemy").at("vx").get<float>();
+							auto vy = j.at("enemy").at("vy").get<float>();
+							auto current_action = j.at("enemy").at("current_action").get<int>();
+							auto orientation = j.at("enemy").at("orientation").get<bool>();
+							auto trigger_target = j.at("enemy").at("trigger_target").get<bool>();
+							auto hp = j.at("enemy").at("hp").get<float>();
+							
 							for (auto& a : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
 							{
 								auto& arena = a->Get<ArenaGameComponent>();
@@ -959,6 +1037,15 @@ public:
 								auto& box = arena.enemy.ptr->Get<HitBoxComponent>();
 								box.Mirror(Vector2{ float(!orientation), 0 });
 								box.Update();
+
+								if (trigger_target)
+								{
+									TriggerTargetAttack(&arena.enemy, &arena.player);
+								}
+
+								arena.enemy.ptr->Get<CharacterStatsComponent>().hp = hp;
+								arena.enemy.lifeBox->Get<TransformComponent>().position.width = HEALTH_BAR_WIDTH * hp / BASE_HP;
+								arena.enemy.lifeBox->Get<TransformComponent>().position.x = SCREEN_WIDTH - HEALTH_BAR_PADDING - arena.enemy.lifeBox->Get<TransformComponent>().position.width;
 							}
 						}
 					}
@@ -972,6 +1059,8 @@ public:
 				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "PhysicsSystem");
 				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "AnimationSystem");
 				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "HitBoxSystem");
+
+				waitingScreen->RemoveAllComponents();
 
 				connected_with_server = true;
 			}
@@ -988,8 +1077,6 @@ public:
 					continue;
 
 				std::string jstr(&p[0], p.size() + 1);
-				if (jstr.find('}') != std::string::npos)
-					jstr[jstr.find('}') + 1] = '\0';
 				nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
 				if (j.is_discarded())
 				{

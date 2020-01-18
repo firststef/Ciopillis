@@ -31,6 +31,7 @@ void* RunGame(void* param)
 	auto hitBoxSystem = std::make_shared<HitBoxSystem>();
 	auto networkSystem = std::make_shared<GameRoomServerSystem>(clients);
 
+	manager.systemManager.AddSystem(defferSystem);
 	manager.systemManager.AddSystem(drawSystem);
 	manager.systemManager.AddSystem(arenaSystem);
 	manager.systemManager.AddSystem(physicsSystem);
