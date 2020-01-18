@@ -1,5 +1,6 @@
 #include "GameRoomServer.h"
 #include "Constants.h"
+#include "External.h"
 #include <iostream>
 #ifdef WIN32
 #include <WS2tcpip.h>
@@ -219,14 +220,127 @@ void GameRoomServerSystem::RunMainThread()
 {
 	while (true)
 	{
-		if (signal_access(READ_TYPE, false))
-			break;
-
 		auto packets = gather_packets();
 
 		if (signal_access(READ_TYPE, false))
 			break;
-	
-		send_packets({ packets[1], packets[0] });
+
+		for (auto& pack : packets[0])
+		{
+			//printf("packet from 0\n");
+			
+			if (pack.empty())
+				continue;
+
+			if (strcmp(pack.data(), "connect") == 0)
+			{
+				continue;
+			}
+
+			std::string jstr(&pack[0], pack.size() + 1);
+			jstr[pack.size()] = '\0';
+			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
+			if (j.is_discarded())
+			{
+				printf("Malformed packet%d\n", __LINE__);
+				continue;
+			}
+
+			j.emplace("player", 0);
+			auto str = j.dump();
+			Packet p;
+			p.insert(p.begin(), str.begin(), str.end() + 1);
+			
+			receive_queue_access(WRITE_TYPE, &p);
+		}
+
+		for (auto& pack : packets[1])
+		{
+			//printf("packet from 1\n");
+			
+			if (pack.empty())
+				continue;
+
+			if (strcmp(pack.data(), "connect") == 0)
+			{
+				continue;
+			}
+
+			std::string jstr(&pack[0], pack.size() + 1);
+			jstr[pack.size()] = '\0';
+			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
+			if (j.is_discarded())
+			{
+				printf("Malformed packet%d\n", __LINE__);
+				continue;
+			}
+
+			j.emplace("enemy", 0);
+			auto str = j.dump();
+			Packet p;
+			p.insert(p.begin(), str.begin(), str.end()+1);
+
+			receive_queue_access(WRITE_TYPE, &p);
+		}
+
+		auto send = send_queue_access(READ_TYPE, nullptr);
+
+		SleepFunc(9);
+
+		std::vector<Packet> packets_for_one;
+		std::vector<Packet> packets_for_two;
+		for (auto& pack : send)
+		{
+			if (pack.empty())
+				continue;
+
+			std::string jstr(&pack[0], pack.size() + 1);
+			jstr[pack.size()] = '\0';
+			nlohmann::json j = nlohmann::json::parse(jstr.c_str(), nullptr, false);
+			if (j.is_discarded())
+			{
+				printf("Malformed packet%d\n", __LINE__);
+				continue;
+			}
+			
+			packets_for_one.push_back(pack);
+
+			auto b = j.find("player") != j.end();
+
+			nlohmann::json::iterator it1 = j.find("player");
+			std::swap(j["aux"], it1.value());
+			j.erase(it1);
+
+			nlohmann::json::iterator it2 = j.find("enemy");
+			std::swap(j["player"], it2.value());
+			j.erase(it2);
+
+			nlohmann::json::iterator it3 = j.find("aux");
+			std::swap(j["enemy"], it3.value());
+			j.erase(it3);
+			
+			auto str = j.dump();
+			Packet p;
+			p.insert(p.begin(), str.begin(), str.end() + 1);
+			packets_for_two.push_back(p);
+		}
+
+		if (!packets_for_one.empty())
+		{
+			auto str = packets_for_one[0].data();
+			auto x = 0;
+		}
+
+		if (!packets_for_two.empty())
+		{
+			auto str = packets_for_two[0].data();
+			auto x = 0;
+		}
+		
+		send_packets({ packets_for_one, packets_for_two });
+
+		if (signal_access(READ_TYPE, false))
+			break;
 	}
+	
 }

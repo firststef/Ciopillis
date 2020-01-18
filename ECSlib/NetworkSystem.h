@@ -101,13 +101,12 @@ public:
 	{
 		std::vector<char> conn_msg;
 		std::string msg = "connect";
-		conn_msg.insert(conn_msg.begin(), msg.begin(), msg.end());
+		conn_msg.insert(conn_msg.begin(), msg.begin(), msg.end() + 1);
 		send_queue.push(conn_msg);
 	}
 
-	FixedQueue<Packet, 40> receive_queue;
-	FixedQueue<Packet, 40> send_queue;
-	bool changed = false;
+	FixedQueue<Packet, 4> receive_queue;
+	FixedQueue<Packet, 4> send_queue;
 
 	void RunMainThread() override;
 

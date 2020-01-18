@@ -7,7 +7,7 @@ const unsigned SCREEN_HEIGHT = 900;
 
 const float BASE_HP = 100;
 const float BASE_VELOCITY = 0.3f;
-const float BOOST_VELOCITY = 5.0f;
+const float BOOST_VELOCITY = 2.0f;
 const float DASH_INTERVAL = 1.0f;
 
 const float ATTACK_X_POINTS = 1.0f;
@@ -34,6 +34,10 @@ const unsigned TARGET_ACTIVATE_TIME = 1500;
 const unsigned STUN_TIME = 2000;
 
 const unsigned ARENA_BORDER = 200;
+
+const unsigned HEALTH_BAR_WIDTH = 800;
+const unsigned HEALTH_BAR_HEIGHT = 50;
+const unsigned HEALTH_BAR_PADDING = 50;
 
 //Animations
 inline unsigned MOVE_ANIM_TIME = 600;

@@ -9,11 +9,10 @@ public:
 
     EntityPtr AddEntity()
     {
-		auto x = std::make_shared<int>(5);
-        EntityPtr e = std::make_shared<Entity>();
-        entities.push_back(e);
+		EntityPtr e = std::make_shared<Entity>();
+		entities.push_back(e);
 
-        return e;
+		return e;
     }
 
     void RemoveEntity(EntityPtr e)

@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 #include "NetworkSystem.h"
 
 class GameRoomManager
@@ -20,17 +21,15 @@ public:
 	void Destroy();
 };
 
-class GameRoomServerSystem : public INetworkSystem
+class GameRoomServerSystem : public NetworkSystem
 {
 public:
 
 	GameRoomServerSystem(std::vector<std::shared_ptr<ClientSocket>> client_sockets = {})
-		: INetworkSystem("GameRoomServerSystem", client_sockets)
+		: NetworkSystem(std::move(client_sockets))
 	{}
 
-	GameRoomServerSystem(std::string server_address, int port)
-		: INetworkSystem("GameRoomServerSystem", server_address, port)
-	{}
+	bool started = false;
 
 	void RunMainThread() override;
 };

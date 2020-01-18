@@ -227,7 +227,6 @@ std::vector<std::vector<Packet>> INetworkSystem::gather_packets()
 				signal_access(WRITE_TYPE, true);
 				return packets;
 			}
-			return packets;
         }
 #endif
 		std::vector<char> packet;
@@ -257,7 +256,7 @@ void INetworkSystem::send_packets(std::vector<std::vector<Packet>> packets)
 					signal_access(WRITE_TYPE, true);
 				}
 #elif __linux__
-				if (write(client_sockets[i]->cl, &packet[0], packets.size()) <= 0) {
+				if (write(client_sockets[i]->cl, &packet[0], packet.size()) <= 0) {
 					perror("Error in write(). Quitting.\n");
 					signal_access(WRITE_TYPE, true);
 				}

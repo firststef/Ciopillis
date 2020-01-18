@@ -14,7 +14,7 @@ int main()
     ECSManager manager;
 
 	auto defferSystem = std::make_shared<DefferSystem>();
-	auto arenaSystem = std::make_shared<ArenaSystem>();
+	auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem::TESTER);
 	auto drawSystem = std::make_shared<DrawSystem>();
 	auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>();
 	auto physicsSystem = std::make_shared <PhysicsSystem>();

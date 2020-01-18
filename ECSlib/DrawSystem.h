@@ -36,7 +36,7 @@ public:
 					transform.position,
                     Vector2{ 0, 0 },
 					0.0f,
-					RAYWHITE
+					sprite.color
 				);
             }
         }

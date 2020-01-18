@@ -20,6 +20,7 @@ public:
     void RemoveAllComponents()
     {
         components.clear();
+		componentBitset.reset();
     }
     void Destroy()
     {

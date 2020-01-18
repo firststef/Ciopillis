@@ -14,12 +14,13 @@ int main(int argc, char** argv)
 		server_ip = "127.0.0.1";
 	
 	//Initialization
-	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, windowTitle);
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Client");
 	SetTargetFPS(60);
 
 	ECSManager manager;
 
-	auto arenaSystem = std::make_shared<ArenaSystem>();
+	auto defferSystem = std::make_shared<DefferSystem>();
+	auto arenaSystem = std::make_shared<ArenaSystem>(ArenaSystem::CLIENT);
 	auto drawSystem = std::make_shared<DrawSystem>();
 	auto keyboardInputSystem = std::make_shared<KeyboardInputSystem>();
 	auto physicsSystem = std::make_shared <PhysicsSystem>();
@@ -27,6 +28,7 @@ int main(int argc, char** argv)
 	auto hitBoxSystem = std::make_shared<HitBoxSystem>();
 	auto networkSystem = std::make_shared<NetworkSystem>(server_ip, 54000);
 
+	manager.systemManager.AddSystem(defferSystem);
 	manager.systemManager.AddSystem(drawSystem);
 	manager.systemManager.AddSystem(arenaSystem);
 	manager.systemManager.AddSystem(keyboardInputSystem, false);
@@ -38,6 +40,7 @@ int main(int argc, char** argv)
 	auto game(manager.pool.AddEntity());
 	game->Add<ArenaGameComponent>();
 
+	manager.eventManager.Subscribe<DefferEvent>(defferSystem);
 	manager.eventManager.Subscribe<KeyboardEvent>(arenaSystem);
 	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
 	manager.eventManager.Subscribe<AnimationEvent>(arenaSystem);
