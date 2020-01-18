@@ -11,7 +11,7 @@
 class ArenaSystem : public ISystem
 {
 	bool connected_with_server = false;
-	EntityPtr waitingScreen = nullptr;
+	EntityPtr displayScreen = nullptr;
 	
 	void OnInit(EntityPtr e)
 	{
@@ -514,46 +514,47 @@ class ArenaSystem : public ISystem
         arena.state = ArenaGameComponent::RUNNING;
     }
 
-    void OnRunning(EntityPtr e)
-    {
-        //Height sorting
-        auto& arena = e->Get<ArenaGameComponent>();
+	void OnRunning(EntityPtr e)
+	{
+		//Height sorting
+		auto& arena = e->Get<ArenaGameComponent>();
 
-        std::sort(arena.generatedEntities.begin(), arena.generatedEntities.end(), [](EntityPtr a, EntityPtr b)
-        {
-            if (a->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>())
-                && b->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>()))
-            {
-                return (a->Get<TransformComponent>().position.y + a->Get<TransformComponent>().position.height)
-                    > (b->Get<TransformComponent>().position.y + b->Get<TransformComponent>().position.height);
-            }
-            return false;
-        });
-
-        unsigned i = 0;
-        unsigned size = arena.generatedEntities.size();
-        for (auto& en : arena.generatedEntities)
-        {
-            if (en->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>()))
-            {
-                en->Get<TransformComponent>().zIndex = size - i;
-
-                auto& velocity = en->Get<PhysicsComponent>().body->velocity;
-                velocity = Vector2{ velocity.x * (1.0f - TOP_DOWN_VELOCITY_LOSS), velocity.y * (1.0f - TOP_DOWN_VELOCITY_LOSS) };
-
-                if (velocity <= Vector2({ TOP_DOWN_VELOCITY_LOW_LIMIT, TOP_DOWN_VELOCITY_LOW_LIMIT }) 
-                    && velocity >= Vector2({ -TOP_DOWN_VELOCITY_LOW_LIMIT, -TOP_DOWN_VELOCITY_LOW_LIMIT }))
-                    velocity = Vector2{ 0,0 };
-            }
-
-            i++;
-
-            //INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
-        }
-
-		if (type == SERVER) {
-			for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+		std::sort(arena.generatedEntities.begin(), arena.generatedEntities.end(), [](EntityPtr a, EntityPtr b)
+		{
+			if (a->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>())
+				&& b->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>()))
 			{
+				return (a->Get<TransformComponent>().position.y + a->Get<TransformComponent>().position.height)
+					> (b->Get<TransformComponent>().position.y + b->Get<TransformComponent>().position.height);
+			}
+			return false;
+		});
+
+		unsigned i = 0;
+		unsigned size = arena.generatedEntities.size();
+		for (auto& en : arena.generatedEntities)
+		{
+			if (en->Has(1 << GetComponentTypeID<TransformComponent>() | 1 << GetComponentTypeID<PhysicsComponent>()))
+			{
+				en->Get<TransformComponent>().zIndex = size - i;
+
+				auto& velocity = en->Get<PhysicsComponent>().body->velocity;
+				velocity = Vector2{ velocity.x * (1.0f - TOP_DOWN_VELOCITY_LOSS), velocity.y * (1.0f - TOP_DOWN_VELOCITY_LOSS) };
+
+				if (velocity <= Vector2({ TOP_DOWN_VELOCITY_LOW_LIMIT, TOP_DOWN_VELOCITY_LOW_LIMIT })
+					&& velocity >= Vector2({ -TOP_DOWN_VELOCITY_LOW_LIMIT, -TOP_DOWN_VELOCITY_LOW_LIMIT }))
+					velocity = Vector2{ 0,0 };
+			}
+
+			i++;
+
+			//INFO: deci pot folosi obiecte fizice overlapped atata timp cat nu sunt activate
+		}
+
+		for (auto& e : pool->GetEntities(1 << GetComponentTypeID<ArenaGameComponent>()))
+		{
+			if (type == SERVER) {
+
 				auto& arena = e->Get<ArenaGameComponent>();
 				auto& transp = arena.player.ptr->Get<TransformComponent>();
 				auto& physicp = arena.player.ptr->Get<PhysicsComponent>();
@@ -570,7 +571,7 @@ class ArenaSystem : public ISystem
 					auxTriggerTargetPlayer = true;
 					arena.player.triggerTarget = false;
 				}
-				
+
 				bool auxTriggerTargetEnemy = false;
 				if (arena.enemy.triggerTarget)
 				{
@@ -602,9 +603,38 @@ class ArenaSystem : public ISystem
 							{"hp", statse.hp}
 						}
 					}
-				});
-			}//de sinronizat si target si transf
+					});
+			}
+			else
+			{
+				bool stop = false;
+				if (e->Get<ArenaGameComponent>().player.ptr->Get<CharacterStatsComponent>().hp <= 0)
+				{
+					stop = true;
+
+					displayScreen->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT }).zIndex = 10;
+					auto lose_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "lose.png").string();
+					displayScreen->Add<SpriteComponent>(std::string("EndScreen"), textureManager->Load(lose_path), RAYWHITE);
+				}
+				else if (e->Get<ArenaGameComponent>().enemy.ptr->Get<CharacterStatsComponent>().hp <= 0)
+				{
+					stop = true;
+
+					displayScreen->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT }).zIndex = 10;
+					auto win_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "win.png").string();
+					displayScreen->Add<SpriteComponent>(std::string("EndScreen"), textureManager->Load(win_path), RAYWHITE);
+				}
+
+				if (stop)
+				{
+					eventManager->Notify<SystemControlEvent>(SystemControlEvent::DISABLE, "KeyboardInputSystem");
+					eventManager->Notify<SystemControlEvent>(SystemControlEvent::DISABLE, "PhysicsSystem");
+					eventManager->Notify<SystemControlEvent>(SystemControlEvent::DISABLE, "AnimationSystem");
+					eventManager->Notify<SystemControlEvent>(SystemControlEvent::DISABLE, "HitBoxSystem");
+				}
+			}
 		}//de reparat coordonatele inegale
+		
     }
 
     void OnEnd(EntityPtr e)
@@ -673,10 +703,10 @@ public:
 
 	void Initialize() override
     {
-		waitingScreen = pool->AddEntity();
-		waitingScreen->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
+		displayScreen = pool->AddEntity();
+		displayScreen->Add<TransformComponent>(Rectangle{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT });
 		auto wait_screen_path = (std::filesystem::path(CIOPILLIS_ROOT) / "Resources" / "sprites" / "waitscreen.png").string();
-		waitingScreen->Add<SpriteComponent>(std::string("WaitingScreen"), textureManager->Load(wait_screen_path), RAYWHITE);
+		displayScreen->Add<SpriteComponent>(std::string("WaitingScreen"), textureManager->Load(wait_screen_path), RAYWHITE);
     }
 
     void Execute() override
@@ -894,7 +924,7 @@ public:
 						sin(angle) * velocity
 					};
 
-					if (type == SERVER)
+					if (type == SERVER || type == TESTER)
 					{
 						e2->Get<CharacterStatsComponent>().hp -= 20;
 
@@ -1060,7 +1090,7 @@ public:
 				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "AnimationSystem");
 				eventManager->Notify<SystemControlEvent>(SystemControlEvent::ENABLE, "HitBoxSystem");
 
-				waitingScreen->RemoveAllComponents();
+				displayScreen->RemoveAllComponents();
 
 				connected_with_server = true;
 			}
