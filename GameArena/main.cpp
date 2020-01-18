@@ -38,6 +38,10 @@ int main()
 	manager.eventManager.Subscribe<KeyboardEvent>(arenaSystem);
 	manager.eventManager.Subscribe<HitBoxEvent>(arenaSystem);
 	manager.eventManager.Subscribe<AnimationEvent>(arenaSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(keyboardInputSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(physicsSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(animationSystem);
+	manager.eventManager.Subscribe<SystemControlEvent>(hitBoxSystem);
 
     manager.Initialize();
 
