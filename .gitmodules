@@ -1,0 +1,3 @@
+[submodule "ECSlib"]
+	path = ECSlib
+	url = https://github.com/firststef/ECSlib.git
