@@ -65,7 +65,7 @@ Just to mention a few important systems, ECSlib implements the **DrawSystem** (g
 
 ![Game Diagram](https://drive.google.com/uc?export=download&id=15BQs6OjsTcAlnQFBJxINkpDQAUUSfVCn)
 
-
+# \[NOTE\]: This is a diagram when I was planning the game to have 2 mechanics: card mechanics and a battle mechanic
 
 The main transitions are shown in the picture above. Rendering is done by the DrawSystem, by calling functions from the Raylib library.
 
@@ -78,7 +78,7 @@ Implementation
 -------------------
 ### ECSlib: The Systems
 
-Implementation for each of the systems is complex to start describing and it is neither the purpose for this paper. Therefore it will be discussed at a later date.
+To be continued later.
 
 ### ECSlib: The NetworkSystem class
 
@@ -117,7 +117,10 @@ CHECK(sendto(sd, msg, 100, 0,(struct sockaddr*) &server, &length)));
 
  **The transfer sequence**
  The format of all the messages in the networking communication are `.json`. A certain message from the client starts the entire networking process, and contains some information:
-```json
+
+# \[NOTE\]: This transfer sequence has not been implemented yet
+
+```js
 {
   "head":"start_all",
   "mode": "remote", // or localhost
@@ -127,7 +130,7 @@ CHECK(sendto(sd, msg, 100, 0,(struct sockaddr*) &server, &length)));
 }
 ```
 After two players are connected, the server might send back a reply json with information about the initiated match.
-```json
+```js
 {
   "head":"start_game",
   "other_username": "the_other_usr",
@@ -135,7 +138,7 @@ After two players are connected, the server might send back a reply json with in
 }
 ```
 In the **card selection phase** the users take turns to perform an action, and send the input. The input is captured from the user by the **InputSystem** and passed as an **Event** to the **CardGameEventSystem**. The input is validated and sent again as an event to the **NetworkSystem**.
-```json
+```js
 {
   "head":"card_selection_turn",
   "action": "draw", // can be "discard", "play_card", "skip"
@@ -145,7 +148,7 @@ In the **card selection phase** the users take turns to perform an action, and s
 }
 ```
 The server responds with statuses:
-```json
+```js
  {
   "head":"card_selection_response",
   "status": "valid_choice",
@@ -155,7 +158,7 @@ The server responds with statuses:
 }
 ```
 When the response is sent, this system will notify through the same procedure the event system. If both players have chosen an action the response of the server is sent back to them and the game proceeds to **arena phase**. In this phase players can send their current coordinates to the server and the input actions:
-```json
+```js
  {
   "head":"arena_action",
   "action": "attack",
@@ -167,7 +170,7 @@ When the response is sent, this system will notify through the same procedure th
 }
 ```
 The Arena interacts in the same way with its own event system called ArenaGameEventSystem. The server response could then be:
-```json
+```js
  {
   "head":"arena_action_response",
   "coordinates_self": [99, 199], //will overwrite self coordinates,
@@ -181,7 +184,7 @@ The Arena interacts in the same way with its own event system called ArenaGameEv
 ```
 The coordinates of the players are then overwritten at every exchange.
 One of the terminating messages would specify the winner or an error:
-```json
+```js
  {
   "head":"fatal_error",
   "coordinates_self": [-100, 0], //invalid coord, corrupt data
