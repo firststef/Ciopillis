@@ -65,7 +65,7 @@ Just to mention a few important systems, ECSlib implements the **DrawSystem** (g
 
 ![Game Diagram](https://drive.google.com/uc?export=download&id=15BQs6OjsTcAlnQFBJxINkpDQAUUSfVCn)
 
-
+# \[NOTE\]: This is a diagram when I was planning the game to have 2 mechanics: card mechanics and a battle mechanic
 
 The main transitions are shown in the picture above. Rendering is done by the DrawSystem, by calling functions from the Raylib library.
 
@@ -117,6 +117,9 @@ CHECK(sendto(sd, msg, 100, 0,(struct sockaddr*) &server, &length)));
 
  **The transfer sequence**
  The format of all the messages in the networking communication are `.json`. A certain message from the client starts the entire networking process, and contains some information:
+
+# \[NOTE\]: This transfer sequence has not been implemented yet
+
 ```js
 {
   "head":"start_all",
