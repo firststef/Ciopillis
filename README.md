@@ -7,6 +7,7 @@ You can build the project with CMake both on Linux and Windows(with MSVC). Just 
 
 ```shell
 git clone git@github.com:firststef/Ciopillis.git && cd ciopillis
+git submodule update --init --recursive
 mkdir build && cd build
 cmake ..
 ```
