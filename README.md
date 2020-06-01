@@ -13,3 +13,5 @@ cmake ..
 ```
 
 Note: On Windows it will generate a *.sln* file. You can then then build from inside Microsoft Visual Studio by the menu option `Build Solution` and then `Build Project X`.
+
+You can consult the project documentation here: https://github.com/firststef/Ciopillis/blob/master/Documentation.md
