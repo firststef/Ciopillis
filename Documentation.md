@@ -78,7 +78,7 @@ Implementation
 -------------------
 ### ECSlib: The Systems
 
-Implementation for each of the systems is complex to start describing and it is neither the purpose for this paper. Therefore it will be discussed at a later date.
+To be continued later.
 
 ### ECSlib: The NetworkSystem class
 
