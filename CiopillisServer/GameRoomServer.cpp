@@ -24,7 +24,7 @@ struct ClientSocket
 #endif
 };
 
-void GameRoomManager::Initialize()
+void GameRoom;Manager::Initialize()
 {
 #ifdef WIN32
 	// Initialze winsock
