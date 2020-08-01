@@ -1,0 +1,37 @@
+name: BuildLinux
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+      
+    - name: Run cmake
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+      
+    - name: Build ECSlib
+      run: |
+        cd build
+        cmake --build . --target ECSlib -- -j 4
+      
+    - name: Build CiopillisClient
+      run: |
+        cd build
+        cmake --build . --target CiopillisClient -- -j 4
+        
+    - name: Build CiopillisServer
+      run: |
+        cd build
+        cmake --build . --target CiopillisServer -- -j 4

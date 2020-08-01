@@ -1,6 +1,6 @@
 <h1>Ciopillis</h1>
 
-Build status: ![WinBuild](![C/C++ CI](https://github.com/firststef/Ciopillis/workflows/BuildWindows/badge.svg))
+Build status: ![WinBuild](https://github.com/firststef/Ciopillis/workflows/BuildWindows/badge.svg) ![LinuxBuild](https://github.com/firststef/Ciopillis/workflows/BuildLinux/badge.svg)
 
 Ciopillis is a game written in c/c++ with the help of the raylib engine. In this wiki I will present mostly how the CiopillisEngine works. Checkout the <a href="https://github.com/firststef/Ciopillis/wiki">wiki</a> for more information.
 
