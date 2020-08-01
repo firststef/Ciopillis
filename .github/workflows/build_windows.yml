@@ -24,6 +24,10 @@ jobs:
         mkdir build
         cd build
         cmake ..
+    - name: debug dir
+      run: |
+        pwd
+        dir .
       
     - name: Build ECSlib
       run: |
