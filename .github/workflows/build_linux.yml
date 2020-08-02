@@ -26,11 +26,6 @@ jobs:
         cd build
         cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc-9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-9
       
-    - name: Build ECSlib
-      run: |
-        cd build
-        cmake --build . --target ECSlib -- -j 4
-      
     - name: Build CiopillisClient
       run: |
         cd build

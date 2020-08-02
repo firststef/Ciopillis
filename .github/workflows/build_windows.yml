@@ -25,11 +25,6 @@ jobs:
         cd build
         cmake ..
       
-    - name: Build ECSlib
-      run: |
-        cd build
-        msbuild ECSlib/ECSlib.vcxproj
-      
     - name: Build CiopillisClient
       run: |
         cd build
